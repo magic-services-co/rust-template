@@ -1,7 +1,8 @@
 {
-  "version": "2.3.1",
+  "version": "2.3.2",
   "releasedAt": "2026-10-11",
   "notes": [
+    "Site updates can finish building again, so the new pages show up after you run the update.",
     "An update now restarts the site after the new pages are built, so the version and the pages match.",
     "The Harmony mod can now be downloaded and updated from the site, and game servers can pick up that update on their own."
   ],
@@ -17,6 +18,7 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "The panel type menu shows a logo for Pterodactyl, Pelican, and Calagopus.",
     "Sites that already updated were showing the new version while still serving the previous pages. Run update once more to load the new pages, including the Harmony mod page.",
     "Long server names on the leaderboard stay inside the box. The box grows a little, then the name is cut off.",
     "Tag pictures on server cards are larger.",

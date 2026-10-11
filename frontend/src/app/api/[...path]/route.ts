@@ -160,12 +160,12 @@ async function proxy(
   }
   attachXsrfHeader(request, headers);
 
-  let body: Uint8Array | undefined;
+  let body: ArrayBuffer | undefined;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     try {
       const buffer = await request.arrayBuffer();
       if (buffer.byteLength > 0) {
-        body = new Uint8Array(buffer);
+        body = buffer;
       }
     } catch {
       body = undefined;

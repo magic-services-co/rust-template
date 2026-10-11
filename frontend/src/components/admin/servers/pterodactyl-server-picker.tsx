@@ -6,6 +6,7 @@ import { getAuthToken } from '@/lib/laravel-auth'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
+import { PanelDriverMark, panelDriverFromLabel } from '@/components/admin/servers/panel-driver-mark'
 
 export type PterodactylServerOption = {
     shortUuid: string
@@ -20,6 +21,7 @@ type PterodactylPanelOption = {
     id: number
     name: string
     panelUrl: string
+    driver?: string
     driverLabel?: string
 }
 
@@ -112,14 +114,20 @@ export function PterodactylServerPicker({
                         onServerChange(null, null)
                     }}
                 >
-                    <SelectTrigger>
+                    <SelectTrigger className="[&>span]:flex [&>span]:min-w-0 [&>span]:items-center [&>span]:line-clamp-none">
                         <SelectValue placeholder="Select panel" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {panels.map((p) => (
                             <SelectItem key={p.id} value={String(p.id)}>
-                                {p.name}{p.driverLabel ? ` · ${p.driverLabel}` : ''}
+                                <span className="inline-flex min-w-0 items-center gap-2">
+                                    <PanelDriverMark driver={panelDriverFromLabel(p.driver)} />
+                                    <span className="truncate">
+                                        {p.name}
+                                        {p.driverLabel ? ` · ${p.driverLabel}` : ''}
+                                    </span>
+                                </span>
                             </SelectItem>
                         ))}
                     </SelectContent>

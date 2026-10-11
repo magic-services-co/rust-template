@@ -26,8 +26,7 @@ import {
     normalizePterodactylStartupVarKeys,
     type PterodactylStartupVarKeys,
 } from '@/lib/pterodactyl-startup-vars'
-
-type PanelDriver = 'pterodactyl' | 'pelican' | 'calagopus'
+import { PanelDriverMark, panelDriverFromLabel, type PanelDriver } from '@/components/admin/servers/panel-driver-mark'
 
 const PANEL_DRIVERS: { id: PanelDriver; label: string }[] = [
     { id: 'pterodactyl', label: 'Pterodactyl' },
@@ -249,11 +248,13 @@ export function PterodactylPanelSettings() {
                                     className="flex items-center justify-between gap-2 rounded-md border p-3"
                                 >
                                     <div>
-                                        <p className="font-medium text-sm">
+                                        <p className="flex items-center gap-2 font-medium text-sm">
                                             {panel.name}
-                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                                {panel.driverLabel ?? 'Pterodactyl'}
-                                            </span>
+                                            <PanelDriverMark
+                                                driver={panelDriverFromLabel(panel.driver)}
+                                                label={panel.driverLabel ?? 'Pterodactyl'}
+                                                className="text-xs font-normal text-muted-foreground"
+                                            />
                                         </p>
                                         <p className="text-xs text-muted-foreground truncate">{panel.panelUrl}</p>
                                         {panel.apiKeyConfigured && (
@@ -289,13 +290,13 @@ export function PterodactylPanelSettings() {
                         <div className="space-y-2">
                             <Label>Panel type</Label>
                             <Select value={driver} onValueChange={(value) => setDriver(value as PanelDriver)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="[&>span]:flex [&>span]:min-w-0 [&>span]:items-center [&>span]:line-clamp-none">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {PANEL_DRIVERS.map((option) => (
                                         <SelectItem key={option.id} value={option.id}>
-                                            {option.label}
+                                            <PanelDriverMark driver={option.id} label={option.label} />
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
