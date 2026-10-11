@@ -168,7 +168,13 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                         </div>
                         <div className="space-y-2">
                             <Label>Server</Label>
-                            <ServerCombobox value={serverId} onChange={setServerId} />
+                            <ServerCombobox
+                                value={serverId}
+                                onChange={setServerId}
+                                align="start"
+                                modal
+                                popoverContentClassName="z-[250]"
+                            />
                         </div>
                         <div className="space-y-2 flex flex-col justify-end">
                             <div className="flex items-center gap-2 h-10">
@@ -189,7 +195,7 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[250]">
                                 <SelectItem value="map_vote_end">{triggerLabels.map_vote_end}</SelectItem>
                                 <SelectItem value="map_start">{triggerLabels.map_start}</SelectItem>
                                 <SelectItem value="schedule">{triggerLabels.schedule}</SelectItem>
@@ -200,7 +206,7 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                     {triggerType === 'schedule' ? (
                         <div className="space-y-2">
                             <Label>Date & time</Label>
-                                <Popover>
+                                <Popover modal>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant="outline"
@@ -213,7 +219,7 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                                             {scheduleAt ? format(scheduleAt, 'PPp') : 'Pick date and time'}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <PopoverContent className="z-[250] w-auto p-0" align="start">
                                         <Calendar
                                             mode="single"
                                             selected={scheduleAt}
@@ -243,7 +249,7 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                                 <SelectTrigger>
                                     <SelectValue placeholder={serverId ? 'Select map vote' : 'Select a server first'} />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="z-[250]">
                                     {mapVotes.map((v) => (
                                         <SelectItem key={v.id} value={v.id}>
                                             Vote ends {format(new Date(v.vote_end), 'PPp')}
@@ -259,13 +265,13 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
 
                     {!hasPterodactyl && serverId && (
                         <p className="text-sm text-amber-600 dark:text-amber-500">
-                            Link a Pterodactyl server in Server Management for power actions and startup variables.
+                            Link a panel server in Server Management for power actions and startup variables.
                         </p>
                     )}
 
                     {hasPterodactyl && (
                         <p className="text-sm text-muted-foreground">
-                            Startup variable names for map wipes are configured on the linked Pterodactyl panel (Server Management → Pterodactyl settings).
+                            Startup variable names for map wipes are configured on the linked panel (Server Management → panel settings).
                         </p>
                     )}
 

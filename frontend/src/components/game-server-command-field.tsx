@@ -85,7 +85,7 @@ export function GameServerCommandField({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="ptero" disabled={!hasPterodactyl}>
-                            Ptero
+                            Panel
                         </SelectItem>
                         <SelectItem value="bm" disabled={!bmEnabled}>
                             BM

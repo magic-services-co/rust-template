@@ -176,7 +176,11 @@ export function BanList({ onRefresh }: BanListProps) {
 
             if (response.ok) {
                 const data = await response.json()
-                toast.success(data.message || `Synced ${data.synced} bans from BattleMetrics`)
+                if ((data.synced ?? 0) === 0 && (data.errors ?? 0) > 0) {
+                    toast.error(data.message || data.error || 'Failed to sync bans from BattleMetrics')
+                } else {
+                    toast.success(data.message || `Synced ${data.synced} bans from BattleMetrics`)
+                }
                 fetchBans()
                 onRefresh?.()
             } else {

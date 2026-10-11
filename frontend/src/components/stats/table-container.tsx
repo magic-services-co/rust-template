@@ -127,8 +127,10 @@ export function StatsTableContainer({ leaderboardTheme: serverTheme }: StatsTabl
     borderRadius: "0px",
   } as React.CSSProperties;
 
+  const serverSelectMin = 168
+  const serverSelectMax = Math.round(serverSelectMin * 1.3)
   const comboboxTriggerClass =
-    "h-9 w-[168px] max-w-[168px] shrink-0 justify-between px-2.5 py-1 text-[10px] font-medium shadow-none";
+    "h-9 shrink-0 justify-between px-2.5 py-1 text-[10px] font-medium shadow-none";
 
   if (isLoading || error) {
     return (
@@ -197,12 +199,14 @@ export function StatsTableContainer({ leaderboardTheme: serverTheme }: StatsTabl
 
             <div className="flex flex-col gap-3 border-b border-[rgba(154,179,205,0.16)] bg-[rgba(3,5,8,0.18)] px-4 py-[13px] sm:px-[26px] lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-              <div className="w-[168px] shrink-0">
+              <div className="shrink-0">
                 <ServerCombobox
                   allowGlobal={false}
                   value={selectedServer}
                   triggerClassName={comboboxTriggerClass}
                   triggerStyle={inputStyle}
+                  fitMinWidth={serverSelectMin}
+                  fitMaxWidth={serverSelectMax}
                   onChange={(v) => setSelectedServer(v)}
                 />
               </div>

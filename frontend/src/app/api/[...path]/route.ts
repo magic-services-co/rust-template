@@ -160,22 +160,24 @@ async function proxy(
   }
   attachXsrfHeader(request, headers);
 
-  let body: string | undefined;
+  let body: Uint8Array | undefined;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     try {
-      body = await request.text();
+      const buffer = await request.arrayBuffer();
+      if (buffer.byteLength > 0) {
+        body = new Uint8Array(buffer);
+      }
     } catch {
       body = undefined;
     }
   }
-  const hasBody = typeof body === 'string' && body.length > 0;
 
   let res: Response;
   try {
     res = await fetch(url, {
       method: request.method,
       headers,
-      body: hasBody ? body : undefined,
+      body,
       redirect: 'manual',
     });
   } catch (err) {

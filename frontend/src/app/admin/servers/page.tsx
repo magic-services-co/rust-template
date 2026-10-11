@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { AddServerForm } from '@/components/admin/servers/add-server-form'
 import { AddCategoryForm } from '@/components/admin/servers/add-category-form'
 import { PterodactylPanelSettings } from '@/components/admin/servers/pterodactyl-panel-settings'
+import { ServerTagsButton, ServerTagsSettings } from '@/components/admin/servers/server-tags-settings'
 import { CategoryList } from '@/components/admin/categories/category-list'
 import { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
@@ -38,9 +39,11 @@ export default async function AdminServersPage() {
             </div>}>
                 <div className="flex gap-4">
                     <AddCategoryForm />
+                    <ServerTagsButton />
                     <AddServerForm />
                 </div>
             </Suspense>
+            <ServerTagsSettings />
             <Suspense fallback={<div className="animate-pulse">
                 <div className="h-[400px] bg-secondary/20 rounded-md" />
             </div>}>

@@ -10,38 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
 import { cn } from "@/lib/utils";
-import type { CookieConsent } from "@/hooks/use-cookie-consent";
+import { useCookieConsent, type CookieBannerCopy, type CookieConsent } from "@/hooks/use-cookie-consent";
 
-export const COOKIE_CATEGORIES = [
-  {
-    key: "necessary" as const,
-    kicker: "ALWAYS ON",
-    title: "Necessary",
-    description: "Required for sign-in, security, and keeping the site working. These cannot be turned off.",
-    required: true,
-  },
-  {
-    key: "analytics" as const,
-    kicker: "OPTIONAL",
-    title: "Analytics",
-    description: "Helps us see which pages people use so we can improve the site. Data is collected anonymously.",
-    required: false,
-  },
-  {
-    key: "marketing" as const,
-    kicker: "OPTIONAL",
-    title: "Marketing",
-    description: "Used to measure campaigns and show relevant offers across our community channels.",
-    required: false,
-  },
-  {
-    key: "preferences" as const,
-    kicker: "OPTIONAL",
-    title: "Preferences",
-    description: "Remembers layout and display choices so the site feels the same next time you visit.",
-    required: false,
-  },
-] as const;
+const CATEGORY_KEYS = ["necessary", "analytics", "marketing", "preferences"] as const;
 
 const GOLD = "#ba9142";
 const CARD_BORDER = "rgba(255, 255, 255, 0.1)";
@@ -80,27 +51,31 @@ export function CookieCta({
 export function CookieCategoryList({
   consent,
   onChange,
+  copy,
 }: {
   consent: CookieConsent;
   onChange: (next: CookieConsent) => void;
+  copy: CookieBannerCopy;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {COOKIE_CATEGORIES.map((category) => {
-        const on = Boolean(consent[category.key]);
+      {CATEGORY_KEYS.map((key) => {
+        const category = copy.categories[key];
+        const required = key === "necessary";
+        const on = Boolean(consent[key]);
         return (
           <button
-            key={category.key}
+            key={key}
             type="button"
-            disabled={category.required}
+            disabled={required}
             aria-pressed={on}
             onClick={() => {
-              if (category.required) return;
-              onChange({ ...consent, [category.key]: !on });
+              if (required) return;
+              onChange({ ...consent, [key]: !on });
             }}
             className={cn(
               "ghost cookie-category flex w-full items-start justify-between gap-4 border px-4 py-3 text-left",
-              category.required && "cursor-default opacity-100",
+              required && "cursor-default opacity-100",
             )}
             style={{
               borderColor: on ? "rgba(186,145,66,0.7)" : CARD_BORDER,
@@ -122,7 +97,7 @@ export function CookieCategoryList({
                 backgroundColor: on ? "rgba(186,145,66,0.12)" : "transparent",
               }}
             >
-              {category.required ? "REQUIRED" : on ? "ON" : "OFF"}
+              {required ? "REQUIRED" : on ? "ON" : "OFF"}
             </span>
           </button>
         );
@@ -142,6 +117,7 @@ export function CookiePreferencesDialog({
   initialConsent: CookieConsent;
   onSave: (consent: CookieConsent) => void;
 }) {
+  const { copy } = useCookieConsent();
   const [consent, setConsent] = useState<CookieConsent>(initialConsent);
 
   useEffect(() => {
@@ -159,16 +135,16 @@ export function CookiePreferencesDialog({
       >
         <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
           <div className="shrink-0 border-b border-[rgba(255,255,255,0.1)] px-5 py-4 pr-12">
-            <p className="support-hero-kicker font-mono text-[10px] font-medium tracking-[2.2px]">YOUR CHOICES</p>
+            <p className="support-hero-kicker font-mono text-[10px] font-medium tracking-[2.2px]">{copy.dialogKicker}</p>
             <DialogTitle className="pt-2 text-left text-[26px] font-extrabold leading-8 tracking-[-1.4px] text-[#f2f7ff]">
-              COOKIE <span style={{ color: GOLD }}>SETTINGS</span>
+              {copy.dialogTitle} <span style={{ color: GOLD }}>{copy.dialogTitleAccent}</span>
             </DialogTitle>
             <DialogDescription className="max-w-[440px] pt-2 text-left text-[13px] leading-[20px] text-[#9facc0]">
-              Necessary cookies stay on. Everything else is optional and can be changed anytime from the footer.
+              {copy.dialogMessage}
             </DialogDescription>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
-            <CookieCategoryList consent={consent} onChange={setConsent} />
+            <CookieCategoryList consent={consent} onChange={setConsent} copy={copy} />
             <p className="pt-3 text-[11px] leading-[18px] text-[#8292a6]">
               Read more in our{" "}
               <Link href="/privacy-policy" className="text-[#d7b15a] hover:text-[#f0c970]" onClick={() => onOpenChange(false)}>
@@ -179,7 +155,7 @@ export function CookiePreferencesDialog({
           </div>
           <div className="flex shrink-0 flex-col gap-2 border-t border-[rgba(255,255,255,0.1)] px-5 py-4 sm:flex-row sm:justify-end">
             <CookieCta variant="secondary" onClick={() => onOpenChange(false)}>
-              CANCEL
+              {copy.cancelLabel}
             </CookieCta>
             <CookieCta
               onClick={() => {
@@ -187,7 +163,7 @@ export function CookiePreferencesDialog({
                 onOpenChange(false);
               }}
             >
-              SAVE PREFERENCES
+              {copy.saveLabel}
             </CookieCta>
           </div>
           <HomeCardCorners color={GOLD} show />

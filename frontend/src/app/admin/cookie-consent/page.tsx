@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CookiePreferencesLink } from '@/components/cookie-preferences-link';
+import { CookieBannerEditor } from '@/components/admin/cookie-banner-editor';
 
 export const metadata: Metadata = {
   title: 'Cookie Consent Management',
@@ -31,6 +32,8 @@ export default async function CookieConsentPage() {
         <h1 className="text-2xl font-bold">Cookie Consent Management</h1>
         <CookiePreferencesLink variant="button" />
       </div>
+
+      <CookieBannerEditor />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>

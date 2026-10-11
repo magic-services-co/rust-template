@@ -55,17 +55,23 @@ export function ServerCard({ server, isDragging }: ServerCardProps) {
                         <p className="text-sm text-gray-500">
                             ID: {server.server_id}
                         </p>
+                        {server.mod_runtime === "oxide" || server.mod_runtime === "carbon" ? (
+                            <p className="text-sm text-gray-500">
+                                {server.mod_runtime === "carbon" ? "Carbon" : "Oxide"}
+                            </p>
+                        ) : null}
                     </div>
                     <ServerActions
                         serverId={server.server_id}
                         serverName={server.server_name}
-                        enabled={server.enabled ?? false}
+                        enabled={server.enabled !== false}
                         serverImagePath={server.image_path ?? null}
                         serverAddress={server.server_address ?? null}
                         wipeSchedule={server.wipe_schedule ?? 'auto'}
                         currentMapThumbnailUrl={server.current_map_thumbnail_url ?? null}
                         pterodactylPanelId={server.pterodactyl_panel_id ?? null}
                         pterodactylServerIdentifier={server.pterodactyl_server_identifier ?? null}
+                        tagIds={Array.isArray(server.tags) ? server.tags.map((tag) => Number(tag.id)).filter((id) => !Number.isNaN(id)) : []}
                     />
                 </CardContent>
             </Card>

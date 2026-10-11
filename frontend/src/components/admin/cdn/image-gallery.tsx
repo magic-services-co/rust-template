@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Copy, Download, Trash2, Eye, EyeOff, Edit } from "lucide-react"
+import { Copy, Download, Trash2, Eye, EyeOff, Edit, File } from "lucide-react"
 import { toast } from "sonner"
-import Image from "next/image"
 
 interface UploadedImage {
   id: string
@@ -147,13 +146,18 @@ export function ImageGallery({ images, onDelete, onRename }: ImageGalleryProps) 
         {images.map((image) => (
           <Card key={image.id} className="overflow-hidden group">
             <div className="relative aspect-video">
-              <Image
-                src={image.url}
-                alt={image.originalName}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-                unoptimized={image.url.startsWith('/uploads/')}
-              />
+              {image.mimeType?.startsWith("image/") ? (
+                <img
+                  src={image.url}
+                  alt={image.originalName}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted px-3 text-center">
+                  <File className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-xs break-all line-clamp-2">{image.originalName}</p>
+                </div>
+              )}
 
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
@@ -170,13 +174,18 @@ export function ImageGallery({ images, onDelete, onRename }: ImageGalleryProps) 
                     <DialogContent className="max-w-4xl">
                       <div className="space-y-4">
                         <div className="relative aspect-video">
-                          <Image
-                            src={image.url}
-                            alt={image.originalName}
-                            fill
-                            className="object-contain"
-                            unoptimized={image.url.startsWith('/uploads/')}
-                          />
+                          {image.mimeType?.startsWith("image/") ? (
+                            <img
+                              src={image.url}
+                              alt={image.originalName}
+                              className="absolute inset-0 h-full w-full object-contain"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted px-3 text-center">
+                              <File className="h-10 w-10 text-muted-foreground" />
+                              <p className="text-sm break-all">{image.originalName}</p>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <h3 className="font-semibold">{image.originalName}</h3>

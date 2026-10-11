@@ -7,6 +7,8 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { compareServersByRankThenPlayers, serverAlign } from "@/lib/server-display";
+import { cn } from "@/lib/utils";
 
 interface HomeServersProps {
     ctaLabel?: string;
@@ -56,16 +58,18 @@ export default function HomeServers({
         .map(query => query.data)
         .filter((server): server is EnhancedServerData => server !== undefined);
 
-    const sortedServers = [...allServers].sort((a, b) =>
-        (b.attributes.players || 0) - (a.attributes.players || 0)
-    );
+    const useTags = siteSettings.data?.serversUseTags === true;
+    const align = serverAlign(siteSettings.data?.serversAlign);
+    const sortedServers = useTags
+        ? [...allServers].sort(compareServersByRankThenPlayers)
+        : [...allServers].sort((a, b) => (b.attributes.players || 0) - (a.attributes.players || 0));
 
     const topServers = sortedServers.slice(0, limit);
     const hasMoreServers = sortedServers.length > limit;
 
     return (
         <div className="relative">
-            <div className="home-servers-grid">
+            <div className={cn("home-servers-grid", align === "center" && "align-center", align === "rtl" && "align-rtl")}>
                 {topServers.length === 0 ? (
                     <ServerCardWrap>
                         <article className="server-card relative flex min-h-[211px] flex-col items-center justify-center overflow-visible border p-[17px]">
@@ -74,12 +78,14 @@ export default function HomeServers({
                         </article>
                     </ServerCardWrap>
                 ) : (
-                    topServers.map((server) => (
+                    topServers.map((server, index) => (
                         <ServerCardWrap key={server.id}>
                             <Server
                                 data={server}
                                 copyServerAddress={siteSettings.data?.copyServerAddress || false}
                                 categoryName={server.categoryName}
+                                tags={server.tags}
+                                featured={useTags && index === 0}
                             />
                         </ServerCardWrap>
                     ))

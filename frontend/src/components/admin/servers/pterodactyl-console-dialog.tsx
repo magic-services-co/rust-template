@@ -213,7 +213,7 @@ export function PterodactylConsoleDialog({
                 setPanelOrigin(json.origin ?? null)
                 setConsoleHint(json.consoleHint)
                 setPteroReady(true)
-                appendLine(`[Console] Pterodactyl OK — short UUID ${json.pterodactylShortUuid ?? '?'}`)
+                appendLine(`[Console] ${json.panelName ?? 'Panel'} connected — ${json.pterodactylShortUuid ?? '?'}`)
                 if (bmEnabled) {
                     appendLine(`[Console] BattleMetrics RCON available (server ID ${serverId})`)
                 }
@@ -343,7 +343,7 @@ export function PterodactylConsoleDialog({
                         Console — {serverName}
                     </DialogTitle>
                     <DialogDescription>
-                        Send commands via Pterodactyl or BattleMetrics RCON. Live output uses Pterodactyl
+                        Send commands through the linked panel or BattleMetrics RCON. Live output uses the panel
                         Wings (<code className="text-xs">allowed_origins</code> required).
                     </DialogDescription>
                 </DialogHeader>

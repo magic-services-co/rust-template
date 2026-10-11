@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { ExternalLink, Loader2, Plus, Settings, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -26,13 +27,24 @@ import {
     type PterodactylStartupVarKeys,
 } from '@/lib/pterodactyl-startup-vars'
 
+type PanelDriver = 'pterodactyl' | 'pelican' | 'calagopus'
+
+const PANEL_DRIVERS: { id: PanelDriver; label: string }[] = [
+    { id: 'pterodactyl', label: 'Pterodactyl' },
+    { id: 'pelican', label: 'Pelican' },
+    { id: 'calagopus', label: 'Calagopus' },
+]
+
 type PterodactylPanel = {
     id: number
     name: string
+    driver?: PanelDriver
+    driverLabel?: string
     panelUrl: string
     apiKeyMasked: string | null
     apiKeyConfigured: boolean
     apiKeyCreateUrl: string
+    docsUrl?: string
     clientApiUrl: string
     startupVarKeys: PterodactylStartupVarKeys
 }
@@ -45,7 +57,8 @@ function authHeaders(json = false): Record<string, string> {
     return h
 }
 
-function apiKeyHint(key: string): string | null {
+function apiKeyHint(driver: PanelDriver, key: string): string | null {
+    if (driver === 'calagopus') return null
     const trimmed = key.trim().toLowerCase()
     if (trimmed.startsWith('ptla_')) {
         return 'Application keys (ptla_) cannot be used. Create a Client API key (ptlc_) in your panel account instead.'
@@ -56,10 +69,17 @@ function apiKeyHint(key: string): string | null {
     return null
 }
 
+function keyCreateUrl(driver: PanelDriver, panelUrl: string): string | null {
+    const base = panelUrl.trim().replace(/\/+$/, '')
+    if (!base) return null
+    return driver === 'calagopus' ? `${base}/account/api-keys` : `${base}/account/api`
+}
+
 export function PterodactylPanelSettings() {
     const [open, setOpen] = useState(false)
     const [editingId, setEditingId] = useState<number | null>(null)
     const [name, setName] = useState('')
+    const [driver, setDriver] = useState<PanelDriver>('pterodactyl')
     const [panelUrl, setPanelUrl] = useState('')
     const [apiKey, setApiKey] = useState('')
     const [startupVarKeys, setStartupVarKeys] = useState<PterodactylStartupVarKeys>({
@@ -74,21 +94,20 @@ export function PterodactylPanelSettings() {
                 credentials: 'include',
                 headers: authHeaders(),
             })
-            if (!res.ok) throw new Error('Failed to load Pterodactyl panels')
+            if (!res.ok) throw new Error('Failed to load panels')
             return res.json() as Promise<{ panels: PterodactylPanel[] }>
         },
         enabled: open,
     })
 
     const panels = data?.panels ?? []
-    const keyHint = apiKeyHint(apiKey)
-    const apiKeyCreateUrl = panelUrl.trim()
-        ? `${panelUrl.replace(/\/+$/, '')}/account/api`
-        : null
+    const keyHint = apiKeyHint(driver, apiKey)
+    const apiKeyCreateUrl = keyCreateUrl(driver, panelUrl)
 
     const resetForm = () => {
         setEditingId(null)
         setName('')
+        setDriver('pterodactyl')
         setPanelUrl('')
         setApiKey('')
         setStartupVarKeys({ ...defaultPterodactylStartupVarKeys })
@@ -98,6 +117,7 @@ export function PterodactylPanelSettings() {
         mutationFn: async () => {
             const body = {
                 name: name.trim(),
+                driver,
                 panelUrl: panelUrl.trim(),
                 startupVarKeys: normalizePterodactylStartupVarKeys(startupVarKeys),
                 ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
@@ -152,6 +172,7 @@ export function PterodactylPanelSettings() {
                 credentials: 'include',
                 headers: authHeaders(true),
                 body: JSON.stringify({
+                    driver,
                     panelUrl: panelUrl.trim(),
                     ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
                 }),
@@ -163,6 +184,7 @@ export function PterodactylPanelSettings() {
     const startEdit = (panel: PterodactylPanel) => {
         setEditingId(panel.id)
         setName(panel.name)
+        setDriver(panel.driver ?? 'pterodactyl')
         setPanelUrl(panel.panelUrl)
         setApiKey('')
         setStartupVarKeys(normalizePterodactylStartupVarKeys(panel.startupVarKeys))
@@ -171,26 +193,45 @@ export function PterodactylPanelSettings() {
     return (
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm() }}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" title="Pterodactyl panel settings">
+                <Button variant="outline" size="icon" title="Game panel settings">
                     <Settings className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Pterodactyl Panels</DialogTitle>
+                    <DialogTitle>Game panels</DialogTitle>
                     <DialogDescription>
-                        Connect one or more Pterodactyl panels using a Client API key (
+                        Connect Pterodactyl, Pelican, or Calagopus. Pterodactyl and Pelican use a Client API key (
                         <code className="text-xs">ptlc_</code>
-                        ). Keys are used to list servers when creating or editing site servers.
+                        ). Calagopus uses an account API key from its API keys page.
+                        Keys list servers when you add or edit a site server.
                         For live console output, add your admin site URL to Wings{' '}
                         <code className="text-xs">allowed_origins</code> on each node.{' '}
                         <a
-                            href="https://pterodactyl-api-docs.netvpx.com/docs/api/client"
+                            href="https://docs.pterodactyl.io/v2/api"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary underline inline-flex items-center gap-1"
                         >
-                            API docs <ExternalLink className="h-3 w-3" />
+                            Pterodactyl <ExternalLink className="h-3 w-3" />
+                        </a>
+                        {' · '}
+                        <a
+                            href="https://demo.pelican.dev/docs/api/client"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline"
+                        >
+                            Pelican
+                        </a>
+                        {' · '}
+                        <a
+                            href="https://demo.calagopus.com/api"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline"
+                        >
+                            Calagopus
                         </a>
                     </DialogDescription>
                 </DialogHeader>
@@ -208,7 +249,12 @@ export function PterodactylPanelSettings() {
                                     className="flex items-center justify-between gap-2 rounded-md border p-3"
                                 >
                                     <div>
-                                        <p className="font-medium text-sm">{panel.name}</p>
+                                        <p className="font-medium text-sm">
+                                            {panel.name}
+                                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                {panel.driverLabel ?? 'Pterodactyl'}
+                                            </span>
+                                        </p>
                                         <p className="text-xs text-muted-foreground truncate">{panel.panelUrl}</p>
                                         {panel.apiKeyConfigured && (
                                             <p className="text-xs text-muted-foreground font-mono mt-1">
@@ -241,6 +287,21 @@ export function PterodactylPanelSettings() {
                     <div className="space-y-3 rounded-md border p-4">
                         <h4 className="text-sm font-medium">{editingId ? 'Edit panel' : 'Add panel'}</h4>
                         <div className="space-y-2">
+                            <Label>Panel type</Label>
+                            <Select value={driver} onValueChange={(value) => setDriver(value as PanelDriver)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PANEL_DRIVERS.map((option) => (
+                                        <SelectItem key={option.id} value={option.id}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="pt-name">Display name</Label>
                             <Input
                                 id="pt-name"
@@ -259,13 +320,19 @@ export function PterodactylPanelSettings() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="pt-key">Client API key</Label>
+                            <Label htmlFor="pt-key">{driver === 'calagopus' ? 'API key' : 'Client API key'}</Label>
                             <Input
                                 id="pt-key"
                                 type="password"
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                placeholder={editingId ? 'Leave blank to keep current key' : 'ptlc_...'}
+                                placeholder={
+                                    editingId
+                                        ? 'Leave blank to keep current key'
+                                        : driver === 'calagopus'
+                                          ? 'Account API key'
+                                          : 'ptlc_...'
+                                }
                                 autoComplete="off"
                             />
                             {keyHint && (
@@ -276,7 +343,7 @@ export function PterodactylPanelSettings() {
                             )}
                             {apiKeyCreateUrl && (
                                 <p className="text-xs text-muted-foreground">
-                                    Create a Client API key at{' '}
+                                    {driver === 'calagopus' ? 'Create an API key at' : 'Create a Client API key at'}{' '}
                                     <a
                                         href={apiKeyCreateUrl}
                                         target="_blank"
@@ -285,11 +352,9 @@ export function PterodactylPanelSettings() {
                                     >
                                         {apiKeyCreateUrl}
                                     </a>
-                                    . Application keys (
-                                    <code className="text-xs">ptla_</code>
-                                    ) must be created there as Client keys (
-                                    <code className="text-xs">ptlc_</code>
-                                    ).
+                                    {driver === 'calagopus'
+                                        ? '.'
+                                        : '. Application keys (ptla_) will not work. Use a Client key (ptlc_).'}
                                 </p>
                             )}
                         </div>

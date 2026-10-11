@@ -10,12 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { AlertTriangle, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 type PaynowKeyConfig = {
     isPayNowApiKeyInDatabase?: boolean
     paynowApiKeySource?: "database" | "environment" | "none"
+    paynowKeyHealth?: "ok" | "missing" | "missing_website_role" | string
+    paynowKeyMessage?: string | null
 }
 
 export function PayNowApiKeySettings() {
@@ -73,10 +76,15 @@ export function PayNowApiKeySettings() {
 
     const inDatabase = config?.isPayNowApiKeyInDatabase === true
     const source = config?.paynowApiKeySource
+    const health = config?.paynowKeyHealth
 
     const statusBadge =
         isLoading ? (
             <Badge variant="secondary">Loading…</Badge>
+        ) : health === "missing_website_role" ? (
+            <Badge variant="destructive">Missing Website role</Badge>
+        ) : health === "missing" || source === "none" ? (
+            <Badge variant="destructive">Key missing</Badge>
         ) : source === "database" ? (
             <Badge>Key in site settings</Badge>
         ) : source === "environment" ? (
@@ -105,6 +113,13 @@ export function PayNowApiKeySettings() {
                 {statusBadge}
             </CardHeader>
             <CardContent className="space-y-4">
+                {(health === "missing" || health === "missing_website_role") && config?.paynowKeyMessage ? (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>{health === "missing" ? "PayNow API key is missing" : "PayNow API key lacks the Website role"}</AlertTitle>
+                        <AlertDescription>{config.paynowKeyMessage}</AlertDescription>
+                    </Alert>
+                ) : null}
                 <div className="space-y-2">
                     <Label htmlFor="paynow-api-key">API key</Label>
                     <Input

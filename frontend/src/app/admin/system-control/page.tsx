@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Metadata } from "next"
 import { VpsMetricsPanel } from "@/components/admin/vps-metrics-panel"
+import { HarmonyModDownloadButton } from "@/components/admin/harmony-mod-download"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
@@ -23,6 +24,20 @@ export default function SystemControlDashboardPage() {
                 <Button variant="secondary" asChild>
                     <Link href="/admin/system-control/addons">Manage addons</Link>
                 </Button>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
+                <div>
+                    <p className="font-medium">Harmony mod</p>
+                    <p className="text-muted-foreground text-sm">
+                        Download MagicCore, or open the page to read the version and what changed. Servers update on their own, or with rusttemplate.update.
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="ghost" asChild>
+                        <Link href="/admin/system-control/harmony">Update notes</Link>
+                    </Button>
+                    <HarmonyModDownloadButton />
+                </div>
             </div>
         </div>
     )

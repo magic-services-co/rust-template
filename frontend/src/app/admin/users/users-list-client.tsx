@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsInteger } from "nuqs";
 import { useDebouncedCallback } from "use-debounce";
 import { backendApi } from "@/lib/api";
 import { getAuthToken } from "@/lib/laravel-auth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Check, MoreHorizontal, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+
+type SteamProspect = {
+  steamId: string;
+  name: string;
+  image: string | null;
+};
 
 type ListUser = {
   id: string;
@@ -40,7 +47,7 @@ function useUsers(page: number, pageSize: number, search: string, roleId: string
       const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), search, role: roleId, sortBy, sortOrder });
       const res = await fetch(backendApi(`admin/users?${params}`), { credentials: "include", headers });
       if (!res.ok) throw new Error("Failed to fetch users");
-      return res.json() as Promise<{ users: ListUser[]; total: number }>;
+      return res.json() as Promise<{ users: ListUser[]; total: number; steamProspect?: SteamProspect | null }>;
     },
   });
 }
@@ -111,6 +118,61 @@ function RowActions({ user }: { user: ListUser }) {
   );
 }
 
+function SteamProspectRow({ prospect }: { prospect: SteamProspect }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const addUser = useMutation({
+    mutationFn: async () => {
+      const token = getAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json", "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(backendApi("admin/users/from-steam"), {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({ steamId: prospect.steamId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || body.message || "Could not add this Steam account");
+      }
+      return res.json() as Promise<{ user: { steamId: string; name: string | null } }>;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(`${result.user.name || prospect.name} was added to the site`);
+      router.push(`/admin/users/${result.user.steamId || prospect.steamId}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={prospect.image ?? undefined} alt="" />
+            <AvatarFallback>{prospect.name.charAt(0) || "?"}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p>{prospect.name}</p>
+            <p className="text-xs text-muted-foreground">Not on the site yet</p>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="font-mono text-sm text-muted-foreground">{prospect.steamId}</TableCell>
+      <TableCell className="text-muted-foreground">—</TableCell>
+      <TableCell className="text-muted-foreground">—</TableCell>
+      <TableCell className="text-muted-foreground">—</TableCell>
+      <TableCell>
+        <Button size="sm" disabled={addUser.isPending} onClick={() => addUser.mutate()}>
+          {addUser.isPending ? "Adding…" : "Add to site"}
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 function UsersListClientInner() {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [pageSize, setPageSize] = useQueryState("pageSize", parseAsInteger.withDefault(10));
@@ -128,6 +190,7 @@ function UsersListClientInner() {
     setPage(1);
   }, [sortBy, sortOrder, setSortBy, setSortOrder, setPage]);
   const users = data?.users ?? [];
+  const steamProspect = data?.steamProspect ?? null;
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize) || 1;
   const from = (page - 1) * pageSize + 1;
@@ -162,10 +225,12 @@ function UsersListClientInner() {
         <TableBody>
           {isLoading ? (
             <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading…</TableCell></TableRow>
-          ) : users.length === 0 ? (
+          ) : users.length === 0 && !steamProspect ? (
             <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No users found.</TableCell></TableRow>
           ) : (
-            users.map((user) => (
+            <>
+            {steamProspect ? <SteamProspectRow prospect={steamProspect} /> : null}
+            {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
                   <Link href={`/admin/users/${user.steamId || user.id}`} className="flex items-center gap-3 hover:opacity-90">
@@ -187,13 +252,14 @@ function UsersListClientInner() {
                 <TableCell className="text-muted-foreground text-sm">{format(new Date(user.createdAt), "MM/dd/yyyy")}</TableCell>
                 <TableCell><RowActions user={user} /></TableCell>
               </TableRow>
-            ))
+            ))}
+            </>
           )}
         </TableBody>
       </Table>
       <div className="flex items-center justify-between gap-4 p-4 border-t flex-wrap">
         <p className="text-sm text-muted-foreground flex items-center gap-1">
-          {total === 0 ? "No users" : `${from}–${to} of ${total}`}
+          {total === 0 ? (steamProspect ? "Not on the site yet" : "No users") : `${from}–${to} of ${total}`}
           <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1); }}>
             <SelectTrigger className="w-[70px] h-8 inline-flex"><SelectValue /></SelectTrigger>
             <SelectContent>

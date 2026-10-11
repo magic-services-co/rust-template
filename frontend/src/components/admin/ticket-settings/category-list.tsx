@@ -39,9 +39,7 @@ export function CategoryList({ categories, selectedCategory, onSelectCategory, o
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, keyboardSensorOptions)
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -102,4 +100,8 @@ export function CategoryList({ categories, selectedCategory, onSelectCategory, o
       </div>
     </TabsList>
   )
+}
+
+const keyboardSensorOptions = {
+  coordinateGetter: sortableKeyboardCoordinates,
 }

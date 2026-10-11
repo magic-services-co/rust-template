@@ -10,8 +10,9 @@ export type SiteSettings = {
   discordInvite?: string | null;
   steamGroupId?: string | null;
   steamGroupUrl?: string | null;
-  rustalyzerEnabled?: boolean;
   copyServerAddress?: boolean;
+  serversUseTags?: boolean;
+  serversAlign?: "ltr" | "center" | "rtl";
   showAdaptiveCurrencyOnStorefront?: boolean;
   mapGridRetentionDays?: number | null;
   [key: string]: unknown;

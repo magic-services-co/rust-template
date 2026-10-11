@@ -1,0 +1,15 @@
+{
+  "version": "2.1.1",
+  "releasedAt": "2026-10-11",
+  "notes": [
+    "MagicCore can update itself from the site."
+  ],
+  "added": [
+    "The mod checks for a newer version and downloads MagicCore.dll when the site is serving one.",
+    "Server console command rusttemplate.update downloads and reloads a newer build.",
+    "System Control shows the Harmony mod version and the notes for that release.",
+    "The mod reports whether the server is running Oxide or Carbon, and the site stores that on the server."
+  ],
+  "changed": [],
+  "removed": []
+}

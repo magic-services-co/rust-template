@@ -156,7 +156,7 @@ export function AutomationStepsEditor({
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="z-[250]">
                                         <SelectItem value="start">Start</SelectItem>
                                         <SelectItem value="stop">Stop</SelectItem>
                                         <SelectItem value="restart">Restart</SelectItem>
@@ -207,7 +207,7 @@ export function AutomationStepsEditor({
                             {step.type === 'apply_map_winner' && (
                                 <div className="space-y-3">
                                     <p className="text-xs text-muted-foreground">
-                                        Sets Pterodactyl startup variables from the winning map vote option using the variable names configured on the linked panel (Server Management → Pterodactyl settings).
+                                        Sets panel startup variables from the winning map vote option using the variable names configured on the linked panel (Server Management → panel settings).
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <Switch

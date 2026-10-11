@@ -10,7 +10,7 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 const GOLD = "#ba9142";
 
 export function CookieConsentBanner() {
-  const { isLoaded, needsConsent, acceptAll, denyAll, acceptCustom } = useCookieConsent();
+  const { isLoaded, needsConsent, acceptAll, denyAll, acceptCustom, copy } = useCookieConsent();
   const { data: settings } = useSiteSettings();
   const [showDetails, setShowDetails] = useState(false);
   const [customConsent, setCustomConsent] = useState<CookieConsent>({
@@ -56,28 +56,27 @@ export function CookieConsentBanner() {
             <div className="relative flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-7 sm:py-6">
               <div className="max-w-[640px]">
                 <p className="support-hero-kicker font-mono text-[10px] font-medium tracking-[2.2px]">
-                  PRIVACY / COOKIES
+                  {copy.kicker}
                 </p>
                 <h3 className="pt-2 text-[22px] font-extrabold leading-7 tracking-[-0.8px] text-[#f2f7ff] sm:text-[26px] sm:leading-8">
-                  COOKIE <span style={{ color: GOLD }}>PREFERENCES</span>
+                  {copy.title} <span style={{ color: GOLD }}>{copy.titleAccent}</span>
                 </h3>
                 <p className="pt-2 max-w-[520px] text-[13px] leading-[20px] text-[#9facc0]">
-                  We use cookies to keep {siteName} working, remember your choices, and understand how people use the
-                  site.{" "}
+                  {copy.message.replaceAll("{site}", siteName)}{" "}
                   <Link href="/privacy-policy" className="text-[#d7b15a] hover:text-[#f0c970]">
-                    Privacy Policy
+                    {copy.privacyLabel}
                   </Link>
                 </p>
               </div>
 
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                 <CookieCta variant="secondary" onClick={() => setShowDetails(true)}>
-                  CUSTOMIZE
+                  {copy.customizeLabel}
                 </CookieCta>
                 <CookieCta variant="secondary" onClick={denyAll}>
-                  REJECT ALL
+                  {copy.rejectLabel}
                 </CookieCta>
-                <CookieCta onClick={acceptAll}>ACCEPT ALL</CookieCta>
+                <CookieCta onClick={acceptAll}>{copy.acceptLabel}</CookieCta>
               </div>
             </div>
             <HomeCardCorners color={GOLD} show />

@@ -1346,14 +1346,30 @@ button.map-vote-option {
 }
 
 .home-servers-grid {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: var(--home-servers-gap, 16px);
-  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-servers-grid > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-servers-grid.align-center {
+  justify-content: center;
+}
+
+.home-servers-grid.align-rtl {
+  flex-direction: row-reverse;
 }
 
 @media (min-width: 768px) {
-  .home-servers-grid {
-    grid-template-columns: repeat(var(--home-servers-cols, 3), minmax(0, 1fr));
+  .home-servers-grid > * {
+    width: calc(
+      (100% - (var(--home-servers-cols, 3) - 1) * var(--home-servers-gap, 16px)) / var(--home-servers-cols, 3)
+    );
   }
 }
 

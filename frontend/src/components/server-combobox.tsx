@@ -37,6 +37,8 @@ type ServerComboboxProps = {
     triggerStyle?: React.CSSProperties;
     popoverContentClassName?: string;
     popoverContentStyle?: React.CSSProperties;
+    fitMinWidth?: number;
+    fitMaxWidth?: number;
 }
 
 export function ServerCombobox({
@@ -51,12 +53,17 @@ export function ServerCombobox({
     triggerStyle,
     popoverContentClassName,
     popoverContentStyle,
+    fitMinWidth,
+    fitMaxWidth,
 }: ServerComboboxProps) {
     const { data: serverCategories, ...serversQuery } = useServers();
     const [open, setOpen] = React.useState(false)
     const isDesktop = useMediaQuery("(min-width: 768px)")
     const [selectedServer, setSelectedServer] = React.useState<Server | null>(null)
     const [searchQuery, setSearchQuery] = React.useState("")
+    const triggerRef = React.useRef<HTMLButtonElement>(null)
+    const sized = fitMinWidth != null && fitMaxWidth != null
+    const [fitWidth, setFitWidth] = React.useState(fitMinWidth)
 
     React.useEffect(() => {
         const server = serverCategories?.flatMap(c => c.servers).find(s => s.server_id === value);
@@ -95,6 +102,23 @@ export function ServerCombobox({
         if (selectedServer) return selectedServer.server_name;
         return "Select server...";
     }, [value, selectedServer, allowGlobal, allowNone])
+
+    React.useLayoutEffect(() => {
+        if (!sized || fitMinWidth == null || fitMaxWidth == null) return
+        const button = triggerRef.current
+        if (!button) return
+        const style = getComputedStyle(button)
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+        ctx.font = style.font
+        const textWidth = ctx.measureText(label).width
+        const iconAndGap = 16 + 8
+        const pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+        const border = (parseFloat(style.borderLeftWidth) || 0) + (parseFloat(style.borderRightWidth) || 0)
+        const next = Math.ceil(textWidth + iconAndGap + pad + border)
+        setFitWidth(Math.min(fitMaxWidth, Math.max(fitMinWidth, next)))
+    }, [label, sized, fitMinWidth, fitMaxWidth])
 
     const content = (
         <Command className="bg-secondary/15 backdrop-blur border-border/15 text-muted-foreground">
@@ -162,26 +186,29 @@ export function ServerCombobox({
         </Command>
     )
 
+    const trigger = (
+        <Button
+            ref={triggerRef}
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            title={label}
+            className={cn(
+                "w-full min-w-0 justify-between overflow-hidden bg-background/15 border-border/15 placeholder:text-muted-foreground/60",
+                triggerClassName,
+            )}
+            style={triggerStyle}
+        >
+            <span className="min-w-0 truncate">{label}</span>
+            <ChevronRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+    )
+
     if (isDesktop) {
-        return (
+        const popover = (
             <Popover open={open} onOpenChange={setOpen} modal={modal}>
                 <PopoverTrigger asChild>
-                    {/* <Button variant="outline" className="w-[150px] justify-start">
-                        {selectedServer ? selectedServer.server_name : "Select server"}
-                    </Button> */}
-                    <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className={cn(
-                            "w-full justify-between bg-background/15 border-border/15 placeholder:text-muted-foreground/60",
-                            triggerClassName,
-                        )}
-                        style={triggerStyle}
-                    >
-                        {label}
-                        <ChevronRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    {trigger}
                 </PopoverTrigger>
                 <PopoverContent
                     className={cn("p-0 bg-transparent border-border/15", popoverContentClassName)}
@@ -191,6 +218,14 @@ export function ServerCombobox({
                     {content}
                 </PopoverContent>
             </Popover>
+        )
+
+        if (!sized || fitWidth == null) return popover
+
+        return (
+            <div className="shrink-0" style={{ width: fitWidth }}>
+                {popover}
+            </div>
         )
     }
 

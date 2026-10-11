@@ -142,7 +142,7 @@ export default function Footer({
                 Privacy Policy
               </Link>
               <CookiePreferencesLink
-                className="text-[12px] leading-[16.2px] hover:opacity-80"
+                className="self-start text-left text-[12px] leading-[16.2px] hover:opacity-80"
                 style={{ color: linkColor }}
               />
             </div>

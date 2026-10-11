@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, useWatch } from 'react-hook-form'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronUp, ChevronDown, Trash } from 'lucide-react'
@@ -21,7 +21,7 @@ export function SortableField({
 }: SortableFieldProps) {
     const [expanded, setExpanded] = useState(false)
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
-    const { watch, setValue } = useFormContext<FormValues>()
+    const { getValues, setValue } = useFormContext<FormValues>()
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -36,30 +36,29 @@ export function SortableField({
     const isFieldType = (value: unknown): value is FieldType =>
         ['string', 'number', 'boolean', 'enum', 'date', 'textarea', 'players', 'server', 'server-grid', 'players-grid'].includes(value as string);
 
-    const watchedType = watch(typePath)
+    const watchedType = useWatch({ control, name: typePath })
     const fieldType = isFieldType(watchedType) ? watchedType : 'string'
 
     const slugifyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    React.useEffect(() => {
-        const subscription = watch((value, { name }) => {
-            if (name === labelPath) {
-                const label = value.steps?.[stepIndex]?.fields?.[fieldIndex]?.label
-                if (label) {
-                    if (slugifyTimeoutRef.current) clearTimeout(slugifyTimeoutRef.current)
-                    slugifyTimeoutRef.current = setTimeout(() => {
-                        fetch(backendApi(`slugify?text=${encodeURIComponent(label)}`))
-                            .then((res) => (res.ok ? res.json() : { slug: '' }))
-                            .then((data) => setValue(keyPath, data.slug ?? ''))
-                            .catch(() => {})
-                    }, 300)
-                }
-            }
-        })
-        return () => {
-            subscription.unsubscribe()
-            if (slugifyTimeoutRef.current) clearTimeout(slugifyTimeoutRef.current)
-        }
-    }, [watch, setValue, stepIndex, fieldIndex, labelPath, keyPath])
+    React.useEffect(() => () => {
+        if (slugifyTimeoutRef.current) clearTimeout(slugifyTimeoutRef.current)
+    }, [])
+    const queueSlug = (label: string) => {
+        if (slugifyTimeoutRef.current) clearTimeout(slugifyTimeoutRef.current)
+        const trimmed = label.trim()
+        if (!trimmed) return
+        slugifyTimeoutRef.current = setTimeout(() => {
+            fetch(backendApi(`slugify?text=${encodeURIComponent(trimmed)}`))
+                .then((res) => (res.ok ? res.json() : { slug: '' }))
+                .then((data) => {
+                    const next = data.slug ?? ''
+                    if (getValues(keyPath) !== next) {
+                        setValue(keyPath, next, { shouldDirty: true })
+                    }
+                })
+                .catch(() => {})
+        }, 300)
+    }
     return (
         <div ref={setNodeRef} style={style} className="mb-4 p-4 border rounded-lg">
             <div className="flex items-center space-x-4">
@@ -72,7 +71,14 @@ export function SortableField({
                     render={({ field }) => (
                         <FormItem className="flex-grow">
                             <FormControl>
-                                <Input {...field} placeholder="Label" />
+                                <Input
+                                    {...field}
+                                    placeholder="Label"
+                                    onChange={(event) => {
+                                        field.onChange(event)
+                                        queueSlug(event.target.value)
+                                    }}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

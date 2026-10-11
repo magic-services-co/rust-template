@@ -1,12 +1,30 @@
 {
-  "version": "2.2.8",
-  "releasedAt": "2026-09-28",
+  "version": "2.3.0",
+  "releasedAt": "2026-10-11",
   "notes": [
-    "IonCube encode output folders are gitignored so they never show up as local changes during updates."
+    "The Harmony mod can now be downloaded and updated from the site, and game servers can pick up that update on their own."
   ],
-  "added": [],
+  "added": [
+    "System Control has a Harmony mod page with the version, what changed, and a download.",
+    "A game server on the new mod checks for updates and installs them, or you can run rusttemplate.update in the server console.",
+    "The mod tells the site whether that server is Oxide or Carbon, and the server card remembers it.",
+    "Panels can be Pterodactyl, Pelican, or Calagopus. Linking a server, the console, power, and startup still work the same way.",
+    "Server tags are managed from a Tags button, and servers can be shown by tag instead of category.",
+    "User search finds a Steam ID even when that person has never signed in, and you can add them to the site.",
+    "The cookie banner text can be edited, including the footer Cookies link.",
+    "Linked kits can be filled in by hand or pulled from the game server.",
+    "Admin shows a warning when the PayNow key is missing or cannot run the store."
+  ],
   "changed": [
-    ".gitignore now covers .encode-license-out and .encode-release-out."
+    "Long server names on the leaderboard stay inside the box. The box grows a little, then the name is cut off.",
+    "Tag pictures on server cards are larger.",
+    "The Cookies link in the footer lines up with Terms and Privacy.",
+    "Server lists can be aligned left, center, or right.",
+    "Theme colors such as card text now show up on the site.",
+    "Menus inside popups stay on top, so you can pick a panel, tag, or category.",
+    "Bans have their own permission for viewing, creating, removing, and syncing bans."
   ],
-  "removed": []
+  "removed": [
+    "The Rustalyzer widget is no longer on the site."
+  ]
 }

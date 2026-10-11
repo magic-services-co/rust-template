@@ -12,6 +12,92 @@ export type CookieConsent = {
 
 type Status = 'pending' | 'accepted' | 'denied' | 'custom';
 
+export type CookieCategoryCopy = {
+  kicker: string;
+  title: string;
+  description: string;
+};
+
+export type CookieBannerCopy = {
+  kicker: string;
+  title: string;
+  titleAccent: string;
+  message: string;
+  privacyLabel: string;
+  customizeLabel: string;
+  rejectLabel: string;
+  acceptLabel: string;
+  dialogKicker: string;
+  dialogTitle: string;
+  dialogTitleAccent: string;
+  dialogMessage: string;
+  cancelLabel: string;
+  saveLabel: string;
+  footerLabel: string;
+  categories: {
+    necessary: CookieCategoryCopy;
+    analytics: CookieCategoryCopy;
+    marketing: CookieCategoryCopy;
+    preferences: CookieCategoryCopy;
+  };
+};
+
+export const defaultCookieBannerCopy: CookieBannerCopy = {
+  kicker: 'PRIVACY / COOKIES',
+  title: 'COOKIE',
+  titleAccent: 'PREFERENCES',
+  message: 'We use cookies to keep {site} working, remember your choices, and understand how people use the site.',
+  privacyLabel: 'Privacy Policy',
+  customizeLabel: 'CUSTOMIZE',
+  rejectLabel: 'REJECT ALL',
+  acceptLabel: 'ACCEPT ALL',
+  dialogKicker: 'YOUR CHOICES',
+  dialogTitle: 'COOKIE',
+  dialogTitleAccent: 'SETTINGS',
+  dialogMessage: 'Necessary cookies stay on. Everything else is optional and can be changed anytime from the footer.',
+  cancelLabel: 'CANCEL',
+  saveLabel: 'SAVE PREFERENCES',
+  footerLabel: 'Cookies',
+  categories: {
+    necessary: {
+      kicker: 'ALWAYS ON',
+      title: 'Necessary',
+      description: 'Required for sign-in, security, and keeping the site working. These cannot be turned off.',
+    },
+    analytics: {
+      kicker: 'OPTIONAL',
+      title: 'Analytics',
+      description: 'Helps us see which pages people use so we can improve the site. Data is collected anonymously.',
+    },
+    marketing: {
+      kicker: 'OPTIONAL',
+      title: 'Marketing',
+      description: 'Used to measure campaigns and show relevant offers across our community channels.',
+    },
+    preferences: {
+      kicker: 'OPTIONAL',
+      title: 'Preferences',
+      description: 'Remembers layout and display choices so the site feels the same next time you visit.',
+    },
+  },
+};
+
+function mergeCopy(value: unknown): CookieBannerCopy {
+  if (!value || typeof value !== 'object') return defaultCookieBannerCopy;
+  const raw = value as Partial<CookieBannerCopy>;
+  const categories = raw.categories ?? defaultCookieBannerCopy.categories;
+  return {
+    ...defaultCookieBannerCopy,
+    ...Object.fromEntries(Object.entries(raw).filter(([, entry]) => typeof entry === 'string' && entry.trim() !== '')),
+    categories: {
+      necessary: { ...defaultCookieBannerCopy.categories.necessary, ...categories.necessary },
+      analytics: { ...defaultCookieBannerCopy.categories.analytics, ...categories.analytics },
+      marketing: { ...defaultCookieBannerCopy.categories.marketing, ...categories.marketing },
+      preferences: { ...defaultCookieBannerCopy.categories.preferences, ...categories.preferences },
+    },
+  };
+}
+
 const COOKIE_CONSENT_STORAGE_KEY = 'cookie_consent';
 
 const defaultConsent: CookieConsent = {
@@ -21,12 +107,13 @@ const defaultConsent: CookieConsent = {
   preferences: false,
 };
 
-type Snapshot = { isLoaded: boolean; status: Status; consent: CookieConsent };
+type Snapshot = { isLoaded: boolean; status: Status; consent: CookieConsent; copy: CookieBannerCopy };
 
 let snapshot: Snapshot = {
   isLoaded: false,
   status: 'pending',
   consent: defaultConsent,
+  copy: defaultCookieBannerCopy,
 };
 
 const listeners = new Set<() => void>();
@@ -66,7 +153,7 @@ function setStoredConsent(status: Status, consent: CookieConsent): void {
   }
 }
 
-async function fetchConsent(): Promise<{ status: Status; consent: CookieConsent } | null> {
+async function fetchConsent(): Promise<{ status: Status; consent: CookieConsent; copy: CookieBannerCopy } | null> {
   try {
     const res = await fetch(backendApi('cookie-consent'), {
       credentials: 'include',
@@ -82,7 +169,7 @@ async function fetchConsent(): Promise<{ status: Status; consent: CookieConsent 
       marketing: data.consent?.marketing ?? false,
       preferences: data.consent?.preferences ?? false,
     };
-    return { status, consent };
+    return { status, consent, copy: mergeCopy(data.copy) };
   } catch {
     return null;
   }
@@ -109,19 +196,21 @@ function ensureLoaded() {
   if (loadStarted) return;
   loadStarted = true;
   fetchConsent().then((data) => {
+    const copy = data?.copy ?? defaultCookieBannerCopy;
     if (data && data.status !== 'pending') {
-      emit({ isLoaded: true, status: data.status, consent: data.consent });
+      emit({ isLoaded: true, status: data.status, consent: data.consent, copy });
       return;
     }
     const stored = getStoredConsent();
     if (stored) {
-      emit({ isLoaded: true, status: stored.status, consent: stored.consent });
+      emit({ isLoaded: true, status: stored.status, consent: stored.consent, copy });
       return;
     }
     emit({
       isLoaded: true,
       status: data?.status ?? 'pending',
       consent: data?.consent ?? defaultConsent,
+      copy,
     });
   });
 }
@@ -184,5 +273,6 @@ export function useCookieConsent() {
     acceptAll,
     denyAll,
     acceptCustom,
+    copy: state.copy,
   };
 }

@@ -8,16 +8,15 @@ import { SupportPageShell } from "@/components/support/support-page-shell";
 
 export type ServersPageClientProps = {
   theme: Record<string, unknown>;
-  rustalyzerEnabled: boolean;
 };
 
-export function ServersPageClient({ theme, rustalyzerEnabled }: ServersPageClientProps) {
+export function ServersPageClient({ theme }: ServersPageClientProps) {
   return (
     <LeaderboardThemeProvider>
       <ServerThemeProvider serverTheme={theme}>
         <SupportPageShell>
           <ServerTitles serverTheme={theme} />
-          <ServerList serverTheme={theme} initialRustalyzerEnabled={rustalyzerEnabled} />
+          <ServerList serverTheme={theme} />
         </SupportPageShell>
       </ServerThemeProvider>
     </LeaderboardThemeProvider>

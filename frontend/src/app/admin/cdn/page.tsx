@@ -38,6 +38,18 @@ interface UploadedImage {
   description?: string
 }
 
+function newUploadId(): string {
+  if (typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 export default function CDNPage() {
   const [images, setImages] = useState<UploadedImage[]>([])
   const [loading, setLoading] = useState(true)
@@ -143,6 +155,61 @@ export default function CDNPage() {
     setSelectedFiles(files)
   }
 
+  const uploadHeaders = useCallback(() => {
+    return { ...getHeaders(), ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}) }
+  }, [getHeaders])
+
+  const uploadDirect = useCallback(async (files: File[]) => {
+    const formData = new FormData()
+    files.forEach((file) => {
+      formData.append("files[]", file)
+    })
+    formData.append("description", description)
+    const response = await fetch(backendApi("admin/cdn/upload"), {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      headers: uploadHeaders(),
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.error || "Upload failed")
+    }
+    const result = await response.json()
+    return result.uploadedImages?.length ?? files.length
+  }, [description, uploadHeaders])
+
+  const uploadInParts = useCallback(async (file: File) => {
+    const chunkBytes = 1_500_000
+    const totalParts = Math.ceil(file.size / chunkBytes)
+    const uploadId = newUploadId()
+    for (let partIndex = 0; partIndex < totalParts; partIndex++) {
+      const start = partIndex * chunkBytes
+      const formData = new FormData()
+      formData.append("uploadId", uploadId)
+      formData.append("partIndex", String(partIndex))
+      formData.append("totalParts", String(totalParts))
+      formData.append("originalName", file.name)
+      formData.append("description", description)
+      formData.append("chunk", file.slice(start, Math.min(file.size, start + chunkBytes)), file.name)
+      const response = await fetch(backendApi("admin/cdn/upload/parts"), {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: uploadHeaders(),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.error || "Upload failed")
+      }
+      const result = await response.json()
+      if (result.complete) {
+        return result.uploadedImages?.length ?? 1
+      }
+    }
+    throw new Error("Upload did not finish")
+  }, [description, uploadHeaders])
+
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       toast.error("Please select files to upload")
@@ -150,33 +217,28 @@ export default function CDNPage() {
     }
 
     setUploading(true)
-    const formData = new FormData()
-    selectedFiles.forEach((file) => {
-      formData.append("files", file)
-    })
-    formData.append("description", description)
+    const chunkBytes = 1_500_000
+    const directFiles = selectedFiles.filter((file) => file.size <= chunkBytes)
+    const partFiles = selectedFiles.filter((file) => file.size > chunkBytes)
 
     try {
-      const response = await fetch(backendApi("admin/cdn/upload"), {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-        headers: { ...getHeaders(), ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}) },
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        toast.success(`Successfully uploaded ${result.uploadedImages?.length ?? 0} image(s)`)
-        setSelectedFiles([])
-        setDescription("")
-        fetchImages()
-      } else {
-        const error = await response.json().catch(() => ({}))
-        toast.error(error.error || "Upload failed")
+      let uploaded = 0
+      if (directFiles.length > 0) {
+        uploaded += await uploadDirect(directFiles)
+        setSelectedFiles(partFiles)
       }
+      for (const file of partFiles) {
+        uploaded += await uploadInParts(file)
+        setSelectedFiles((current) => current.filter((item) => item !== file))
+      }
+      toast.success(`Successfully uploaded ${uploaded} file(s)`)
+      setSelectedFiles([])
+      setDescription("")
+      fetchImages()
     } catch (error) {
       console.error("Upload error:", error)
-      toast.error("Upload failed")
+      toast.error(error instanceof Error ? error.message : "Upload failed")
+      fetchImages()
     } finally {
       setUploading(false)
     }
@@ -325,17 +387,17 @@ export default function CDNPage() {
         <TabsContent value="upload" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Upload Images</CardTitle>
+              <CardTitle>Upload files</CardTitle>
               <CardDescription>
-                Upload images to your CDN. Images will be stored securely and can be used throughout your website.
+                Upload any file to your CDN. Files are stored and can be used throughout your website.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="files">Select Images</Label>
+                <Label htmlFor="files">Select files</Label>
                 <UploadFile
-                  maxSize={10}
-                  accept="image/*"
+                  maxSize={null}
+                  accept=""
                   multiple={true}
                   onFilesSelected={handleFilesSelected}
                   isUploading={uploading}
@@ -348,13 +410,19 @@ export default function CDNPage() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                       {selectedFiles.map((file, index) => (
                         <div key={index} className="relative group">
-                          <Image
-                            src={URL.createObjectURL(file)}
-                            alt={file.name}
-                            width={100}
-                            height={100}
-                            className="w-full h-20 object-cover rounded border"
-                          />
+                          {file.type.startsWith("image/") ? (
+                            <Image
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              width={100}
+                              height={100}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                          ) : (
+                            <div className="w-full h-20 rounded border flex items-center justify-center px-2 text-center text-xs break-all">
+                              {file.name}
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
                             <Button
                               size="sm"
@@ -394,7 +462,7 @@ export default function CDNPage() {
                 ) : (
                   <>
                     <UploadCloud className="mr-2 h-4 w-4" />
-                    Upload {selectedFiles.length} Image{selectedFiles.length !== 1 ? 's' : ''}
+                    Upload {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}
                   </>
                 )}
               </Button>

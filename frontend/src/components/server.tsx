@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ServerData } from "@/hooks/use-server-data";
+import { ServerData, ServerTag } from "@/hooks/use-server-data";
 import { getServerConnectAddress } from "@/lib/server-card-helpers";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -17,11 +17,13 @@ export default function Server({
   data,
   copyServerAddress,
   categoryName,
+  tags = [],
   featured = false,
 }: {
   data: ServerData;
   copyServerAddress: boolean;
   categoryName?: string;
+  tags?: ServerTag[];
   featured?: boolean;
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -76,7 +78,7 @@ export default function Server({
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
           data={data}
-          categoryName={categoryName}
+          categoryName={tags.length > 0 ? tags.map((tag) => tag.name).join(" · ") : categoryName}
           copyServerAddress={copyServerAddress}
         />
 
@@ -88,14 +90,29 @@ export default function Server({
           onKeyDown={onKeyOpenDetails}
           aria-label={`View details for ${displayName ?? "server"}`}
         >
-          <div className="relative flex h-[13px] items-center justify-between">
-            <div className="flex items-center gap-[5px] opacity-50">
-              {region.flag ? (
-                <img src={region.flag} alt="" className="size-2 rounded-[1px] object-cover" />
+          <div className="relative flex min-h-[13px] items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 opacity-50">
+              {tags.length > 0 ? (
+                tags.map((tag) => (
+                  <span key={tag.id} className="inline-flex items-center gap-[5px]">
+                    {tag.image ? (
+                      <img src={tag.image} alt="" className="h-4 w-6 rounded-[1px] object-cover" />
+                    ) : (
+                      <span className="size-2 rounded-[1px] bg-[#eef4fb]/40" />
+                    )}
+                    <span className="server-card-meta text-[8px] tracking-[1px] text-[#eef4fb]">{tag.name.toUpperCase()}</span>
+                  </span>
+                ))
               ) : (
-                <span className="size-2 rounded-[1px] bg-[#eef4fb]/40" />
+                <>
+                  {region.flag ? (
+                    <img src={region.flag} alt="" className="size-2 rounded-[1px] object-cover" />
+                  ) : (
+                    <span className="size-2 rounded-[1px] bg-[#eef4fb]/40" />
+                  )}
+                  <span className="server-card-meta text-[8px] tracking-[1px] text-[#eef4fb]">{region.label}</span>
+                </>
               )}
-              <span className="server-card-meta text-[8px] tracking-[1px] text-[#eef4fb]">{region.label}</span>
             </div>
             {featured ? (
               <div className="absolute left-1/2 top-[0.5px] flex -translate-x-1/2 items-center gap-2">

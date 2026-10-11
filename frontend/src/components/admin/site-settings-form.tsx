@@ -22,6 +22,7 @@ import { useSiteSettings } from "@/hooks/use-site-settings"
 import type { SiteSettings } from "@/hooks/use-site-settings"
 import { backendApi } from "@/lib/api"
 import { PayNowApiKeySettings } from "@/components/admin/paynow-api-key-settings"
+import { LinkedKitSettings } from "@/components/admin/linked-kit-settings"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { Switch } from "../ui/switch"
 
@@ -31,7 +32,6 @@ const siteSettingsSchema = z.object({
     discordInvite: z.string().url("Must be a valid URL").optional().or(z.literal("")),
     steamGroupId: z.string().optional(),
     steamGroupUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-    rustalyzerEnabled: z.boolean().optional(),
     copyServerAddress: z.boolean().optional(),
     showAdaptiveCurrencyOnStorefront: z.boolean().optional(),
     mapGridRetentionDays: z.number().int().min(1).nullable().optional(),
@@ -47,7 +47,6 @@ function toFormValues(data: SiteSettings | null | undefined): SiteSettingsFormVa
         discordInvite: data.discordInvite ?? undefined,
         steamGroupId: data.steamGroupId ?? undefined,
         steamGroupUrl: data.steamGroupUrl ?? undefined,
-        rustalyzerEnabled: data.rustalyzerEnabled,
         copyServerAddress: data.copyServerAddress,
         showAdaptiveCurrencyOnStorefront: data.showAdaptiveCurrencyOnStorefront,
         mapGridRetentionDays: data.mapGridRetentionDays ?? undefined,
@@ -249,6 +248,7 @@ export function SiteSettingsForm() {
                 </CardContent>
             </Card>
             <PayNowApiKeySettings />
+            <LinkedKitSettings />
         </>
     )
 }

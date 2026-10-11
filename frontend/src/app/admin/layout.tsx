@@ -5,6 +5,7 @@ import DynamicBreadcrumbs from "@/components/dynamic-breadcrumbs"
 import { AdminPageViewLogger } from "@/components/admin/admin-page-view-logger"
 import { AdminActionLogger } from "@/components/admin/admin-action-logger"
 import { AdminReleaseBadge } from "@/components/admin/admin-release-badge"
+import { PayNowKeyWarning } from "@/components/admin/paynow-key-warning"
 import { Suspense } from "react"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
@@ -68,6 +69,7 @@ export default async function DashboardLayout({
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-4 p-4 py-6">
+                    <PayNowKeyWarning />
                     {children}
                 </div>
             </SidebarInset>

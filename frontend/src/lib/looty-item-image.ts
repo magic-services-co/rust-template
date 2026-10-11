@@ -1,6 +1,6 @@
-/** Rust item icons: https://looty-cdn.magicservices.co/Items/{shortname}.png */
+/** Rust item icons: https://cdn.looty.cc/Items/{shortname}.png */
 
-const BASE = "https://looty-cdn.magicservices.co/Items";
+const BASE = "https://cdn.looty.cc/Items";
 
 /** Rust-style item shortname, e.g. rifle.ak, smg.mp5 */
 function isItemShortname(s: string): boolean {

@@ -14,7 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import Image from 'next/image';
 
 interface UploadFileProps {
-    maxSize?: number;
+    /** Megabytes. Pass null for no size limit. */
+    maxSize?: number | null;
+    /** File input accept filter. Pass an empty string to allow every file type. */
     accept?: string;
     multiple?: boolean;
     onFilesSelected?: (files: File[]) => void;
@@ -45,13 +47,15 @@ export function UploadFile({
         const files = Array.from(event.target.files || []);
         setError(null);
 
-        const invalidFiles = files.filter(
-            (file) => file.size > maxSize * 1024 * 1024
-        );
+        if (maxSize != null) {
+            const invalidFiles = files.filter(
+                (file) => file.size > maxSize * 1024 * 1024
+            );
 
-        if (invalidFiles.length > 0) {
-            setError(`File size exceeds ${maxSize}MB limit`);
-            return;
+            if (invalidFiles.length > 0) {
+                setError(`File size exceeds ${maxSize}MB limit`);
+                return;
+            }
         }
 
         if (onFilesSelected) {
@@ -69,7 +73,7 @@ export function UploadFile({
                 type="file"
                 ref={inputRef}
                 className="hidden"
-                accept={accept}
+                accept={accept || undefined}
                 multiple={multiple}
                 onChange={handleFileChange}
                 disabled={isUploading || isScanning || disabled}

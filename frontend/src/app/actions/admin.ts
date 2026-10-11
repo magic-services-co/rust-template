@@ -13,10 +13,12 @@ export type CategoryWithServers = {
     order?: number;
     image_path?: string | null;
     server_address?: string | null;
+    enabled?: boolean;
     wipe_schedule?: string;
     current_map_thumbnail_url?: string | null;
     pterodactyl_panel_id?: number | null;
     pterodactyl_server_identifier?: string | null;
+    tags?: Array<{ id: number; name: string; image?: string | null }>;
   }>;
 };
 

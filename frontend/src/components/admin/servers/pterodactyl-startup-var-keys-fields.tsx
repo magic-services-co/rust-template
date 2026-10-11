@@ -20,7 +20,7 @@ export function PterodactylStartupVarKeysFields({ value, onChange, disabled }: P
             <div>
                 <p className="text-sm font-medium">Rust startup variable names</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                    Environment variable keys from your Pterodactyl Rust egg. Used when automations apply a winning map vote (seed/size or custom URL).
+                    Environment variable keys from the Rust egg on this panel. Used when automations apply a winning map vote (seed/size or custom URL).
                 </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">

@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <RustManagedDir Condition="'$(RUST_MANAGED_DIR)' != ''">$(RUST_MANAGED_DIR)</RustManagedDir>
+    <RustManagedDir Condition="'$(RustManagedDir)' == ''">$(MSBuildThisFileDirectory)Managed</RustManagedDir>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+</Project>

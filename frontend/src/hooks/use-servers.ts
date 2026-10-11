@@ -11,6 +11,7 @@ export type Server = {
   server_address?: string | null;
   pterodactyl_panel_id?: number | null;
   pterodactyl_server_identifier?: string | null;
+  mod_runtime?: "oxide" | "carbon" | null;
 };
 
 export type ServerCategory = {

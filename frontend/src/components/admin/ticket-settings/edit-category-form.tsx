@@ -3,7 +3,7 @@
 import React from 'react'
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
-import { useForm, FormProvider, useFormState } from 'react-hook-form'
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FormValues, formSchema } from './category-manager'
 import { Button } from '@/components/ui/button'
@@ -59,10 +59,12 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
 
     const sensors = useSensors(
         useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        useSensor(KeyboardSensor, keyboardSensorOptions)
     )
+    const { fields: steps, append: appendStep, remove: removeStep } = useFieldArray({
+        control: methods.control,
+        name: 'steps',
+    })
 
     const updateCategoryMutation = useMutation({
         mutationFn: async (updatedCategory: FormValues & { slug: string }) => {
@@ -134,20 +136,12 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
         }
     };
 
-    const { errors } = useFormState({ control: methods.control })
-
     return (
         <FormProvider {...methods}>
             <form
                 onSubmit={methods.handleSubmit(onSubmit)}
                 className="space-y-8"
             >
-                {Object.keys(errors).length > 0 && (
-                    <div className="text-red-500">
-                        Please correct the errors in the form before submitting.
-                        {JSON.stringify(errors)}
-                    </div>
-                )}
                 <FormField
                     control={methods.control}
                     name="name"
@@ -198,14 +192,14 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                    <SortableContext items={methods.watch('steps').map(step => `step-${step.id}`)} strategy={verticalListSortingStrategy}>
-                        {methods.watch('steps').map((step, stepIndex) => (
+                    <SortableContext items={steps.map(step => `step-${step.id}`)} strategy={verticalListSortingStrategy}>
+                        {steps.map((step, stepIndex) => (
                             <SortableStep
                                 key={step.id}
                                 id={`step-${step.id}`}
                                 stepIndex={stepIndex}
                                 control={methods.control}
-                                removeStep={(index: number) => methods.setValue('steps', methods.getValues('steps').filter((_, i) => i !== index))}
+                                removeStep={removeStep}
                             />
                         ))}
                     </SortableContext>
@@ -215,7 +209,7 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => methods.setValue('steps', [...methods.getValues('steps'), { name: `Step ${methods.getValues('steps').length + 1}`, fields: [] }])}
+                        onClick={() => appendStep({ name: `Step ${steps.length + 1}`, fields: [] })}
                     >
                         Add Step
                     </Button>
@@ -317,4 +311,8 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
             </form>
         </FormProvider>
     )
+}
+
+const keyboardSensorOptions = {
+    coordinateGetter: sortableKeyboardCoordinates,
 }

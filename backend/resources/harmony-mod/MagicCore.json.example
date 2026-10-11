@@ -1,0 +1,23 @@
+{
+  "API_END_POINT": "https://yoursite.example/api",
+  "SERVER_ID": "your-server-id",
+  "API_KEY": "",
+  "DEBUG": false,
+  "QUEUE_POLL_SECONDS": 1.5,
+  "STATS_FLUSH_SECONDS": 300,
+  "TRACKED_ROLES_REFRESH_MINUTES": 10,
+  "ROLE_SAFETY_SYNC_MINUTES": 0,
+  "MAX_CONCURRENT_HTTP": 4,
+  "HTTP_TIMEOUT_SECONDS": 8,
+  "HTTP_CALLBACKS_PER_FRAME": 24,
+  "BAN_SYSTEM_ENABLED": true,
+  "BAN_CHECK_CACHE_MINUTES": 5,
+  "BAN_PERIODIC_CHECK_MINUTES": 10,
+  "BAN_BATCH_SIZE": 10,
+  "DEFAULT_GROUP": "default",
+  "STATS_SOURCE": "core",
+  "RoleCommonNames": {
+    "admin": "Admin",
+    "linked": "Linked"
+  }
+}

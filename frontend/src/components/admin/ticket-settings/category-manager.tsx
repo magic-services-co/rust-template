@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
-import { useForm, FormProvider, useFieldArray, useFormState} from 'react-hook-form'
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { Tabs } from '@/components/ui/tabs'
 import { SortableStep } from './sortable-step'
 import { CategoryList } from './category-list'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -158,18 +158,14 @@ export function CategoryManager() {
         },
     })
 
-    const { errors } = useFormState({ control: methods.control })
-
-    const { fields: steps, append: appendStep, remove: removeStep, move: moveStep } = useFieldArray({
+    const { fields: steps, append: appendStep, remove: removeStep } = useFieldArray({
         control: methods.control,
         name: 'steps',
     })
 
     const sensors = useSensors(
         useSensor(PointerSensor),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        useSensor(KeyboardSensor, keyboardSensorOptions)
     )
 
     const onDragEnd = (event: DragEndEvent) => {
@@ -218,9 +214,10 @@ export function CategoryManager() {
     if (isLoading) return <div>Loading categories...</div>
     if (error) return <div>Error loading categories: {error.message}</div>
 
+    const activeCategory = categories?.find((category) => category.slug === selectedCategory)
 
     return (
-        <Tabs value={selectedCategory} className="flex gap-4 h-full">
+        <Tabs value={selectedCategory ?? 'new'} className="flex gap-4 h-full">
             <Card>
                 <CardHeader>
                     <CardTitle>Categories</CardTitle>
@@ -238,7 +235,16 @@ export function CategoryManager() {
             </Card>
 
             <div className="flex-grow">
-                <TabsContent value="new" className="mt-0">
+                {selectedCategory !== 'new' && activeCategory ? (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{activeCategory.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <EditCategoryForm key={activeCategory.slug} category={activeCategory} />
+                        </CardContent>
+                    </Card>
+                ) : (
                     <Card>
                         <CardHeader>
                             <CardTitle>New Category</CardTitle>
@@ -246,12 +252,6 @@ export function CategoryManager() {
                         <CardContent>
                             <FormProvider {...methods}>
                                 <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-                                    {Object.keys(errors).length > 0 && (
-                                        <div className="text-red-500">
-                                            Please correct the errors in the form before submitting.
-                                            {JSON.stringify(errors)}
-                                        </div>
-                                    )}
                                     <FormField
                                         control={methods.control}
                                         name="name"
@@ -336,22 +336,12 @@ export function CategoryManager() {
                             </FormProvider>
                         </CardContent>
                     </Card>
-                </TabsContent>
-                {categories?.map((category: Category) => (
-                    <TabsContent key={category.slug} value={category.slug}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{category.name}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <EditCategoryForm
-                                    category={category}
-                                />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                ))}
+                )}
             </div>
         </Tabs>
     )
+}
+
+const keyboardSensorOptions = {
+    coordinateGetter: sortableKeyboardCoordinates,
 }

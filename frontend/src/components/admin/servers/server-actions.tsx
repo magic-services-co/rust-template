@@ -20,8 +20,9 @@ import { Info } from 'lucide-react'
 import Image from 'next/image'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { WIPE_SCHEDULE_OPTIONS, WIPE_SCHEDULE_VALUES } from '@/lib/wipe-schedule-presets'
-import { PterodactylServerPicker, type PterodactylServerOption } from '@/components/admin/servers/pterodactyl-server-picker'
+import { PterodactylServerPicker } from '@/components/admin/servers/pterodactyl-server-picker'
 import { PterodactylConsoleDialog } from '@/components/admin/servers/pterodactyl-console-dialog'
+import { ServerTagPicker } from '@/components/admin/servers/server-tag-picker'
 
 interface ServerActionsProps {
     serverId: string;
@@ -33,6 +34,7 @@ interface ServerActionsProps {
     currentMapThumbnailUrl?: string | null;
     pterodactylPanelId?: number | null;
     pterodactylServerIdentifier?: string | null;
+    tagIds?: number[];
 }
 
 const serverFormSchema = z.object({
@@ -47,6 +49,7 @@ const serverFormSchema = z.object({
             message: 'Invalid wipe schedule',
         }),
     current_map_thumbnail_url: z.union([z.string().max(2048, 'URL is too long'), z.null()]).optional(),
+    tagIds: z.array(z.number()).default([]),
 })
 
 type ServerFormData = z.infer<typeof serverFormSchema>
@@ -61,6 +64,7 @@ export function ServerActions({
     currentMapThumbnailUrl,
     pterodactylPanelId,
     pterodactylServerIdentifier,
+    tagIds = [],
 }: ServerActionsProps) {
     const router = useRouter()
     const queryClient = useQueryClient()
@@ -82,6 +86,7 @@ export function ServerActions({
                 ? wipeSchedule
                 : 'auto',
             current_map_thumbnail_url: currentMapThumbnailUrl ?? null,
+            tagIds,
         },
     })
 
@@ -134,6 +139,7 @@ export function ServerActions({
                     currentMapThumbnailUrl: (data.current_map_thumbnail_url?.trim() ?? '') || null,
                     pterodactylPanelId: ptPanelId,
                     pterodactylServerIdentifier: ptServerId,
+                    tagIds: data.tagIds,
                 }),
             })
             if (!response.ok) {
@@ -172,6 +178,7 @@ export function ServerActions({
                 ? wipeSchedule
                 : 'auto',
             current_map_thumbnail_url: currentMapThumbnailUrl ?? null,
+            tagIds,
         })
         setPtPanelId(pterodactylPanelId ?? null)
         setPtServerId(pterodactylServerIdentifier ?? null)
@@ -234,12 +241,6 @@ export function ServerActions({
                                 serverIdentifier={ptServerId}
                                 onPanelChange={setPtPanelId}
                                 onServerChange={(id) => setPtServerId(id)}
-                                onServerSelected={(server: PterodactylServerOption) => {
-                                    form.setValue('name', server.name, { shouldDirty: true })
-                                    if (server.address) {
-                                        form.setValue('server_address', server.address, { shouldDirty: true })
-                                    }
-                                }}
                             />
                             <FormField
                                 control={form.control}
@@ -369,6 +370,16 @@ export function ServerActions({
                                         <FormDescription>
                                             RustMaps CDN thumbnail (content.rustmaps.com). When set, overrides BattleMetrics for the server card map preview and the 3D viewer.
                                         </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="tagIds"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <ServerTagPicker value={field.value ?? []} onChange={field.onChange} />
                                         <FormMessage />
                                     </FormItem>
                                 )}

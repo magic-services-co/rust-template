@@ -9,6 +9,12 @@ export type RustMapsDetails = {
   url?: string;
 };
 
+export type ServerTag = {
+  id: number;
+  name: string;
+  image?: string | null;
+};
+
 export interface ServerData {
   id: string;
   server_id?: string;
@@ -17,6 +23,7 @@ export interface ServerData {
   image_path?: string | null;
   server_address?: string | null;
   wipe_schedule?: string | null;
+  tags?: ServerTag[];
   mapVotes?: { id: string };
   attributes: {
     name?: string;
@@ -56,6 +63,7 @@ type ServersDataItem = {
   order: number;
   mapVotes?: { id: string };
   wipe_schedule?: string | null;
+  tags?: unknown;
   attributes: Record<string, unknown> & {
     name?: string;
     players?: number;
@@ -73,6 +81,22 @@ type ServersDataItem = {
     };
   };
 };
+
+function normalizeTags(raw: unknown): ServerTag[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const tag = item as Record<string, unknown>;
+    const id = toNumber(tag.id);
+    const name = typeof tag.name === 'string' ? tag.name.trim() : '';
+    if (id == null || name === '') return [];
+    return [{
+      id,
+      name,
+      image: typeof tag.image === 'string' && tag.image.trim() !== '' ? tag.image : null,
+    }];
+  });
+}
 
 function toNumber(v: unknown): number | undefined {
   if (typeof v === 'number' && !Number.isNaN(v)) return v;
@@ -133,6 +157,7 @@ async function fetchServers(): Promise<EnhancedServerData[]> {
       server_address: item.server_address ?? null,
       mapVotes: item.mapVotes,
       wipe_schedule: typeof item.wipe_schedule === "string" ? item.wipe_schedule : null,
+      tags: normalizeTags(item.tags),
       categoryId: item.categoryId,
       categoryName: item.categoryName,
       categoryOrder: item.categoryOrder,

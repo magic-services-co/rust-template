@@ -1,0 +1,13 @@
+bin/
+obj/
+Managed/
+.vs/
+*.user
+*.suo
+*.dll
+*.pdb
+*.mdb
+HarmonyMods/
+!src/
+.idea/
+*.log

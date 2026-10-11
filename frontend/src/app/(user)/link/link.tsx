@@ -4,7 +4,7 @@ import { SteamIcon, DiscordIcon } from "@/components/icons";
 import { UserSession } from "@/types/next-auth";
 import { signIn } from "@/lib/laravel-auth-react";
 import { CheckIcon, Loader2, UnlinkIcon, StarIcon, RefreshCcwIcon } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -26,26 +26,59 @@ import { useRouter } from "next/navigation";
 import { LINKED_USERS_COUNT_QUERY_KEY, LinkedUsersCount } from "@/components/linked-users-count";
 import { cn } from "@/lib/utils";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { backendApi } from "@/lib/api";
+import { lootyItemImageUrl } from "@/lib/looty-item-image";
 
 interface LinkProps {
     user?: UserSession | null;
     linkStatus?: "success" | "error" | null;
 }
 
-const KIT_ITEMS = [
-    { src: "/images/link/kit-01.png", qty: "x1,000" },
-    { src: "/images/link/kit-02.png", qty: "x150" },
-    { src: "/images/link/kit-03.png", qty: "x3,000" },
-    { src: "/images/link/kit-04.png", qty: "x300" },
-    { src: "/images/link/kit-05.png", qty: "x15,000" },
-    { src: "/images/link/kit-06.png", qty: "x10,000" },
-    { src: "/images/link/kit-07.png", qty: "x4,500" },
-    { src: "/images/link/kit-08.png", qty: "x350" },
-    { src: "/images/link/kit-09.png", qty: "x750" },
-    { src: "/images/link/kit-10.png", qty: "x1" },
-    { src: "/images/link/kit-11.png", qty: "x64" },
-    { src: "/images/link/kit-12.png", qty: "x4" },
-] as const;
+type LinkedKitItem = { shortname: string; amount: number };
+
+type LinkedKitResponse = {
+    kitName?: string;
+    items?: LinkedKitItem[];
+};
+
+function formatKitQty(amount: number) {
+    return `x${amount.toLocaleString("en-US")}`;
+}
+
+function KitItemTile({ item }: { item: LinkedKitItem }) {
+    const [failed, setFailed] = useState(false);
+
+    return (
+        <div className="flex flex-col">
+            <div
+                className="relative flex h-[46px] items-center justify-center overflow-hidden rounded-[7px] border"
+                style={{
+                    borderColor: "rgba(255,255,255,0.1)",
+                    backgroundImage:
+                        "linear-gradient(131.54deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.06) 100%)",
+                }}
+                title={item.shortname}
+            >
+                {failed ? (
+                    <span className="px-1 text-center text-[8px] leading-[9px] text-[#ecf3fc]/70">{item.shortname}</span>
+                ) : (
+                    <img
+                        src={lootyItemImageUrl(item.shortname)}
+                        alt={item.shortname}
+                        className="absolute inset-0 size-full object-contain"
+                        onError={() => setFailed(true)}
+                    />
+                )}
+            </div>
+            <p
+                className="pt-1 text-right text-[9px] font-semibold leading-[9px]"
+                style={{ color: "rgba(239,246,255,0.78)" }}
+            >
+                {formatKitQty(item.amount)}
+            </p>
+        </div>
+    );
+}
 
 function getStepStatus(user?: UserSession | null) {
     const steamLinked = !!user?.steamId;
@@ -145,6 +178,18 @@ export default function AccountLinkStepper({ user, linkStatus }: LinkProps) {
     const { data: settings } = useSiteSettings();
     const router = useRouter();
     const [isLinkingDiscord, setIsLinkingDiscord] = useState(false);
+
+    const kitQuery = useQuery({
+        queryKey: ["link-kit"],
+        queryFn: async () => {
+            const response = await fetch(backendApi("link/kit"), { headers: { Accept: "application/json" } });
+            if (!response.ok) return { kitName: "linked", items: [] } satisfies LinkedKitResponse;
+            return (await response.json()) as LinkedKitResponse;
+        },
+        staleTime: 60_000,
+    });
+    const kitItems = kitQuery.data?.items ?? [];
+    const kitName = (kitQuery.data?.kitName || "linked").trim();
 
     const isGroupEnabled = useMemo(() => {
         return !!settings?.steamGroupId && !!settings?.steamGroupUrl;
@@ -256,37 +301,22 @@ export default function AccountLinkStepper({ user, linkStatus }: LinkProps) {
                     </div>
 
                     <div className="flex items-center gap-[7px] pl-[46px] pt-[17px] font-mono text-[8px] tracking-[0.85px]" style={{ color: "rgba(186,145,66,0.7)" }}>
-                        <span>12 ITEMS</span>
+                        <span>{kitItems.length} {kitItems.length === 1 ? "ITEM" : "ITEMS"}</span>
                         <span className="size-[2px] rounded-[1px] bg-[#ba9142]" />
-                        <span>ACCESS IN /KIT</span>
+                        <span>ACCESS IN /KIT {kitName.toUpperCase()}</span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-3 pt-[13px]">
-                        {KIT_ITEMS.map((item) => (
-                            <div key={item.src} className="flex flex-col">
-                                <div
-                                    className="relative h-[46px] overflow-hidden rounded-[7px] border"
-                                    style={{
-                                        borderColor: "rgba(255,255,255,0.1)",
-                                        backgroundImage:
-                                            "linear-gradient(131.54deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.06) 100%)",
-                                    }}
-                                >
-                                    <img
-                                        src={item.src}
-                                        alt=""
-                                        className="absolute inset-0 size-full object-contain"
-                                    />
-                                </div>
-                                <p
-                                    className="pt-1 text-right text-[9px] font-semibold leading-[9px]"
-                                    style={{ color: "rgba(239,246,255,0.78)" }}
-                                >
-                                    {item.qty}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
+                    {kitItems.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-3 pt-[13px]">
+                            {kitItems.map((item, index) => (
+                                <KitItemTile key={`${item.shortname}-${index}`} item={item} />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="pt-4 text-[11px] leading-4" style={{ color: "rgba(142,156,175,0.72)" }}>
+                            Kit contents show here after the server reports them, or after they are set in site settings.
+                        </p>
+                    )}
 
                     <p
                         className="mt-auto pt-6 font-mono text-[8px] tracking-[0.8px] lg:pt-4"

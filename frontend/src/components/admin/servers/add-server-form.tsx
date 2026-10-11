@@ -17,6 +17,7 @@ import { Loader2, Info } from 'lucide-react'
 import { WIPE_SCHEDULE_OPTIONS } from '@/lib/wipe-schedule-presets'
 import Image from 'next/image'
 import { PterodactylServerPicker, type PterodactylServerOption } from '@/components/admin/servers/pterodactyl-server-picker'
+import { ServerTagPicker } from '@/components/admin/servers/server-tag-picker'
 
 interface ServerFormData {
     id: string
@@ -34,6 +35,7 @@ export function AddServerForm() {
     const [infoHoverOpen, setInfoHoverOpen] = useState(false)
     const [pterodactylPanelId, setPterodactylPanelId] = useState<number | null>(null)
     const [pterodactylServerIdentifier, setPterodactylServerIdentifier] = useState<string | null>(null)
+    const [tagIds, setTagIds] = useState<number[]>([])
     const router = useRouter()
     const { control, register, handleSubmit, reset, setValue } = useForm<ServerFormData>({
         defaultValues: {
@@ -75,6 +77,7 @@ export function AddServerForm() {
                     wipe_schedule: data.wipe_schedule || 'auto',
                     pterodactylPanelId: pterodactylPanelId,
                     pterodactylServerIdentifier: pterodactylServerIdentifier,
+                    tagIds,
                 }),
             })
             if (!response.ok) {
@@ -89,6 +92,7 @@ export function AddServerForm() {
             reset()
             setPterodactylPanelId(null)
             setPterodactylServerIdentifier(null)
+            setTagIds([])
             setOpen(false)
             queryClient.invalidateQueries({ queryKey: ['fetch-server-list'] })
             queryClient.invalidateQueries({ queryKey: ['serverData'] })
@@ -178,6 +182,7 @@ export function AddServerForm() {
                             </Popover>
                         </div>
                     </div>
+                    <ServerTagPicker value={tagIds} onChange={setTagIds} />
                     <Controller
                         name="categoryId"
                         control={control}

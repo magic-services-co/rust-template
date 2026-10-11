@@ -187,6 +187,10 @@ const data = {
           title: "Discord Bot",
           url: "system-control/discord-bot",
         },
+        {
+          title: "Harmony mod",
+          url: "system-control/harmony",
+        },
       ],
     },
   ],

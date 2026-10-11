@@ -12,7 +12,7 @@ interface CookiePreferencesLinkProps {
 }
 
 export function CookiePreferencesLink({ variant = "link", className, style }: CookiePreferencesLinkProps) {
-  const { getConsent, acceptCustom } = useCookieConsent();
+  const { getConsent, acceptCustom, copy } = useCookieConsent();
   const [showDialog, setShowDialog] = useState(false);
   const [currentConsent, setCurrentConsent] = useState(getConsent());
 
@@ -32,7 +32,7 @@ export function CookiePreferencesLink({ variant = "link", className, style }: Co
           style={style}
           onClick={() => open(true)}
         >
-          Cookie Preferences
+          {copy.dialogTitle} {copy.dialogTitleAccent}
         </Button>
       ) : (
         <button
@@ -41,7 +41,7 @@ export function CookiePreferencesLink({ variant = "link", className, style }: Co
           style={style}
           onClick={() => open(true)}
         >
-          Cookies
+          {copy.footerLabel}
         </button>
       )}
       <CookiePreferencesDialog

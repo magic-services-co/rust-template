@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
@@ -21,6 +20,7 @@ type PterodactylPanelOption = {
     id: number
     name: string
     panelUrl: string
+    driverLabel?: string
 }
 
 type PterodactylServerPickerProps = {
@@ -68,7 +68,7 @@ export function PterodactylServerPicker({
             })
             if (!res.ok) {
                 const json = await res.json().catch(() => ({}))
-                throw new Error(json.error || 'Failed to load Pterodactyl servers')
+                throw new Error(json.error || 'Failed to load panel servers')
             }
             return res.json() as Promise<{ servers: PterodactylServerOption[] }>
         },
@@ -77,17 +77,11 @@ export function PterodactylServerPicker({
 
     const servers = serversData?.servers ?? []
 
-    useEffect(() => {
-        if (!serverIdentifier || !onServerSelected) return
-        const match = servers.find((s) => s.shortUuid === serverIdentifier)
-        if (match) onServerSelected(match)
-    }, [serverIdentifier, servers, onServerSelected])
-
     if (panelsLoading) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading Pterodactyl panels…
+                Loading panels…
             </div>
         )
     }
@@ -95,14 +89,14 @@ export function PterodactylServerPicker({
     if (panels.length === 0) {
         return (
             <p className="text-xs text-muted-foreground">
-                Configure a Pterodactyl panel using the settings button next to Server Management to link game servers.
+                Add a Pterodactyl, Pelican, or Calagopus panel with the settings button next to Server Management.
             </p>
         )
     }
 
     return (
         <div className="space-y-3 rounded-md border border-border/40 p-3">
-            <p className="text-sm font-medium">Pterodactyl server (optional)</p>
+            <p className="text-sm font-medium">Panel server (optional)</p>
             <div className="space-y-2">
                 <Label>Panel</Label>
                 <Select
@@ -125,7 +119,7 @@ export function PterodactylServerPicker({
                         <SelectItem value="none">None</SelectItem>
                         {panels.map((p) => (
                             <SelectItem key={p.id} value={String(p.id)}>
-                                {p.name}
+                                {p.name}{p.driverLabel ? ` · ${p.driverLabel}` : ''}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -154,7 +148,7 @@ export function PterodactylServerPicker({
                             }}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Pterodactyl server" />
+                                <SelectValue placeholder="Select game server" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">None</SelectItem>
