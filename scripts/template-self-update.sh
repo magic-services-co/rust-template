@@ -248,6 +248,8 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   fi
   echo "npm ci && npm run build (frontend)…"
   (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build)
+  echo "Restarting the site so the new pages are served…"
+  bash "$ROOT/frontend/scripts/restart-next.sh"
 fi
 
 echo "Self-update finished."
