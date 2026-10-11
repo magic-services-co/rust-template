@@ -5,6 +5,7 @@ Managed/
 *.user
 *.suo
 *.dll
+!/MagicCore.dll
 *.pdb
 *.mdb
 HarmonyMods/
