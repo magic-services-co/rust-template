@@ -1,7 +1,8 @@
 {
-  "version": "2.3.8",
+  "version": "2.3.9",
   "releasedAt": "2026-10-12",
   "notes": [
+    "An update starts the site and the API when they are not already running.",
     "A logo address shows in the navbar and the admin sidebar, and saving a color keeps that color on the preview.",
     "The Site Editor is easier to use, and Detailed still reaches every color and control.",
     "Admin includes an API reference for this site.",
@@ -23,6 +24,7 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "A site update starts the frontend on port 3000 and the backend on port 8000 when nothing is listening.",
     "The navbar and the admin sidebar use the logo address you save. A large file stays in the logo box.",
     "Saving a color in the Site Editor reloads the preview, so the color you saved stays on screen.",
     "Editing the theme no longer resizes the rest of the page.",

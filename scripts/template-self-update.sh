@@ -252,6 +252,44 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   bash "$ROOT/frontend/scripts/restart-next.sh"
 fi
 
+start_backend_if_down() {
+  local port="${BACKEND_PORT:-8000}"
+  local backend="$ROOT/backend"
+  local pidfile="$ROOT/.rust-template-backend-serve.pid"
+  local logf="$backend/storage/logs/install-artisan-serve.log"
+  if [[ ! -f "$backend/artisan" ]]; then
+    return 0
+  fi
+  if ss -H -ltn "sport = :${port}" 2>/dev/null | grep -q .; then
+    echo "Backend is already listening on port ${port}."
+    return 0
+  fi
+  echo "No backend process is listening on port ${port}. Starting it…"
+  mkdir -p \
+    "$backend/bootstrap/cache" \
+    "$backend/storage/framework/cache/data" \
+    "$backend/storage/framework/sessions" \
+    "$backend/storage/framework/views" \
+    "$backend/storage/logs"
+  (
+    cd "$backend"
+    nohup php artisan serve --host=0.0.0.0 --port="$port" >>"$logf" 2>&1 &
+    echo $! >"$pidfile"
+  )
+  local _
+  for _ in $(seq 1 20); do
+    if ss -H -ltn "sport = :${port}" 2>/dev/null | grep -q .; then
+      echo "Backend is listening on port ${port}."
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Backend did not start listening on port ${port}. See ${logf}" >&2
+  return 1
+}
+
+start_backend_if_down
+
 nginx_site="/etc/nginx/sites-available/rust-template"
 if [[ -f "$nginx_site" ]] && ! grep -q 'client_max_body_size' "$nginx_site"; then
   if [[ "$(id -u)" -eq 0 ]]; then

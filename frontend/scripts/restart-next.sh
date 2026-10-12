@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Restart a production `next start` after a build so new pages are served.
-# `next dev` is left running. Exits 0 when there is nothing to restart.
+# If nothing is listening, start it. `next dev` is left running.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -68,6 +68,31 @@ is_ancestor_of_self() {
   return 1
 }
 
+start_frontend() {
+  local NPM_BIN
+  NPM_BIN="$(command -v npm || true)"
+  if [[ -z "$NPM_BIN" ]]; then
+    echo "npm is not installed; cannot start Next.js." >&2
+    exit 1
+  fi
+  echo "Starting Next.js on port ${PORT}…"
+  (
+    cd "$FRONTEND"
+    nohup "$NPM_BIN" run start -- --hostname 0.0.0.0 --port "$PORT" >>"$LOG" 2>&1 &
+    echo $! >"$PIDFILE"
+  )
+  local _
+  for _ in $(seq 1 30); do
+    if [[ -n "$(listener_pid || true)" ]]; then
+      echo "Frontend is listening on port ${PORT}."
+      exit 0
+    fi
+    sleep 1
+  done
+  echo "Frontend did not start listening on port ${PORT}. See ${LOG}" >&2
+  exit 1
+}
+
 pid="$(listener_pid || true)"
 if [[ -z "$pid" && -f "$PIDFILE" ]]; then
   pid="$(tr -d ' \n\r' < "$PIDFILE" || true)"
@@ -78,7 +103,7 @@ fi
 
 if [[ -z "$pid" ]]; then
   echo "No frontend process is listening on port ${PORT}."
-  exit 0
+  start_frontend
 fi
 
 if chain_matches "$pid" "next dev"; then
@@ -148,25 +173,4 @@ if [[ -n "$listen" ]]; then
   sleep 1
 fi
 
-NPM_BIN="$(command -v npm || true)"
-if [[ -z "$NPM_BIN" ]]; then
-  echo "npm is not installed; cannot start Next.js." >&2
-  exit 1
-fi
-
-(
-  cd "$FRONTEND"
-  nohup "$NPM_BIN" run start -- --hostname 0.0.0.0 --port "$PORT" >>"$LOG" 2>&1 &
-  echo $! >"$PIDFILE"
-)
-
-for _ in $(seq 1 30); do
-  if [[ -n "$(listener_pid || true)" ]]; then
-    echo "Frontend is listening on port ${PORT}."
-    exit 0
-  fi
-  sleep 1
-done
-
-echo "Frontend did not start listening on port ${PORT}. See ${LOG}" >&2
-exit 1
+start_frontend
