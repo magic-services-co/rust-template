@@ -24,7 +24,22 @@ function siteStoragePattern() {
 
 const siteStorage = siteStoragePattern();
 
+function devOriginHostnames() {
+    const hosts = new Set();
+    for (const raw of [process.env.NEXT_PUBLIC_DOMAIN, process.env.FRONTEND_URL]) {
+        if (!raw) continue;
+        try {
+            const url = new URL(raw.includes('://') ? raw : `http://${raw}`);
+            if (url.hostname) hosts.add(url.hostname);
+        } catch {
+            // Ignore a malformed site URL.
+        }
+    }
+    return [...hosts];
+}
+
 const nextConfig = {
+    allowedDevOrigins: devOriginHostnames(),
     serverExternalPackages: ['sharp'],
     async rewrites() {
         return [

@@ -1,7 +1,7 @@
 "use client";
 import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import {
     ColumnDef,
     flexRender,
@@ -52,6 +52,9 @@ import { useLeaderboardSettings } from '@/hooks/use-leaderboard-settings';
 type LeaderboardThemeMerged = ReturnType<typeof withLeaderboardDefaults>
 
 const LEFT_ALIGN_IDS = new Set(["rank", "player", "time_played"])
+const EMPTY_ROWS: Record<string, any>[] = []
+const EMPTY_SORTING: SortingState = []
+const HIDDEN_COLUMNS = { steam_id: false }
 
 function PlayerCell({
     row,
@@ -396,38 +399,48 @@ export function StatsTable({
 
     const { data: servers, ...serversQuery } = useServers();
     const { data: wipesData } = useWipes(selectedServer ? selectedServer : undefined, false);
-    const wipes = useMemo(() => wipesData?.data || [], [wipesData?.data]);
+    const wipes = wipesData.data;
 
+    const setSelectedServerRef = useRef(setSelectedServer);
+    const setSelectedWipeIdRef = useRef(setSelectedWipeId);
+    const setPageRef = useRef(setPage);
+    const setSortingQueryRef = useRef(setSortingQuery);
+    const setSortOrderRef = useRef(setSortOrder);
+    setSelectedServerRef.current = setSelectedServer;
+    setSelectedWipeIdRef.current = setSelectedWipeId;
+    setPageRef.current = setPage;
+    setSortingQueryRef.current = setSortingQuery;
+    setSortOrderRef.current = setSortOrder;
+
+    const firstServerId = servers[0]?.servers?.[0]?.server_id ?? null;
     useEffect(() => {
-        if (servers && servers.length > 0 && !selectedServer) {
-            const firstServer = servers[0]?.servers?.[0];
-            if (firstServer) {
-                setSelectedServer(firstServer.server_id);
-            }
+        if (!selectedServer && firstServerId) {
+            setSelectedServerRef.current(firstServerId);
         }
-    }, [servers, selectedServer, setSelectedServer]);
+    }, [selectedServer, firstServerId]);
 
     useEffect(() => {
         if (selectedWipeId === -1) {
             return;
         }
-        
+
         if (selectedServer && wipes.length > 0) {
             const activeWipe = wipes.find(w => w.is_active);
-            const latestWipe = wipes.sort((a, b) => 
+            const latestWipe = [...wipes].sort((a, b) =>
                 new Date(b.started_at ?? 0).getTime() - new Date(a.started_at ?? 0).getTime()
             )[0];
-            
+
             const wipeToSelect = activeWipe || latestWipe;
-            const selectedWipeExists = selectedWipeId != null && wipes.some(w => w.id === selectedWipeId);
-            
-            if (wipeToSelect && !selectedWipeExists) {
-                setSelectedWipeId(wipeToSelect.id);
+            const selectedMatches = selectedWipeId != null && wipes.some(w => String(w.id) === String(selectedWipeId));
+            const nextId = wipeToSelect ? Number(wipeToSelect.id) : NaN;
+
+            if (wipeToSelect && !selectedMatches && Number.isFinite(nextId) && nextId !== selectedWipeId) {
+                setSelectedWipeIdRef.current(nextId);
             }
-        } else if (!selectedServer) {
-            setSelectedWipeId(null);
+        } else if (!selectedServer && selectedWipeId != null) {
+            setSelectedWipeIdRef.current(null);
         }
-    }, [selectedServer, wipes, selectedWipeId, setSelectedWipeId]);
+    }, [selectedServer, wipes, selectedWipeId]);
 
     const debouncedSetSearchQuery = useDebouncedCallback(setSearchQuery, 300);
 
@@ -446,7 +459,7 @@ export function StatsTable({
     });
 
     const sorting = React.useMemo((): SortingState => {
-        if (!sortingQuery) return [];
+        if (!sortingQuery) return EMPTY_SORTING;
         return [{ id: sortingQuery, desc: !sortOrder || sortOrder.toLowerCase() === 'desc' }];
     }, [sortingQuery, sortOrder]);
 
@@ -456,19 +469,24 @@ export function StatsTable({
         setSortOrder(newSorting[0].desc ? 'desc' : 'asc')
     };
 
+    const pageResetKey = `${searchQuery}|${sortingQuery}|${sortOrder}|${selectedServer}|${selectedWipeId}|${tab}`;
+    const pageResetKeyRef = useRef(pageResetKey);
     useEffect(() => {
-        setPage(1);
-    }, [searchQuery, sortingQuery, sortOrder, selectedServer, selectedWipeId, tab, setPage]);
+        if (pageResetKeyRef.current === pageResetKey) return;
+        pageResetKeyRef.current = pageResetKey;
+        if (page !== 1) setPageRef.current(1);
+    }, [pageResetKey, page]);
 
+    const columnKeyList = columnData.map((column) => column.columnKey).join("|");
     useEffect(() => {
         if (!isActive || !sortingQuery) return;
-        const isValidSort = columnData.some(column => column.columnKey === sortingQuery);
+        const isValidSort = columnKeyList.split("|").includes(sortingQuery);
         const timeSortOk = tab === "misc_stats" && sortingQuery === "time_played";
         if (!isValidSort && !timeSortOk) {
-            setSortingQuery(null);
-            setSortOrder(null);
+            setSortingQueryRef.current(null);
+            setSortOrderRef.current(null);
         }
-    }, [isActive, tab, columnData, sortingQuery, setSortingQuery, setSortOrder]);
+    }, [isActive, tab, columnKeyList, sortingQuery]);
 
     const handleSortingChange: OnChangeFn<SortingState> = (updaterOrValue) => {
         if (lockSort) {
@@ -505,32 +523,34 @@ export function StatsTable({
             sortingQuery,
         ],
     );
+    const tableRows = data?.data ?? EMPTY_ROWS;
+    const pagination = useMemo(
+        () => ({
+            pageIndex: Math.max(0, page - 1),
+            pageSize: Number(pageSize) || 10,
+        }),
+        [page, pageSize],
+    );
+    const tableState = useMemo(
+        () => ({
+            sorting,
+            pagination,
+            columnVisibility: HIDDEN_COLUMNS,
+        }),
+        [sorting, pagination],
+    );
     const table = useTable({
         features: appTableFeatures,
-        data: data?.data ?? [],
+        data: tableRows,
         columns,
         onSortingChange: handleSortingChange,
         manualPagination: true,
         manualSorting: true,
         manualFiltering: true,
         pageCount: data?.totalPages || 1,
-        state: {
-            sorting,
-            pagination: {
-                pageIndex: page - 1,
-                pageSize: pageSize,
-            },
-            columnVisibility: {
-                steam_id: false,
-            },
-        },
+        state: tableState,
         initialState: {
-            /* pagination: {
-                pageSize: 10,
-            }, */
-            columnVisibility: {
-                steam_id: false, 
-            },
+            columnVisibility: HIDDEN_COLUMNS,
         },
     })
 

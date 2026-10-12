@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { backendApi } from '@/lib/api';
 
@@ -10,6 +11,8 @@ export type Wipe = {
   started_at?: string;
   [key: string]: unknown;
 };
+
+const EMPTY_WIPES: Wipe[] = [];
 
 async function fetchWipes(serverId: string | undefined, _lifetime: boolean): Promise<Wipe[]> {
   if (!serverId) return [];
@@ -30,8 +33,10 @@ export function useWipes(serverId: string | undefined, lifetime: boolean) {
     enabled: !!serverId,
     staleTime: 60 * 1000,
   });
+  const wipes = query.data ?? EMPTY_WIPES;
+  const data = useMemo(() => ({ data: wipes }), [wipes]);
   return {
-    data: { data: query.data ?? [] },
+    data,
     isLoading: query.isLoading,
     error: query.error,
   };

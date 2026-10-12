@@ -70,7 +70,10 @@ export function StatsTableContainer({ leaderboardTheme: serverTheme }: StatsTabl
     setSearchLocal(searchQuery ?? "");
   }, [searchQuery]);
 
-  const theme = withLeaderboardDefaults(clientTheme || serverTheme);
+  const theme = useMemo(
+    () => withLeaderboardDefaults(clientTheme || serverTheme),
+    [clientTheme, serverTheme],
+  );
   const showWipeSelection = leaderboardSettings?.showWipeSelection ?? true;
   const lifetime = !showWipeSelection || selectedWipeId === -1;
 

@@ -21,6 +21,8 @@ export type ServerCategory = {
   servers: Server[];
 };
 
+const EMPTY_SERVERS: ServerCategory[] = [];
+
 async function fetchServers(): Promise<ServerCategory[]> {
   const res = await fetch(backendApi('servers'), {
     headers: { Accept: 'application/json' },
@@ -39,7 +41,7 @@ export default function useServers() {
     staleTime: 60 * 1000,
   });
   return {
-    data: query.data ?? [],
+    data: query.data ?? EMPTY_SERVERS,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

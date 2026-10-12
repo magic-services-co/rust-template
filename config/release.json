@@ -1,9 +1,9 @@
 {
-  "version": "2.3.4",
-  "releasedAt": "2026-10-11",
+  "version": "2.3.5",
+  "releasedAt": "2026-10-12",
   "notes": [
-    "The site and admin are updated to the current frontend and Laravel packages.",
-    "This update needs PHP 8.3. Upgrade PHP before running it if the site is still on 8.2."
+    "The leaderboard loads instead of crashing while the table is opening.",
+    "The admin sidebar sits beside the page instead of covering it."
   ],
   "added": [
     "System Control has a Harmony mod page with the version, what changed, and a download.",
@@ -17,6 +17,9 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "The leaderboard no longer crashes while it loads the server and wipe lists.",
+    "The admin sidebar sits beside the main section.",
+    "Chart and account menu widths follow their layout again.",
     "Frontend and Laravel packages are on their current releases, including the editor, charts, tables, and styles.",
     "This update needs PHP 8.3.",
     "Opening Edit on a server and saving no longer replaces the name and address with the panel server, or turns an enabled server off.",
