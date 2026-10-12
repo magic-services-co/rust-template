@@ -36,10 +36,12 @@ export default function MobileNav({
     logoImage,
     wordmarkColor,
     theme,
+    siteName,
 }: {
     items: NavigationItem[];
     logoImage?: string;
     wordmarkColor?: string;
+    siteName?: string;
     theme?: {
         navLinkColor?: string;
         navLinkHoverColor?: string;
@@ -73,7 +75,7 @@ export default function MobileNav({
 
     return (
         <>
-            <BrandMark logoImage={logoImage} wordmarkColor={wordmarkColor} size="header" />
+            <BrandMark logoImage={logoImage} wordmarkColor={wordmarkColor} size="header" siteName={siteName} />
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                     <button
@@ -96,7 +98,7 @@ export default function MobileNav({
                     <HomeCardCorners color={GOLD} show />
                     <div className="relative z-[1] flex h-full min-h-0 flex-col">
                         <div className="flex h-[94px] items-center justify-between border-b px-4" style={{ borderColor: "var(--user-menu-divider, rgba(255,255,255,0.1))" }}>
-                            <BrandMark logoImage={logoImage} wordmarkColor={wordmarkColor} size="header" />
+                            <BrandMark logoImage={logoImage} wordmarkColor={wordmarkColor} size="header" siteName={siteName} />
                             <button
                                 type="button"
                                 className="ghost site-mobile-close flex h-10 w-10 items-center justify-center border outline-none"

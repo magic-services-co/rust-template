@@ -16,9 +16,11 @@ import {
 export default function Navigation({
   navigationItems,
   theme,
+  siteName,
 }: {
   navigationItems: NavigationItem[];
   theme?: LayoutTheme;
+  siteName?: string;
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const t = withLayoutDefaults(theme);
@@ -44,7 +46,7 @@ export default function Navigation({
     >
       <div className="mx-auto hidden h-[94px] max-w-[1200px] items-center justify-between px-4 md:flex">
         <span data-theme-field="navWordmarkColor" data-theme-label="Nav wordmark">
-          <BrandMark logoImage={t.logoImage} wordmarkColor={t.primaryTitleColor} size="header" />
+          <BrandMark logoImage={t.logoImage} wordmarkColor={t.primaryTitleColor} size="header" siteName={siteName} />
         </span>
         <MainNav items={navigationItems} theme={t} />
         <UserNav theme={t} />
@@ -55,6 +57,7 @@ export default function Navigation({
           logoImage={t.logoImage}
           wordmarkColor={t.primaryTitleColor}
           theme={t}
+          siteName={siteName}
         />
       </div>
     </header>

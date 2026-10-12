@@ -54,7 +54,7 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
     );
   }
 
-  const res = await fetch(backendApi("data?include=navigationItems,themeSettings"), {
+  const res = await fetch(backendApi("data?include=navigationItems,themeSettings,siteSettings"), {
     headers: {
       Accept: "application/json",
       ...(host && { Host: host }),
@@ -80,11 +80,12 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
   const data = res.ok ? await res.json() : {};
   const navItems = Array.isArray(data.navigationItems) ? data.navigationItems : [];
   const theme = data.themeSettings as LayoutTheme | undefined;
+  const siteName = typeof data.siteSettings?.name === "string" ? data.siteSettings.name : undefined;
 
   const safeChildren = children ?? null;
 
   return (
-    <UserLayoutClient navItems={navItems} theme={theme}>
+    <UserLayoutClient navItems={navItems} theme={theme} siteName={siteName}>
       {safeChildren}
     </UserLayoutClient>
   );

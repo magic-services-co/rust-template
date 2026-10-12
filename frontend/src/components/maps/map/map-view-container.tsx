@@ -19,6 +19,8 @@ import Link from "next/link";
 import useServerData from "@/hooks/use-server-data";
 import { mapOptionWorldSize } from "@/lib/server-card-helpers";
 import { withMapsDefaults } from "@/lib/maps-theme-defaults";
+import { useSiteSettings } from "@/hooks/use-site-settings";
+import { splitBrandName } from "@/lib/layout-theme-defaults";
 import { useMapsTheme } from "@/hooks/use-maps-theme";
 import { ErrorCta, ErrorHint, ErrorPageContent } from "@/components/error-page";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
@@ -42,6 +44,8 @@ export default function MapViewContainer({ id, theme: serverTheme }: MapViewCont
     const { data: clientTheme } = useMapsTheme();
     const theme = withMapsDefaults(clientTheme || serverTheme);
     const { serverList } = useServerData();
+    const { data: siteSettings } = useSiteSettings();
+    const siteKicker = splitBrandName(siteSettings?.name).filter(Boolean).join(" ");
     const [now, setNow] = useState(() => new Date());
 
     useEffect(() => {
@@ -142,7 +146,7 @@ export default function MapViewContainer({ id, theme: serverTheme }: MapViewCont
         <div>
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-[575px]">
-                    <p className="text-[11px] font-medium tracking-[2.6px] text-[#ba9142]">MAGIC RUST</p>
+                    <p className="text-[11px] font-medium tracking-[2.6px] text-[#ba9142]">{siteKicker || "MAP VOTE"}</p>
                     <h1 className="pt-1 text-[40px] font-bold leading-[60px] tracking-[-2px] text-[#f2f7ff] sm:text-[50px]">
                         {serverName.toUpperCase()}{" "}
                         <span className="text-[#ba9142]">MAP VOTES</span>
@@ -231,7 +235,10 @@ function MapOption({
     const mapSrc = option.thumbnailUrl || option.imageUrl || option.rawImageUrl;
     const iconSrc =
         option.imageIconUrl && option.imageIconUrl !== mapSrc ? option.imageIconUrl : undefined;
-    const rustmapsId = String(option.id).replace(/-\d+$/, "");
+    const rustmapsHref =
+        typeof option.url === "string" && /^https?:\/\/(?:www\.)?rustmaps\.com\//i.test(option.url)
+            ? option.url
+            : `https://rustmaps.com/map/${String(option.id).replace(/-\d+$/, "")}`;
 
     const mutation = useMutation({
         mutationFn: async (data: MapVoteVoteData) => {
@@ -395,7 +402,7 @@ function MapOption({
                 </DialogHeader>
                 <div className="flex justify-end gap-2">
                     <Link
-                        href={`https://rustmaps.com/map/${rustmapsId}`}
+                        href={rustmapsHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="ghost support-form-btn-secondary inline-flex h-10 items-center px-4 text-[10px] font-bold tracking-[1.4px]"

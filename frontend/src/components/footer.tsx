@@ -26,14 +26,16 @@ export default function Footer({
   navigationItems = [],
   theme,
   chrome,
+  siteName,
 }: {
   navigationItems?: NavigationItem[];
   theme?: LayoutTheme;
   chrome?: LayoutChromeTheme;
+  siteName?: string;
 }) {
   const { data: settings } = useSiteSettings();
   const t = withLayoutDefaults(theme);
-  const name = (settings?.name || "Magic Rust").replace(/[\s\u00a0\u2000-\u200b\ufeff]+/g, " ").trim();
+  const name = (settings?.name || siteName || "Magic Rust").replace(/[\s\u00a0\u2000-\u200b\ufeff]+/g, " ").trim();
   const year = new Date().getFullYear();
   const visible = navigationItems.filter((item) => !item.hidden && !isHomeItem(item));
   const assistance = visible.filter(isAssistanceItem);
@@ -75,7 +77,7 @@ export default function Footer({
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-[366px] shrink-0">
             <span data-theme-field="footerWordmarkColor" data-theme-label="Footer wordmark">
-              <BrandMark logoImage={t.logoImage} wordmarkColor={wordmarkColor} size="footer" />
+              <BrandMark logoImage={t.logoImage} wordmarkColor={wordmarkColor} size="footer" siteName={siteName} />
             </span>
             <p
               className="mt-[18px] max-w-[314px] text-[12px] font-normal leading-[18.6px]"

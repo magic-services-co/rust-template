@@ -113,15 +113,11 @@ function FavoriteWeaponCell({
 
     return (
         <div className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-zinc-800/90 px-2 py-1 ring-1 ring-white/10">
-            <div className="relative h-6 w-14 shrink-0 md:h-7 md:w-16">
-                <Image
-                    src={src}
-                    alt=""
-                    fill
-                    className="object-contain object-left"
-                    sizes="80px"
-                />
-            </div>
+            <img
+                src={src}
+                alt=""
+                className="h-6 w-14 shrink-0 object-contain object-left md:h-7 md:w-16"
+            />
             <Skull className="h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
             <span
                 className="min-w-[2ch] shrink-0 tabular-nums text-xs font-semibold"

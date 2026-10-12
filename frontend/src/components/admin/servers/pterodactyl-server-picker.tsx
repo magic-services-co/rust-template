@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
@@ -47,6 +48,8 @@ export function PterodactylServerPicker({
     onServerChange,
     onServerSelected,
 }: PterodactylServerPickerProps) {
+    const panelTouched = useRef(false)
+    const serverTouched = useRef(false)
     const { data: panelsData, isLoading: panelsLoading } = useQuery({
         queryKey: ['pterodactylPanels'],
         queryFn: async () => {
@@ -104,17 +107,24 @@ export function PterodactylServerPicker({
                 <Select
                     value={panelId != null ? String(panelId) : 'none'}
                     onValueChange={(v) => {
+                        if (!panelTouched.current) return
                         if (v === 'none') {
                             onPanelChange(null)
                             onServerChange(null, null)
                             return
                         }
                         const id = parseInt(v, 10)
+                        if (id === panelId) return
                         onPanelChange(id)
                         onServerChange(null, null)
                     }}
                 >
-                    <SelectTrigger className="[&>span]:flex [&>span]:min-w-0 [&>span]:items-center [&>span]:line-clamp-none">
+                    <SelectTrigger
+                        className="[&>span]:flex [&>span]:min-w-0 [&>span]:items-center [&>span]:line-clamp-none"
+                        onPointerDown={() => {
+                            panelTouched.current = true
+                        }}
+                    >
                         <SelectValue placeholder="Select panel" />
                     </SelectTrigger>
                     <SelectContent>
@@ -146,6 +156,8 @@ export function PterodactylServerPicker({
                         <Select
                             value={serverIdentifier ?? 'none'}
                             onValueChange={(v) => {
+                                if (!serverTouched.current) return
+                                if (v === (serverIdentifier ?? 'none')) return
                                 if (v === 'none') {
                                     onServerChange(null, null)
                                     return
@@ -155,7 +167,11 @@ export function PterodactylServerPicker({
                                 if (server && onServerSelected) onServerSelected(server)
                             }}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger
+                                onPointerDown={() => {
+                                    serverTouched.current = true
+                                }}
+                            >
                                 <SelectValue placeholder="Select game server" />
                             </SelectTrigger>
                             <SelectContent>

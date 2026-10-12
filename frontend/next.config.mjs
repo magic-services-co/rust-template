@@ -32,12 +32,22 @@ const nextConfig = {
         ];
     },
     images: {
+        localPatterns: [
+            { pathname: '/**' },
+            { pathname: '/storage/**' },
+            { pathname: '/storage/cdn/**' },
+        ],
         remotePatterns: [
-            ...(siteStorage ? [siteStorage] : []),
+            ...(siteStorage ? [siteStorage, { ...siteStorage, pathname: '/storage/cdn/**' }] : []),
             {
                 hostname: backendHost,
                 protocol: backendProtocol,
                 pathname: '/storage/**',
+            },
+            {
+                hostname: backendHost,
+                protocol: backendProtocol,
+                pathname: '/storage/cdn/**',
             },
             {
                 hostname: '127.0.0.1',
@@ -45,9 +55,19 @@ const nextConfig = {
                 pathname: '/storage/**',
             },
             {
+                hostname: '127.0.0.1',
+                protocol: 'http',
+                pathname: '/storage/cdn/**',
+            },
+            {
                 hostname: 'localhost',
                 protocol: 'http',
                 pathname: '/storage/**',
+            },
+            {
+                hostname: 'localhost',
+                protocol: 'http',
+                pathname: '/storage/cdn/**',
             },
             {
                 hostname: 'cdn.discordapp.com',

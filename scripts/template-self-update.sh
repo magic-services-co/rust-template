@@ -252,4 +252,19 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   bash "$ROOT/frontend/scripts/restart-next.sh"
 fi
 
+nginx_site="/etc/nginx/sites-available/rust-template"
+if [[ -f "$nginx_site" ]] && ! grep -q 'client_max_body_size' "$nginx_site"; then
+  if [[ "$(id -u)" -eq 0 ]]; then
+    sed -i '/server_name /a\    client_max_body_size 32m;' "$nginx_site"
+    nginx -t && systemctl reload nginx || true
+    echo "Raised nginx upload limit to 32 MB."
+  elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+    sudo sed -i '/server_name /a\    client_max_body_size 32m;' "$nginx_site"
+    sudo nginx -t && sudo systemctl reload nginx || true
+    echo "Raised nginx upload limit to 32 MB."
+  else
+    echo "Uploads over 1 MB still need client_max_body_size 32m in ${nginx_site} (reload nginx)."
+  fi
+fi
+
 echo "Self-update finished."

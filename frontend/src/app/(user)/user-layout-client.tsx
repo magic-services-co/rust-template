@@ -11,10 +11,12 @@ export function UserLayoutClient({
   children,
   navItems,
   theme,
+  siteName,
 }: {
   children: ReactNode;
   navItems: NavigationItem[];
   theme: LayoutTheme | undefined;
+  siteName?: string;
 }) {
   const chrome = useLayoutChromeTheme(theme);
   const navTheme: LayoutTheme = {
@@ -31,12 +33,12 @@ export function UserLayoutClient({
 
   return (
     <>
-      <Navigation navigationItems={navItems} theme={navTheme} />
+      <Navigation navigationItems={navItems} theme={navTheme} siteName={siteName} />
       <div className="relative z-0 flex min-h-screen flex-col">
         <main className="relative z-0 isolate flex flex-1 flex-col text-foreground">
           {children ?? null}
         </main>
-        <Footer navigationItems={navItems} theme={navTheme} chrome={chrome} />
+        <Footer navigationItems={navItems} theme={navTheme} chrome={chrome} siteName={siteName} />
         <div
           className="pointer-events-none fixed inset-0 -z-10 h-screen max-h-screen w-screen max-w-screen bg-cover"
           style={{

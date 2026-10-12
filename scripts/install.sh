@@ -1332,6 +1332,8 @@ server {
     listen [::]:80;
     server_name ${server_names};
 
+    client_max_body_size 32m;
+
     include /etc/nginx/snippets/rust-template-cloudflare-real-ip.conf;
 
     location / {

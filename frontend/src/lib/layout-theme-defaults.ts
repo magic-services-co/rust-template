@@ -68,6 +68,23 @@ export const LEGAL_THEME_DEFAULTS = {
   establishedYear: "2022",
 } as const;
 
+const LEGAL_DATE_IN_TEXT =
+  /\b(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})\b/i;
+
+export function legalUpdatedDate(
+  sections: Array<{ content?: string | null }>,
+  themeDate?: string | null,
+): string | null {
+  for (const section of sections) {
+    const text = String(section.content ?? "").replace(/<[^>]+>/g, " ");
+    const match = text.match(LEGAL_DATE_IN_TEXT);
+    if (match?.[1]) return match[1];
+  }
+  const fallback = (themeDate ?? "").trim();
+  if (!fallback || fallback === LEGAL_THEME_DEFAULTS.lastUpdated) return null;
+  return fallback;
+}
+
 export const PRIVACY_THEME_DEFAULTS = {
   ...LEGAL_THEME_DEFAULTS,
   introTitle: "Your data, clearly explained",

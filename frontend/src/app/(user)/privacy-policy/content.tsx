@@ -9,6 +9,7 @@ import { usePageThemeDraft } from "@/hooks/use-page-theme-draft";
 import {
   LAYOUT_THEME_DEFAULTS,
   PRIVACY_THEME_DEFAULTS,
+  legalUpdatedDate,
   splitBrandName,
   stripSectionHeading,
   withPrivacyDefaults,
@@ -201,15 +202,19 @@ export default function Content({
               className="w-full max-w-[384px] border-l pl-4"
               style={{ borderColor: "rgba(186,145,66,0.6)" }}
             >
-              <p
-                className="text-[10px] font-bold leading-[15px] tracking-[1.6px]"
-                style={{ color: theme.accentSoft }}
-              >
-                {theme.lastUpdatedLabel}
-              </p>
-              <p className="pt-1 text-[14px] leading-5" style={{ color: "#c0ccda" }}>
-                {theme.lastUpdated}
-              </p>
+              {legalUpdatedDate(sections, theme.lastUpdated) ? (
+                <>
+                  <p
+                    className="text-[10px] font-bold leading-[15px] tracking-[1.6px]"
+                    style={{ color: theme.accentSoft }}
+                  >
+                    {theme.lastUpdatedLabel}
+                  </p>
+                  <p className="pt-1 text-[14px] leading-5" style={{ color: "#c0ccda" }}>
+                    {legalUpdatedDate(sections, theme.lastUpdated)}
+                  </p>
+                </>
+              ) : null}
               <p className="pt-3 text-[11px] leading-5" style={{ color: theme.mutedColor }}>
                 This policy explains how {siteName} handles personal information across our website, servers, and community services.
               </p>

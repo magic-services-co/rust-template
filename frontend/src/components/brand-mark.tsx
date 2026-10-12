@@ -12,13 +12,15 @@ export function BrandMark({
   logoImage,
   wordmarkColor,
   size = "header",
+  siteName,
 }: {
   logoImage?: string;
   wordmarkColor?: string;
   size?: "header" | "footer";
+  siteName?: string;
 }) {
   const { data: settings } = useSiteSettings();
-  const [line1, line2] = splitBrandName(settings?.name);
+  const [line1, line2] = splitBrandName(settings?.name || siteName);
   const color = wordmarkColor || LAYOUT_THEME_DEFAULTS.primaryTitleColor;
   const isFooter = size === "footer";
   const px = isFooter ? 48 : 50;

@@ -41,10 +41,48 @@ function getAuthTokenFromCookie(cookieHeader: string | null): string | null {
   }
 }
 
-export function proxy(request: NextRequest) {
+const SKIP_REDIRECT_PREFIXES = ["/admin", "/storage", "/images", "/setup"];
+
+function backendOrigin(): string {
+  const raw = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  return raw.replace(/\/$/, "");
+}
+
+async function redirectResponse(request: NextRequest, pathname: string): Promise<NextResponse | null> {
+  if (SKIP_REDIRECT_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return null;
+  }
+  if (pathname.includes(".")) return null;
+
+  try {
+    const lookup = await fetch(
+      `${backendOrigin()}/api/redirect?source=${encodeURIComponent(pathname)}`,
+      {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(1500),
+      },
+    );
+    if (!lookup.ok) return null;
+    const data = (await lookup.json()) as { destination?: string; permanent?: boolean };
+    const destination = typeof data.destination === "string" ? data.destination.trim() : "";
+    if (!destination || destination === pathname) return null;
+    const target = destination.startsWith("http://") || destination.startsWith("https://")
+      ? destination
+      : new URL(destination.startsWith("/") ? destination : `/${destination}`, request.url);
+    return NextResponse.redirect(target, data.permanent ? 308 : 307);
+  } catch {
+    return null;
+  }
+}
+
+export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const pathname = request.nextUrl.pathname;
-  requestHeaders.set('x-pathname', pathname);
+  requestHeaders.set("x-pathname", pathname);
+
+  const redirected = await redirectResponse(request, pathname);
+  if (redirected) return redirected;
 
   if (pathname.startsWith('/api/')) {
     const token =

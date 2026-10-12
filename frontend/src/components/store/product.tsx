@@ -9,20 +9,42 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 import { cn } from "@/lib/utils";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
 
+function decodeHtml(value: string): string {
+    const named: Record<string, string> = {
+        nbsp: " ",
+        amp: "&",
+        lt: "<",
+        gt: ">",
+        quot: '"',
+        apos: "'",
+        middot: "·",
+        bull: "•",
+        ndash: "–",
+        mdash: "—",
+    };
+    let text = value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (entity, body: string) => {
+        const key = body.toLowerCase();
+        if (key.startsWith("#x")) {
+            const code = Number.parseInt(key.slice(2), 16);
+            return Number.isFinite(code) ? String.fromCodePoint(code) : entity;
+        }
+        if (key.startsWith("#")) {
+            const code = Number.parseInt(key.slice(1), 10);
+            return Number.isFinite(code) ? String.fromCodePoint(code) : entity;
+        }
+        return named[key] ?? entity;
+    });
+    if (text.includes("&")) text = text.replace(/&([a-z]+);/gi, (entity, body: string) => named[body.toLowerCase()] ?? entity);
+    return text;
+}
+
 function featureBullets(html?: unknown): string[] {
     if (typeof html !== "string" || !html.trim()) return [];
     const withBreaks = html
         .replace(/<\/(li|p|div|h\d|tr)>/gi, "\n")
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<li[^>]*>/gi, "\n");
-    const text = withBreaks
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'");
+    const text = decodeHtml(withBreaks.replace(/<[^>]+>/g, " "));
     return text
         .split(/\n+/)
         .map((line) => line.replace(/^[-•*]\s*/, "").replace(/\s+/g, " ").trim())
@@ -50,7 +72,12 @@ export default function DisplayProduct({
     const accent = STORE_CARD_PALETTES[index % STORE_CARD_PALETTES.length];
     const [brandLeft, brandRight] = splitBrandName(siteSettings?.name);
     const brand = [brandLeft, brandRight].filter(Boolean).join(" ");
-    const bullets = useMemo(() => featureBullets(product.description), [product.description]);
+    const productTitle = (product.name || "Package").trim();
+    const showBrand = brand.toLowerCase() !== productTitle.toLowerCase();
+    const bullets = useMemo(() => {
+        const name = productTitle.toLowerCase();
+        return featureBullets(product.description).filter((line) => line.toLowerCase() !== name);
+    }, [product.description, productTitle]);
     const priceCents =
         ((product.pricing as { price_final?: number } | undefined)?.price_final ??
             (product.price as number | undefined) ??
@@ -124,9 +151,11 @@ export default function DisplayProduct({
                         className="pointer-events-none absolute right-0 top-0 h-[210px] w-44 origin-top object-contain object-top opacity-[0.18] transition-transform duration-500 ease-out group-hover:scale-110"
                     />
                     <div className="pointer-events-none">
-                        <p className="store-pack-brand text-[10px] tracking-[1.8px]">{brand}</p>
+                        {showBrand ? (
+                            <p className="store-pack-brand text-[10px] tracking-[1.8px]">{brand}</p>
+                        ) : null}
                         <h2 className="store-pack-name line-clamp-2 pt-1 text-[24px] font-extrabold leading-7 tracking-[-1.6px] sm:text-[28px] sm:tracking-[-2.24px]">
-                            {(product.name || "Package").toUpperCase()}
+                            {productTitle.toUpperCase()}
                         </h2>
                     </div>
                     <div className="pointer-events-none mt-5 h-px w-12" style={{ backgroundColor: accent }} />
