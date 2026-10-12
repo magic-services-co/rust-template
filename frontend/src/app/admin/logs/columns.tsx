@@ -1,4 +1,5 @@
 "use client"
+import { type AppTableFeatures } from "@/lib/table-features"
 
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -35,7 +36,7 @@ type Role = {
     color: string
 }
 
-export const columns: ColumnDef<AdminLog>[] = [
+export const columns: ColumnDef<AppTableFeatures, AdminLog>[] = [
     {
         accessorKey: "user",
         header: "Admin",

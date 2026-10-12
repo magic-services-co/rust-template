@@ -1,17 +1,14 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    VisibilityState,
+    ColumnVisibilityState,
     flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
+    useTable,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -58,7 +55,7 @@ type TicketUser = {
     name: string
     image: string | null
 }
-const columns: ColumnDef<Ticket>[] = [
+const columns: ColumnDef<AppTableFeatures, Ticket>[] = [
     {
         accessorKey: "id",
         header: "Ticket ID",
@@ -153,7 +150,7 @@ type TicketTableProps = {
 export default function TicketTable() {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+    const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>({})
     const [statusFilter, setStatusFilter] = useState<string>("all")
 
     const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
@@ -191,15 +188,12 @@ export default function TicketTable() {
         setPage(newPage);
     }, [setPage]);
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: data?.tickets ?? [],
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         state: {
             sorting,
@@ -213,11 +207,6 @@ export default function TicketTable() {
         manualPagination: true,
         autoResetPageIndex: true,
         pageCount: Math.ceil((data?.pagination?.totalItems ?? 0) / pageSize),
-        filterFns: {
-            status: (row, id, filterValue) => {
-                return filterValue === "all" || row.getValue(id) === filterValue;
-            },
-        },
     })
 
     useEffect(() => {

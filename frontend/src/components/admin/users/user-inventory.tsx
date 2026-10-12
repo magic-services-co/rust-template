@@ -1,4 +1,5 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -6,13 +7,9 @@ import { getInventory } from "@/app/actions/admin-store"
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
+    useTable,
     SortingState,
-    getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel,
 } from "@tanstack/react-table"
 import { Ban, Clock } from "lucide-react"
 
@@ -34,7 +31,7 @@ import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const columns: ColumnDef<InventoryItem>[] = [
+const columns: ColumnDef<AppTableFeatures, InventoryItem>[] = [
     {
         accessorKey: "product",
         header: "Product",
@@ -174,15 +171,12 @@ export function UserInventory({ customerId }: { customerId: string }) {
         },
     })
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: inventoryData || [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
             columnFilters,

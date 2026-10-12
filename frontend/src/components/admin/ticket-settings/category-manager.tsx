@@ -63,7 +63,7 @@ export const formSchema = z.object({
     maxTicketsPerCooldown: z.coerce.number().min(1).optional(),
 })
 
-export type FormValues = z.infer<typeof formSchema>
+export type FormValues = z.output<typeof formSchema>
 
 export function CategoryManager() {
     const [selectedCategory, setSelectedCategory] = useQueryState('category', {
@@ -134,7 +134,7 @@ export function CategoryManager() {
         },
     })
 
-    const methods = useForm<FormValues>({
+    const methods = useForm<z.input<typeof formSchema>, any, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
@@ -295,7 +295,12 @@ export function CategoryManager() {
                                                 <FormItem>
                                                     <FormLabel>Max Open Tickets per User</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} type="number" min={1} />
+                                                        <Input
+                                                            {...field}
+                                                            type="number"
+                                                            min={1}
+                                                            value={field.value == null ? "" : String(field.value)}
+                                                        />
                                                     </FormControl>
                                                     <FormDescription>
                                                         Maximum number of open tickets a user can have in this category.

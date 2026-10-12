@@ -1,12 +1,11 @@
 "use client";
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import React, { useEffect, useMemo } from 'react'
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
+    useTable,
     SortingState,
     Row,
     Column,
@@ -141,11 +140,11 @@ type GetColumnsOpts = {
 const getColumns = (
     theme: LeaderboardThemeMerged,
     opts: GetColumnsOpts,
-): ColumnDef<Record<string, any>>[] => {
+): ColumnDef<AppTableFeatures, Record<string, any>>[] => {
     const { page, pageSize, lockSort, tab, dataColumns, sortedColumnId } = opts;
 
     const sortHeader = (
-        column: Column<Record<string, any>, unknown>,
+        column: Column<AppTableFeatures, Record<string, any>>,
         columnData: LeaderboardColumn,
         label: React.ReactNode,
     ) =>
@@ -206,7 +205,7 @@ const getColumns = (
             </Button>
         );
 
-    const rankCol: ColumnDef<Record<string, any>> = {
+    const rankCol: ColumnDef<AppTableFeatures, Record<string, any>> = {
         id: "rank",
         accessorFn: () => "",
         header: "#",
@@ -229,7 +228,7 @@ const getColumns = (
         enableSorting: false,
     };
 
-    const playerCol: ColumnDef<Record<string, any>> = {
+    const playerCol: ColumnDef<AppTableFeatures, Record<string, any>> = {
         id: "player",
         header: "Player",
         accessorFn: (r) => r.username,
@@ -237,7 +236,7 @@ const getColumns = (
         enableSorting: false,
     };
 
-    const timeCol: ColumnDef<Record<string, any>> = {
+    const timeCol: ColumnDef<AppTableFeatures, Record<string, any>> = {
         id: "time_played",
         accessorKey: "time_played",
         header: ({ column }) => (
@@ -276,7 +275,7 @@ const getColumns = (
             );
         },
         enableSorting: tab === "misc_stats",
-        sortingFn: "basic",
+        sortFn: "basic",
     };
 
     const metricCols = dataColumns.map(
@@ -284,9 +283,9 @@ const getColumns = (
             ({
                 accessorKey: columnData.columnKey,
                 id: columnData.columnKey,
-                header: ({ column }: { column: Column<Record<string, any>, unknown> }) =>
+                header: ({ column }: { column: Column<AppTableFeatures, Record<string, any>> }) =>
                     sortHeader(column, columnData, columnData.columnLabel),
-                cell: ({ row }: { row: Row<Record<string, any>> }) =>
+                cell: ({ row }: { row: Row<AppTableFeatures, Record<string, any>> }) =>
                     columnFormat(columnData) === "weapon" ? (
                         <div className="flex items-center justify-center">
                             <FavoriteWeaponCell row={row.original} theme={theme} />
@@ -309,14 +308,14 @@ const getColumns = (
                             </span>
                         </div>
                     ),
-            }) satisfies ColumnDef<Record<string, any>>,
+            }) satisfies ColumnDef<AppTableFeatures, Record<string, any>>,
     );
 
     return [
         {
             accessorKey: "steam_id",
             header: "Steam ID",
-            cell: ({ row }: { row: Row<Record<string, any>> }) => <div>{row.getValue("steam_id")}</div>,
+            cell: ({ row }: { row: Row<AppTableFeatures, Record<string, any>> }) => <div>{row.getValue("steam_id")}</div>,
             enableHiding: true,
             enableSorting: false,
         },
@@ -506,11 +505,10 @@ export function StatsTable({
             sortingQuery,
         ],
     );
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: data?.data ?? [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: handleSortingChange,
         manualPagination: true,
         manualSorting: true,
@@ -823,10 +821,10 @@ export function StatsTable({
                                     ←
                                 </Button>
                                 {Array.from({ length: Math.min(5, data?.totalPages ?? 1) }, (_, i) => {
-                                    const pageNum = table.getState().pagination.pageIndex - 2 + i
+                                    const pageNum = table.state.pagination.pageIndex - 2 + i
                                     if (pageNum < 0 || pageNum >= (data?.totalPages ?? 1)) return null
                                     const isActivePage =
-                                        table.getState().pagination.pageIndex === pageNum
+                                        table.state.pagination.pageIndex === pageNum
                                     return (
                                         <Button
                                             type="button"

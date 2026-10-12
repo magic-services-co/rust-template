@@ -1,10 +1,9 @@
 {
-  "version": "2.3.3",
+  "version": "2.3.4",
   "releasedAt": "2026-10-11",
   "notes": [
-    "Editing a server keeps the name, address, and enabled setting you already saved.",
-    "The same RustMaps map can be on more than one vote, and a failed save no longer clears the other votes.",
-    "Servers you turn off stay off the public servers page. Store cards, the footer, and the vote page use your own site details."
+    "The site and admin are updated to the current frontend and Laravel packages.",
+    "This update needs PHP 8.3. Upgrade PHP before running it if the site is still on 8.2."
   ],
   "added": [
     "System Control has a Harmony mod page with the version, what changed, and a download.",
@@ -18,6 +17,8 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "Frontend and Laravel packages are on their current releases, including the editor, charts, tables, and styles.",
+    "This update needs PHP 8.3.",
     "Opening Edit on a server and saving no longer replaces the name and address with the panel server, or turns an enabled server off.",
     "The same RustMaps map can be used in several votes. If a map link cannot be loaded, you get an error and that vote is left as it was.",
     "The vote page shows your site name above the server.",

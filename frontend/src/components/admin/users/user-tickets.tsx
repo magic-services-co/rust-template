@@ -1,17 +1,14 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    VisibilityState,
+    ColumnVisibilityState,
     flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
+    useTable,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -57,7 +54,7 @@ type TicketUser = {
         providerAccountId: string
     }[] */
 }
-const columns: ColumnDef<Ticket>[] = [
+const columns: ColumnDef<AppTableFeatures, Ticket>[] = [
     {
         accessorKey: "id",
         header: "Ticket ID",
@@ -128,7 +125,7 @@ const columns: ColumnDef<Ticket>[] = [
 export default function UserTickets({ userId }: { userId: string }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+    const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({})
     const [statusFilter, setStatusFilter] = React.useState<string>("all")
 
     const { data: tickets, isLoading, isError } = useQuery<Ticket[]>({
@@ -145,25 +142,17 @@ export default function UserTickets({ userId }: { userId: string }) {
         },
     })
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: tickets ?? [],
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
-        },
-        filterFns: {
-            status: (row, id, filterValue) => {
-                return filterValue === "all" || row.getValue(id) === filterValue;
-            },
         },
     })
 

@@ -40,7 +40,7 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
     const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = React.useState(false);
     const hasTickets = (category.ticketCount ?? 0) > 0;
-    const methods = useForm<FormValues>({
+    const methods = useForm<z.input<typeof formSchema>, any, FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             ...category,
@@ -127,7 +127,7 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
             updateCategoryMutation.mutate({ ...data, slug: category.slug });
         } catch (error) {
             if (error instanceof z.ZodError) {
-                console.error('Zod validation error:', error.errors);
+                console.error('Zod validation error:', error.issues);
                 toast.error('Form validation failed. Please check your inputs.');
             } else {
                 console.error('Unexpected error:', error);
@@ -183,7 +183,12 @@ export function EditCategoryForm({ category }: EditCategoryFormProps) {
                             <FormItem>
                                 <FormLabel>Max Open Tickets per User</FormLabel>
                                 <FormControl>
-                                    <Input {...field} type="number" min={1} />
+                                    <Input
+                                        {...field}
+                                        type="number"
+                                        min={1}
+                                        value={field.value == null ? "" : String(field.value)}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

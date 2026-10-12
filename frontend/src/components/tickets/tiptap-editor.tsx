@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from 'react'
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
-import BubbleMenuExtension from '@tiptap/extension-bubble-menu'
 import Link from '@tiptap/extension-link'
 import BulletList from '@tiptap/extension-bullet-list'
 import { Button } from "@/components/ui/button"
@@ -29,7 +29,6 @@ export function TipTapEditor({ onSend, handleFilesSelected, disabled, isScanning
             StarterKit.configure({
                 bulletList: false,
             }),
-            BubbleMenuExtension,
             Link.configure({
                 openOnClick: false,
             }),
@@ -57,7 +56,7 @@ export function TipTapEditor({ onSend, handleFilesSelected, disabled, isScanning
     return (
         <div className="w-full space-y-2">
             {editor && (
-                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+                <BubbleMenu editor={editor}>
                     <div className="flex gap-2 rounded-md border border-border/15 bg-background shadow-sm">
                         <Button
                             variant={editor.isActive("bold") ? "default" : "ghost"}

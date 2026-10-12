@@ -1,4 +1,5 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -6,13 +7,9 @@ import { getSubscriptions } from "@/app/actions/admin-store"
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
+    useTable,
     SortingState,
-    getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel,
 } from "@tanstack/react-table"
 import { ArrowUpDown, Check, Copy } from "lucide-react"
 
@@ -85,7 +82,7 @@ function SubscriptionIdCell({ subscriptionId }: { subscriptionId: string }) {
     )
 }
 
-const columns: ColumnDef<Subscription>[] = [
+const columns: ColumnDef<AppTableFeatures, Subscription>[] = [
     {
         accessorKey: "id",
         header: "Subscription ID",
@@ -171,15 +168,12 @@ export function UserSubscriptions({ customerId }: { customerId: string }) {
         queryFn: (): Promise<SubscriptionsResponse> => getSubscriptions(customerId) as Promise<SubscriptionsResponse>
     })
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: subscriptionsData?.data || [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
             columnFilters,

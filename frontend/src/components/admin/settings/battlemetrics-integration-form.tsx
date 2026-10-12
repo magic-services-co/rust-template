@@ -40,7 +40,7 @@ const battlemetricsIntegrationSchema = z.object({
     path: ["enabled"],
 })
 
-type BattleMetricsIntegrationFormValues = z.infer<typeof battlemetricsIntegrationSchema>
+type BattleMetricsIntegrationFormValues = z.output<typeof battlemetricsIntegrationSchema>
 
 export function BattleMetricsIntegrationForm() {
     const queryClient = useQueryClient()
@@ -67,7 +67,7 @@ export function BattleMetricsIntegrationForm() {
         },
     })
 
-    const form = useForm<BattleMetricsIntegrationFormValues>({
+    const form = useForm<z.input<typeof battlemetricsIntegrationSchema>, any, BattleMetricsIntegrationFormValues>({
         resolver: zodResolver(battlemetricsIntegrationSchema),
         defaultValues: {
             apiKey: "",

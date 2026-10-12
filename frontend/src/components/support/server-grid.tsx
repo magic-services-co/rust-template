@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence, stagger } from "framer-motion";
+import { motion, AnimatePresence, stagger, type Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 import useServerData, { EnhancedServerData } from "@/hooks/use-server-data";
 import { Input } from "../ui/input";
@@ -21,13 +21,13 @@ const staggerVariants = {
     }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { y: -150, opacity: 0 },
     visible: {
         y: 0,
         opacity: 1,
         transition: {
-            type: "spring",
+            type: "spring" as const,
             stiffness: 300,
             damping: 20,
             mass: 0.8,

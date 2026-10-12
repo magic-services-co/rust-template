@@ -1,13 +1,12 @@
 "use client"
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import { useState, useCallback } from "react"
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
+    useTable,
     ColumnFiltersState,
-    getFilteredRowModel,
 } from "@tanstack/react-table"
 
 import {
@@ -43,7 +42,7 @@ import { toast } from "sonner"
 
 export function DataTable({
     columns,
-}: { columns: ColumnDef<AdminLog, any>[] }) {
+}: { columns: ColumnDef<AppTableFeatures, AdminLog, any>[] }) {
     const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
     const [queryPageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(10));
     const [searchQuery, setSearchQuery] = useQueryState('search', {
@@ -104,12 +103,11 @@ export function DataTable({
         }
     };
 
-    const table = useReactTable<AdminLog>({
+    const table = useTable({
+        features: appTableFeatures,
         data: data?.logs || [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
         onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
         state: {
             columnFilters,
             pagination: {

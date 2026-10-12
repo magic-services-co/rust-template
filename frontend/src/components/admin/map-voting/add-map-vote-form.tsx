@@ -30,9 +30,9 @@ export type MapOptionStyle = "rustmaps" | "custom";
 
 const mapVoteFormSchema = z.object({
     server: z.string().min(1, "Server is required"),
-    vote_start: z.date({ required_error: "Vote start date is required" }),
-    vote_end: z.date({ required_error: "Vote end date is required" }),
-    map_start: z.date({ required_error: "Map start date is required" }),
+    vote_start: z.date({ message: "Vote start date is required" }),
+    vote_end: z.date({ message: "Vote end date is required" }),
+    map_start: z.date({ message: "Map start date is required" }),
     map_options: z.array(z.any()).min(2, "At least two map options are required").max(20, "Maximum 20 map options allowed"),
 });
 
@@ -252,7 +252,6 @@ export function AddMapVoteForm() {
                                                     mode="single"
                                                     selected={field.value}
                                                     onSelect={field.onChange}
-                                                    initialFocus
                                                 />
                                                 <div className="flex justify-center p-3 border-t border-border/15">
                                                     <TimePicker
@@ -298,7 +297,6 @@ export function AddMapVoteForm() {
                                                         mode="single"
                                                         selected={field.value}
                                                         onSelect={field.onChange}
-                                                        initialFocus
                                                     />
                                                     <div className="flex justify-center p-3 border-t border-border/15">
                                                         <TimePicker
@@ -343,7 +341,6 @@ export function AddMapVoteForm() {
                                                         mode="single"
                                                         selected={field.value}
                                                         onSelect={field.onChange}
-                                                        initialFocus
                                                     />
                                                     <div className="flex justify-center p-3 border-t border-border/15">
                                                         <TimePicker

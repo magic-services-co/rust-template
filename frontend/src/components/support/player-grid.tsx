@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { useQuery } from "@tanstack/react-query";
@@ -33,13 +33,13 @@ const staggerVariants = {
     }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { y: -150, opacity: 0 },
     visible: {
         y: 0,
         opacity: 1,
         transition: {
-            type: "spring",
+            type: "spring" as const,
             stiffness: 300,
             damping: 20,
             mass: 0.8,

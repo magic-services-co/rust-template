@@ -3,7 +3,7 @@
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
 import { useMemo, useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -155,8 +155,8 @@ export function DynamicTicketForm({ categorySlug, serverTheme }: DynamicTicketFo
         }, {}) ?? {},
     [category])
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<Record<string, any>>({
+        resolver: zodResolver(formSchema) as Resolver<Record<string, any>>,
         defaultValues,
         mode: 'onSubmit',
         criteriaMode: 'all'
@@ -421,7 +421,6 @@ export function DynamicTicketForm({ categorySlug, serverTheme }: DynamicTicketFo
                                                                             }
                                                                             return false;
                                                                         }}
-                                                                        initialFocus
                                                                     />
                                                                 </PopoverContent>
                                                             </Popover>

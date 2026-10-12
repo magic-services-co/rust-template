@@ -1,4 +1,5 @@
 "use client"
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import { useState, useCallback, useEffect } from "react"
 import { backendApi } from "@/lib/api"
@@ -6,11 +7,8 @@ import { getAuthToken } from "@/lib/laravel-auth"
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
+    useTable,
     ColumnFiltersState,
-    getFilteredRowModel,
     SortingState,
 } from "@tanstack/react-table"
 
@@ -38,7 +36,7 @@ import { ServyCoreImportDialog } from "@/components/admin/users/servycore-import
 
 export function DataTable({
     columns,
-}: { columns: ColumnDef<User, any>[] }) {
+}: { columns: ColumnDef<AppTableFeatures, User, any>[] }) {
     const { data: session } = useSession()
     const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
     const [pageSize, setPageSize] = useQueryState('pageSize', parseAsInteger.withDefault(10));
@@ -117,13 +115,11 @@ export function DataTable({
         setPage(1)
     }, [sortBy, sortOrder, setSortBy, setSortOrder, setPage])
 
-    const table = useReactTable<User>({
+    const table = useTable({
+        features: appTableFeatures,
         data: data?.users || [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
         onSortingChange: setSorting,
         state: {
             columnFilters,

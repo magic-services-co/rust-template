@@ -1,4 +1,5 @@
 "use client"
+import { type AppTableFeatures } from "@/lib/table-features"
 
 import { backendApi } from "@/lib/api"
 import { getAuthToken } from "@/lib/laravel-auth"
@@ -134,7 +135,7 @@ function UserActionsCell({ user }: { user: User }) {
     );
 }
 
-export const columns: ColumnDef<User>[] = [
+export const columns: ColumnDef<AppTableFeatures, User>[] = [
     {
         id: "select",
         header: ({ table }) => (

@@ -54,7 +54,7 @@ const redirectSchema = z.object({
     permanent: z.boolean().default(false),
 });
 
-type RedirectFormData = z.infer<typeof redirectSchema>;
+type RedirectFormData = z.output<typeof redirectSchema>;
 
 interface Redirect {
     id: number;
@@ -72,7 +72,7 @@ function RedirectForm({
     initialData?: Redirect | null,
     isLoading: boolean
 }) {
-    const form = useForm<RedirectFormData>({
+    const form = useForm<z.input<typeof redirectSchema>, any, RedirectFormData>({
         resolver: zodResolver(redirectSchema),
         defaultValues: initialData || {
             source: '',

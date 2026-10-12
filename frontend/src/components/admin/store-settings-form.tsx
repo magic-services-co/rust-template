@@ -40,7 +40,7 @@ const storeSettingsSchema = z.object({
     }
 );
 
-export type StoreSettingsFormValues = z.infer<typeof storeSettingsSchema>
+export type StoreSettingsFormValues = z.output<typeof storeSettingsSchema>
 
 export function StoreSettingsForm() {
     const queryClient = useQueryClient()
@@ -59,7 +59,7 @@ export function StoreSettingsForm() {
         },
     })
 
-    const form = useForm<StoreSettingsFormValues>({
+    const form = useForm<z.input<typeof storeSettingsSchema>, any, StoreSettingsFormValues>({
         resolver: zodResolver(storeSettingsSchema),
         defaultValues: {
             featuredProductEnabled: false,

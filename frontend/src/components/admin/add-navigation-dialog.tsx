@@ -14,7 +14,7 @@ interface AddNavigationDialogProps {
 }
 
 export function AddNavigationDialog({ isOpen, onClose, onSubmit }: AddNavigationDialogProps) {
-    const form = useForm<z.infer<typeof navigationItemSchema>>({
+    const form = useForm<z.input<typeof navigationItemSchema>, any, z.output<typeof navigationItemSchema>>({
         resolver: zodResolver(navigationItemSchema),
         defaultValues: {
             label: '',

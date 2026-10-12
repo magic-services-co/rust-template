@@ -1,4 +1,5 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -6,13 +7,9 @@ import { getOrders } from "@/app/actions/admin-store"
 import {
     ColumnDef,
     flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
+    useTable,
     SortingState,
-    getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel,
 } from "@tanstack/react-table"
 import { ArrowUpDown, Check, Copy } from "lucide-react"
 
@@ -86,7 +83,7 @@ function OrderIdCell({ orderId }: { orderId: string }) {
     )
 }
 
-const columns: ColumnDef<Order>[] = [
+const columns: ColumnDef<AppTableFeatures, Order>[] = [
     {
         accessorKey: "id",
         header: "Order ID",
@@ -174,15 +171,12 @@ export function UserOrders({ customerId }: { customerId: string }) {
         queryFn: (): Promise<OrdersResponse> => getOrders(customerId) as Promise<OrdersResponse>
     })
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: ordersData?.data || [],
         columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
             columnFilters,

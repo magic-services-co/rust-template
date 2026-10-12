@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { backendApi } from '@/lib/api';
 import { getAuthToken } from '@/lib/laravel-auth';
 import { prepareSanctumMutationHeaders } from '@/lib/sanctum-csrf';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Image from 'next/image';
@@ -434,8 +434,8 @@ const newPageSchema = z.object({
   newSlug: z.string().min(1, "Slug is required"),
 });
 
-type PageThemeFormValues = z.infer<typeof pageThemeSchema>;
-type NewPageFormValues = z.infer<typeof newPageSchema>;
+type PageThemeFormValues = z.output<typeof pageThemeSchema>;
+type NewPageFormValues = z.output<typeof newPageSchema>;
 
 interface PageTheme {
   id: string;
@@ -592,7 +592,7 @@ interface TeamUser {
 }
 
 interface TeamSectionProps {
-  form: ReturnType<typeof useForm<PageThemeFormValues>>;
+  form: UseFormReturn<z.input<typeof pageThemeSchema>, any, PageThemeFormValues>;
 }
 
 function TeamSection({ form }: TeamSectionProps) {
@@ -856,12 +856,12 @@ export function PageThemeSettings() {
   const [pages, setPages] = useState<PageTheme[]>([]);
   const [selectedPageTheme, setSelectedPageTheme] = useState<PageTheme | null>(null);
 
-  const form = useForm<PageThemeFormValues>({
+  const form = useForm<z.input<typeof pageThemeSchema>, any, PageThemeFormValues>({
     resolver: zodResolver(pageThemeSchema),
     defaultValues: getDefaultFormValues(),
   });
 
-  const newPageForm = useForm<NewPageFormValues>({
+  const newPageForm = useForm<z.input<typeof newPageSchema>, any, NewPageFormValues>({
     resolver: zodResolver(newPageSchema),
     defaultValues: {
       newSlug: '',

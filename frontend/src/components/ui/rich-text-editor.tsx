@@ -1,6 +1,7 @@
 "use client"
 
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import { Button } from "@/components/ui/button"
@@ -39,14 +40,14 @@ export function RichTextEditor({ value, onChange, className }: RichTextEditorPro
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value, false);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor, value]);
 
   return (
     <div className={cn("w-full space-y-2 rounded-md border border-input", className)}>
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+        <BubbleMenu editor={editor}>
           <div className="flex gap-1 rounded-md border border-border/15 bg-background p-1 shadow-sm">
             <Button
               variant={editor.isActive('heading', { level: 2 }) ? "default" : "ghost"}

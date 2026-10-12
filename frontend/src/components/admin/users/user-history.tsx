@@ -1,17 +1,14 @@
 'use client'
+import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
 import * as React from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    VisibilityState,
+    ColumnVisibilityState,
     flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
+    useTable,
 } from "@tanstack/react-table"
 import { ArrowUpDown } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -41,7 +38,7 @@ type BanHistory = {
     }
 }
 
-const columns: ColumnDef<BanHistory>[] = [
+const columns: ColumnDef<AppTableFeatures, BanHistory>[] = [
     {
         accessorKey: "action",
         header: "Action",
@@ -82,7 +79,7 @@ const columns: ColumnDef<BanHistory>[] = [
 export default function UserHistory({ userId }: { userId: string }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+    const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({})
 
     const { data: history, isLoading, isError } = useQuery<BanHistory[]>({
         queryKey: ['admin-user-history', userId],
@@ -98,15 +95,12 @@ export default function UserHistory({ userId }: { userId: string }) {
         },
     })
 
-    const table = useReactTable({
+    const table = useTable({
+        features: appTableFeatures,
         data: history ?? [],
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         state: {
             sorting,

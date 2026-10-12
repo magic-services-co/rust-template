@@ -590,7 +590,6 @@ export function BanForm({ onSuccess, onCancel, hideTitle, initialData }: BanForm
                                                 }
                                             }}
                                             disabled={(date) => date < new Date()}
-                                            initialFocus
                                         />
                                         <div className="flex justify-center p-3 border-t border-border/15">
                                             <TimePicker

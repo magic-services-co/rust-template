@@ -52,7 +52,7 @@ const serverFormSchema = z.object({
     tagIds: z.array(z.number()).default([]),
 })
 
-type ServerFormData = z.infer<typeof serverFormSchema>
+type ServerFormData = z.output<typeof serverFormSchema>
 
 export function ServerActions({
     serverId,
@@ -74,7 +74,7 @@ export function ServerActions({
     const [ptPanelId, setPtPanelId] = useState<number | null>(pterodactylPanelId ?? null)
     const [ptServerId, setPtServerId] = useState<string | null>(pterodactylServerIdentifier ?? null)
 
-    const form = useForm<ServerFormData>({
+    const form = useForm<z.input<typeof serverFormSchema>, any, ServerFormData>({
         resolver: zodResolver(serverFormSchema),
         defaultValues: {
             server_id: serverId,

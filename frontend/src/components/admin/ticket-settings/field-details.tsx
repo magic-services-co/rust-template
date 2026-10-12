@@ -190,7 +190,6 @@ export function DateFieldDetails({ stepIndex, fieldIndex, control, optionsPath }
                                     mode="single"
                                     selected={field.value ? new Date(field.value) : undefined}
                                     onSelect={(date) => field.onChange(date?.toISOString())}
-                                    initialFocus
                                 />
                             </PopoverContent>
                         </Popover>
@@ -227,7 +226,6 @@ export function DateFieldDetails({ stepIndex, fieldIndex, control, optionsPath }
                                     mode="single"
                                     selected={field.value ? new Date(field.value) : undefined}
                                     onSelect={(date) => field.onChange(date?.toISOString())}
-                                    initialFocus
                                 />
                             </PopoverContent>
                         </Popover>
