@@ -1,7 +1,8 @@
 {
-  "version": "2.3.5",
+  "version": "2.3.6",
   "releasedAt": "2026-10-12",
   "notes": [
+    "Updating the site finishes building the pages again, so the version you see is the version that is running.",
     "The leaderboard loads instead of crashing while the table is opening.",
     "The admin sidebar sits beside the page instead of covering it."
   ],
@@ -17,6 +18,7 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "A site update no longer stops while installing the frontend, which had left the new version number on the old pages.",
     "The leaderboard no longer crashes while it loads the server and wipe lists.",
     "The admin sidebar sits beside the main section.",
     "Chart and account menu widths follow their layout again.",
