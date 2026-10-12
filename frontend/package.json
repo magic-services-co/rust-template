@@ -1,6 +1,6 @@
 {
   "name": "magic-rust-template",
-  "version": "2.3.10",
+  "version": "2.3.11",
   "private": true,
   "type": "module",
   "engines": {
@@ -88,11 +88,11 @@
     "@types/openid": "^2.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^10",
+    "eslint": "^9.39.1",
     "eslint-config-next": "^16",
     "playwright-core": "1.64",
     "postcss": "^8",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7"
+    "typescript": ">=6.0.3 <6.1.0"
   }
 }

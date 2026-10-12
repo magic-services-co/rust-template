@@ -1,7 +1,8 @@
 {
-  "version": "2.3.10",
+  "version": "2.3.11",
   "releasedAt": "2026-10-12",
   "notes": [
+    "A site update no longer prints a long list of peer-dependency warnings while installing the frontend.",
     "A site update compiles MagicCore before it is published, and the site will not serve a DLL the game cannot load.",
     "An update starts the site and the API when they are not already running.",
     "A logo address shows in the navbar and the admin sidebar, and saving a color keeps that color on the preview.",
@@ -25,6 +26,7 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "The frontend uses ESLint 9 and TypeScript 6.0, which the Next.js lint plugins accept, so an update does not warn about those packages.",
     "Publishing builds MagicCore.dll and checks that Rust can read it. The download skips a file that is not a real mod.",
     "A site update starts the frontend on port 3000 and the backend on port 8000 when nothing is listening.",
     "The navbar and the admin sidebar use the logo address you save. A large file stays in the logo box.",
