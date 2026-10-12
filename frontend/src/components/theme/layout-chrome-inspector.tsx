@@ -55,10 +55,12 @@ export function LayoutChromeInspector({
   focusGroup,
   activeField,
   onActiveFieldChange,
+  embedded = false,
 }: {
   focusGroup: LayoutChromeGroupId;
   activeField: string | null;
   onActiveFieldChange: (key: string | null) => void;
+  embedded?: boolean;
 }) {
   const [theme, setTheme] = useState<LayoutChromeTheme>(() => withLayoutChromeDefaults());
   const [baseline, setBaseline] = useState<LayoutChromeTheme>(() => withLayoutChromeDefaults());
@@ -93,7 +95,7 @@ export function LayoutChromeInspector({
   }, []);
 
   useEffect(() => {
-    setOpenGroups([focusGroup]);
+    setOpenGroups((prev) => (prev.includes(focusGroup) ? prev : [focusGroup, ...prev]));
   }, [focusGroup]);
 
   useEffect(() => {
@@ -199,14 +201,10 @@ export function LayoutChromeInspector({
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={embedded ? "flex flex-col" : "flex h-full flex-col"}>
       <div className="space-y-3 border-b border-border pb-4">
         <p className="text-sm text-muted-foreground">
-          {focusGroup === "footer"
-            ? "Click the footer or edit the fields. Changes preview on every page."
-            : focusGroup === "account"
-              ? "Click the user photo to open the menu, then edit these colors. Sign in if you only see Sign in."
-              : "Click the header or pick Profile dropdown in the page list to edit the user menu."}
+          Navigation, footer, and the profile menu. These show on every page.
         </p>
         <Input
           value={query}
@@ -250,11 +248,9 @@ export function LayoutChromeInspector({
         type="multiple"
         value={openGroups}
         onValueChange={setOpenGroups}
-        className="flex-1 overflow-y-auto"
+        className={embedded ? undefined : "flex-1 overflow-y-auto"}
       >
-        {orderedGroups
-          .filter((group) => group.id === focusGroup)
-          .map((group) => {
+        {orderedGroups.map((group) => {
           const fields = grouped.get(group.id) ?? [];
           if (fields.length === 0) return null;
           return (

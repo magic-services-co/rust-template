@@ -46,7 +46,8 @@ const buildBreadcrumbs = (navLinks: NavLink[], fullPath: string): { name: string
             })
             currentNavLinks = navLink.children
         } else {
-            const name = part.charAt(0).toUpperCase() + part.slice(1)
+            const segmentLabels: Record<string, string> = { theme: "Site Editor", api: "API" }
+            const name = segmentLabels[part] ?? part.charAt(0).toUpperCase() + part.slice(1)
             if (name === 'Ticket' && accumulatedPath === '/admin/ticket') {
                 breadcrumbs.push({
                     name: 'Tickets',

@@ -51,19 +51,25 @@ async function loadHomeSettings(): Promise<Record<string, unknown>> {
   return isPlainObject(raw) ? raw : {};
 }
 
+const LINKED_HOME_GROUPS = new Set(["visibility", "hero", "look"]);
+
 export function HomeThemeInspector({
   activeField,
   onActiveFieldChange,
+  embedded = false,
+  linkedOnly = false,
 }: {
   activeField: string | null;
   onActiveFieldChange: (key: string | null) => void;
+  embedded?: boolean;
+  linkedOnly?: boolean;
 }) {
   const [theme, setTheme] = useState<HomeTheme>(() => withHomeDefaults());
   const [baseline, setBaseline] = useState<HomeTheme>(() => withHomeDefaults());
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
-  const [openGroups, setOpenGroups] = useState<string[]>(["servers", "rules", "team"]);
+  const [openGroups, setOpenGroups] = useState<string[]>(embedded ? [] : ["servers", "rules", "team"]);
   const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -161,6 +167,11 @@ export function HomeThemeInspector({
     );
   }, [query]);
 
+  useEffect(() => {
+    if (!query.trim()) return;
+    setOpenGroups([...new Set(filtered.map((field) => field.group))]);
+  }, [query, filtered]);
+
   const grouped = useMemo(() => {
     const map = new Map<HomeThemeGroupId, HomeThemeField[]>();
     HOME_THEME_GROUPS.forEach((group) => map.set(group.id, []));
@@ -171,7 +182,7 @@ export function HomeThemeInspector({
   }, [filtered]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={embedded ? "flex flex-col" : "flex h-full flex-col"}>
       <div className="space-y-3 border-b border-border pb-4">
         <p className="text-sm text-muted-foreground">
           Click anything on the homepage, or edit the fields below. Changes preview instantly.
@@ -218,9 +229,9 @@ export function HomeThemeInspector({
         type="multiple"
         value={openGroups}
         onValueChange={setOpenGroups}
-        className="flex-1 overflow-y-auto"
+        className={embedded ? undefined : "flex-1 overflow-y-auto"}
       >
-        {HOME_THEME_GROUPS.map((group) => {
+        {HOME_THEME_GROUPS.filter((group) => !linkedOnly || LINKED_HOME_GROUPS.has(group.id)).map((group) => {
           const fields = grouped.get(group.id) ?? [];
           if (fields.length === 0) return null;
           return (

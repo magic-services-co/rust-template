@@ -175,7 +175,6 @@ function buildRowForTab(
     case "misc_stats":
       return {
         ...base,
-        time_played: intBetween(rng, 3_600, 1_200_000),
         animal_kills: intBetween(rng, 0, 800),
         boats_purchased: intBetween(rng, 0, 40),
         helis_purchased: intBetween(rng, 0, 25),
@@ -311,7 +310,11 @@ export function getFakeLeaderboardStats(params: FakeLeaderboardParams): FakeLead
     const rng = mulberry32(seed + i * 1_000_003);
     const username = NAMES[i % NAMES.length] + (i >= NAMES.length ? `_${i}` : "");
     const steam_id = steamIdForIndex(i, seed);
-    rows.push(buildRowForTab(params.tab, i, rng, steam_id, username));
+    const timeRng = mulberry32(hashSeed(["time_played", params.server || "none", String(i)]));
+    rows.push({
+      ...buildRowForTab(params.tab, i, rng, steam_id, username),
+      time_played: intBetween(timeRng, 3_600, 1_200_000),
+    });
   }
 
   const f = (params.filter ?? "").trim().toLowerCase();

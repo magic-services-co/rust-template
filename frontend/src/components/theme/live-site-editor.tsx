@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { HomeThemeInspector } from '@/components/theme/home-theme-inspector';
 import { PageThemeInspector } from '@/components/theme/page-theme-inspector';
 import { LayoutChromeInspector } from '@/components/theme/layout-chrome-inspector';
+import { SiteSettingsForm } from '@/components/admin/site-settings-form';
 import { homeFieldByKey } from '@/lib/home-theme-defaults';
 import { layoutChromeFieldByKey, type LayoutChromeGroupId } from '@/lib/layout-chrome-defaults';
 import { ThemeEditorPagePicker } from '@/components/admin/theme/theme-editor-page-picker';
@@ -22,7 +23,7 @@ import {
   withThemeEditorQuery,
   type ThemeEditorPageOption,
 } from '@/lib/theme-editor-pages';
-import { getLivePageCatalog, resolveLivePageSlug } from '@/lib/live-page-theme';
+import { resolveLivePageSlug } from '@/lib/live-page-theme';
 import {
   findBestSelectableElement,
   generateSelector,
@@ -76,7 +77,6 @@ function LiveSiteEditorInner() {
   const pageSlug = pathnameToPageSlug(pathname);
   const liveSlug = resolveLivePageSlug(pathname, pageSlug);
   const isHome = liveSlug === 'home';
-  const catalog = getLivePageCatalog(liveSlug);
   const clickListenerRef = useRef<((e: MouseEvent) => void) | null>(null);
   const [hoverLabel, setHoverLabel] = useState<{ text: string; x: number; y: number } | null>(null);
   const [activeField, setActiveField] = useState<string | null>(null);
@@ -144,7 +144,9 @@ function LiveSiteEditorInner() {
       if (isChromeEditorPage(page)) {
         const next = (page.slug === 'footer' || page.slug === 'account' ? page.slug : 'nav') as LayoutChromeGroupId;
         setChromeTarget(next);
-        setActiveField(next === 'account' ? 'userMenuBackground' : null);
+        setActiveField(
+          next === 'footer' ? 'footerBackground' : next === 'account' ? 'userMenuBackground' : 'navLinkColor',
+        );
         setPanelOpen(true);
         requestAnimationFrame(() => {
           if (next === 'footer') {
@@ -324,7 +326,7 @@ function LiveSiteEditorInner() {
         className="fixed bottom-0 left-0 right-0 z-[9998] bg-amber-950 text-amber-100 text-center text-sm py-2 px-4"
         data-live-site-editor-ui="true"
       >
-        Sign in as an admin to use site editor mode, or{' '}
+        Sign in as an admin to use the Site Editor, or{' '}
         <button type="button" className="underline font-medium" onClick={exitEditor}>
           exit editor mode
         </button>
@@ -333,18 +335,11 @@ function LiveSiteEditorInner() {
     );
   }
 
-  const isChrome = isChromeEditorPage(currentEditorPage);
-  const panelTitle = isChrome
-    ? currentEditorPage?.slug === 'footer'
-      ? 'Customize footer'
-      : currentEditorPage?.slug === 'account'
-        ? 'Customize profile dropdown'
-        : 'Customize navigation'
-    : isHome
-      ? 'Customize home'
-      : catalog
-        ? `Customize ${catalog.label.toLowerCase()}`
-        : 'Customize page';
+  const fieldLabel = activeField
+    ? layoutChromeFieldByKey(activeField)?.label ||
+      (isHome ? homeFieldByKey(activeField)?.label : null) ||
+      activeField
+    : null;
 
   return (
     <>
@@ -364,19 +359,14 @@ function LiveSiteEditorInner() {
       >
         <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-semibold shrink-0">Site Editor</span>
             <ThemeEditorPagePicker
               pages={editorPages}
               selectedSlug={currentEditorPage?.slug ?? pageSlug}
               onSelect={goToEditorPage}
             />
-            {activeField ? (
-              <span className="text-xs text-muted-foreground truncate max-w-[28vw]">
-                {isChrome
-                  ? layoutChromeFieldByKey(activeField)?.label || activeField
-                  : isHome
-                    ? homeFieldByKey(activeField)?.label || activeField
-                    : activeField}
-              </span>
+            {fieldLabel ? (
+              <span className="text-xs text-muted-foreground truncate max-w-[28vw]">{fieldLabel}</span>
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -397,34 +387,44 @@ function LiveSiteEditorInner() {
         >
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <p className="text-lg font-semibold">{panelTitle}</p>
-              <p className="text-xs text-muted-foreground">Click the page or edit the fields.</p>
+              <p className="text-lg font-semibold">Site Editor</p>
+              <p className="text-xs text-muted-foreground">
+                This page, the header and footer, and site setup are all in this panel.
+              </p>
             </div>
             <Button type="button" size="sm" variant="ghost" onClick={() => setPanelOpen(false)}>
               Hide
             </Button>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {isChrome ? (
+          <div className="min-h-0 flex-1 space-y-8 overflow-y-auto pr-1">
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold">This page</h2>
+              {isHome ? (
+                <HomeThemeInspector embedded activeField={activeField} onActiveFieldChange={setActiveField} />
+              ) : (
+                <PageThemeInspector
+                  embedded
+                  key={liveSlug}
+                  slug={liveSlug}
+                  activeField={activeField}
+                  onActiveFieldChange={setActiveField}
+                />
+              )}
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold">Every page</h2>
               <LayoutChromeInspector
-                focusGroup={
-                  currentEditorPage?.slug === 'footer' || currentEditorPage?.slug === 'account'
-                    ? currentEditorPage.slug
-                    : 'nav'
-                }
+                embedded
+                focusGroup={chromeTarget ?? 'nav'}
                 activeField={activeField}
                 onActiveFieldChange={setActiveField}
               />
-            ) : isHome ? (
-              <HomeThemeInspector activeField={activeField} onActiveFieldChange={setActiveField} />
-            ) : (
-              <PageThemeInspector
-                key={liveSlug}
-                slug={liveSlug}
-                activeField={activeField}
-                onActiveFieldChange={setActiveField}
-              />
-            )}
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold">Setup</h2>
+              <p className="text-sm text-muted-foreground">Site name, Discord, Steam, and the store.</p>
+              <SiteSettingsForm />
+            </section>
           </div>
         </aside>
       ) : null}

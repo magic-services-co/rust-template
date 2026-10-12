@@ -49,14 +49,20 @@ async function loadPageSettings(fetchSlug: string): Promise<Record<string, unkno
   return isPlainObject(raw) ? raw : {};
 }
 
+const LINKED_PAGE_GROUPS = new Set(["hero", "buttons"]);
+
 export function PageThemeInspector({
   slug,
   activeField,
   onActiveFieldChange,
+  embedded = false,
+  linkedOnly = false,
 }: {
   slug: string;
   activeField: string | null;
   onActiveFieldChange: (key: string | null) => void;
+  embedded?: boolean;
+  linkedOnly?: boolean;
 }) {
   const catalog = getLivePageCatalog(slug);
   const defaults = catalog?.defaults ?? {};
@@ -66,7 +72,7 @@ export function PageThemeInspector({
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
-  const [openGroups, setOpenGroups] = useState<string[]>(["hero", "cards"]);
+  const [openGroups, setOpenGroups] = useState<string[]>(embedded ? [] : ["hero", "cards"]);
   const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -164,6 +170,11 @@ export function PageThemeInspector({
     );
   }, [fields, query]);
 
+  useEffect(() => {
+    if (!query.trim()) return;
+    setOpenGroups([...new Set(filtered.map((field) => field.group))]);
+  }, [query, filtered]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, LiveThemeField[]>();
     LIVE_THEME_GROUPS.forEach((group) => map.set(group.id, []));
@@ -178,13 +189,13 @@ export function PageThemeInspector({
   if (!catalog) {
     return (
       <p className="text-sm text-muted-foreground">
-        This page does not have a structured theme yet. Use Admin → Theme Editor for global colors.
+        This page does not have structured fields yet. Site-wide colors are in the Look section of Site Editor.
       </p>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={embedded ? "flex flex-col" : "flex h-full flex-col"}>
       <div className="space-y-3 border-b border-border pb-4">
         <p className="text-sm text-muted-foreground">
           Click the page or edit the fields. Changes preview instantly.
@@ -224,9 +235,9 @@ export function PageThemeInspector({
         type="multiple"
         value={openGroups}
         onValueChange={setOpenGroups}
-        className="flex-1 overflow-y-auto"
+        className={embedded ? undefined : "flex-1 overflow-y-auto"}
       >
-        {LIVE_THEME_GROUPS.map((group) => {
+        {LIVE_THEME_GROUPS.filter((group) => !linkedOnly || LINKED_PAGE_GROUPS.has(group.id)).map((group) => {
           const groupFields = grouped.get(group.id) ?? [];
           if (groupFields.length === 0) return null;
           return (

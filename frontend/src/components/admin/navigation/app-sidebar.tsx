@@ -149,7 +149,7 @@ const data = {
           url: "/seo",
         },
         {
-          title: "Theme Settings",
+          title: "Site Editor",
           url: "/theme",
         },
         {
@@ -163,6 +163,10 @@ const data = {
         {
           title: "API Keys",
           url: "/settings/api-keys",
+        },
+        {
+          title: "API Reference",
+          url: "/api",
         },
       ],
     },

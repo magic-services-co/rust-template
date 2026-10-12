@@ -14,7 +14,7 @@ export function HomeAppearanceFields({ form }: { form: UseFormReturn<any> }) {
       <div>
         <h3 className="text-lg font-medium">Home copy and colors</h3>
         <p className="text-sm text-muted-foreground">
-          These fields also power the live editor at <code>/?theme-editor=true</code>.
+          These fields are the same ones in the Site Editor on the live site.
         </p>
       </div>
       {HOME_THEME_GROUPS.filter((group) => group.id !== "visibility").map((group) => (

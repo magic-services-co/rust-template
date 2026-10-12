@@ -1,12 +1,16 @@
 {
-  "version": "2.3.6",
+  "version": "2.3.7",
   "releasedAt": "2026-10-12",
   "notes": [
+    "The Site Editor is easier to use, and Detailed still reaches every color and control.",
+    "Admin includes an API reference for this site.",
     "Updating the site finishes building the pages again, so the version you see is the version that is running.",
     "The leaderboard loads instead of crashing while the table is opening.",
     "The admin sidebar sits beside the page instead of covering it."
   ],
   "added": [
+    "Admin has an API Reference for this site, and you can download the OpenAPI document.",
+    "Site Editor Simple mode changes one color, and the related colors follow it.",
     "System Control has a Harmony mod page with the version, what changed, and a download.",
     "A game server on the new mod checks for updates and installs them, or you can run rusttemplate.update in the server console.",
     "The mod tells the site whether that server is Oxide or Carbon, and the server card remembers it.",
@@ -18,6 +22,8 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "Site Editor Detailed lists every control. Clicking a labeled part of the preview opens that field.",
+    "A demo leaderboard fills Time played on every tab.",
     "A site update no longer stops while installing the frontend, which had left the new version number on the old pages.",
     "The leaderboard no longer crashes while it loads the server and wipe lists.",
     "The admin sidebar sits beside the main section.",

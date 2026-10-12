@@ -1,7 +1,8 @@
 'use client';
 
-import { VisualEditor } from './visual-editor';
+import { SiteEditorWorkspace } from './site-editor-workspace';
+import type { SiteEditorPanel } from './site-editor-rail';
 
-export function UnifiedThemeEditor() {
-  return <VisualEditor hideControls />;
+export function UnifiedThemeEditor({ initialPanel = 'theme' }: { initialPanel?: SiteEditorPanel }) {
+  return <SiteEditorWorkspace initialPanel={initialPanel} />;
 }

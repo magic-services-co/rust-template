@@ -5,9 +5,8 @@ import { Suspense } from 'react';
 
 export default function ThemePage() {
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">Theme Settings</h1>
-      <Suspense fallback={<div>Loading...</div>}>
+    <div className="-mx-4 -mb-6 flex h-[calc(100svh-7.5rem)] min-h-0 flex-col">
+      <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Loading Site Editor…</div>}>
         <TabContainer />
       </Suspense>
     </div>

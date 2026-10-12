@@ -134,48 +134,86 @@ export function buildThemeOverrideCss(settings: ThemeOverridePayload): string {
     `;
 }
 
-export function applyThemeMediaToDocument(doc: Document, win: Window | null, settings: ThemeOverridePayload): void {
-  const header = doc.querySelector("header");
-  if (header) {
-    header.querySelectorAll("img").forEach((img) => {
-      const imgElement = img as HTMLImageElement;
-      if (
-        imgElement.alt.toLowerCase().includes("logo") ||
-        imgElement.alt.toLowerCase().includes("server") ||
-        imgElement.src.includes("logo")
-      ) {
-        imgElement.src = settings.logoImage || "/images/logo.png";
-        imgElement.setAttribute("src", settings.logoImage || "/images/logo.png");
+export function buildSiteThemeCss(settings: ThemeOverridePayload): string {
+  const color = (value: string) => value.replace(/[\n\r\0]/g, " ");
+  const vars: Array<[string, string]> = [
+    ["--background", settings.background],
+    ["--foreground", settings.foreground],
+    ["--card", settings.card],
+    ["--card-foreground", settings.cardForeground],
+    ["--popover", settings.popover],
+    ["--popover-foreground", settings.popoverForeground],
+    ["--primary", settings.primary],
+    ["--primary-foreground", settings.primaryForeground],
+    ["--secondary", settings.secondary],
+    ["--secondary-foreground", settings.secondaryForeground],
+    ["--muted", settings.muted],
+    ["--muted-foreground", settings.mutedForeground],
+    ["--accent", settings.accent],
+    ["--accent-foreground", settings.accentForeground],
+    ["--destructive", settings.destructive],
+    ["--destructive-foreground", settings.destructiveForeground],
+    ["--border", settings.border],
+    ["--input", settings.input],
+    ["--ring", settings.ring],
+    ["--radius", settings.radius],
+  ];
+
+  return `
+      :root {
+        ${vars.map(([name, value]) => `${name}: ${color(value)};`).join("\n        ")}
       }
-    });
+
+      h1, h2, h3, h4, h5, h6 {
+        color: ${color(settings.primaryTitleColor)} !important;
+      }
+
+      p, span, div {
+        color: ${color(settings.secondaryTextColor)};
+      }
+
+      a {
+        color: ${color(settings.linkAccentColor)} !important;
+      }
+
+      nav a {
+        color: ${color(settings.navLinkColor)} !important;
+      }
+
+      nav a:hover {
+        color: ${color(settings.navLinkHoverColor)} !important;
+      }
+
+      nav a.active, nav a[aria-current="page"] {
+        color: ${color(settings.navLinkActiveColor)} !important;
+      }
+
+      .text-muted, .text-muted-foreground {
+        color: ${color(settings.mutedTextColor)} !important;
+      }
+
+      header a:not(nav a) { color: inherit !important; }
+      .site-footer a, .site-footer button { color: var(--footer-link-color, #c5d0de) !important; }
+      .legal-page h1, .legal-page h2, .legal-page h3, .legal-page h4 { color: unset !important; }
+      .legal-page a { color: inherit !important; }
+      button.layout-sign-in, button.layout-toc-item { background-color: transparent; }
+    `;
+}
+
+export function applyLayoutThemeMedia(doc: Document, settings: ThemeOverridePayload): void {
+  const layer = doc.querySelector<HTMLElement>("div.pointer-events-none.fixed.inset-0");
+  if (layer && settings.backgroundImage) {
+    layer.style.backgroundImage = `url('${settings.backgroundImage}')`;
+    layer.style.backgroundPosition = "center";
+    layer.style.backgroundRepeat = "no-repeat";
+    layer.style.backgroundSize = "cover";
+    layer.style.opacity = `${(settings.backgroundOpacity ?? 10) / 100}`;
   }
 
-  doc.querySelectorAll("img").forEach((img) => {
-    const imgElement = img as HTMLImageElement;
-    if (imgElement.alt.toLowerCase().includes("logo") || imgElement.alt.toLowerCase().includes("server")) {
-      imgElement.src = settings.logoImage || "/images/logo.png";
-      imgElement.setAttribute("src", settings.logoImage || "/images/logo.png");
-    }
-  });
-
-  doc.querySelectorAll("div").forEach((div) => {
-    const divElement = div as HTMLElement;
-    const computedStyle = win?.getComputedStyle(divElement);
-    const inlineStyle = divElement.getAttribute("style") || "";
-
-    const isBackgroundDiv =
-      (computedStyle?.position === "fixed" &&
-        (parseInt(computedStyle.zIndex || "0", 10) < 0 || computedStyle.zIndex === "-2")) ||
-      inlineStyle.includes("backgroundImage") ||
-      inlineStyle.includes("background-image") ||
-      (divElement.classList.toString().includes("bg-cover") && computedStyle?.position === "fixed");
-
-    if (isBackgroundDiv) {
-      divElement.style.backgroundImage = `url('${settings.backgroundImage || "/images/legal-hero.png"}')`;
-      divElement.style.backgroundPosition = "center";
-      divElement.style.backgroundRepeat = "no-repeat";
-      divElement.style.backgroundSize = "cover";
-      divElement.style.opacity = `${(settings.backgroundOpacity ?? 10) / 100}`;
+  if (!settings.logoImage) return;
+  doc.querySelectorAll<HTMLImageElement>("header a img, footer a img").forEach((img) => {
+    if (img.alt.toLowerCase().includes("logo")) {
+      img.src = settings.logoImage;
     }
   });
 }

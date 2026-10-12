@@ -50,8 +50,9 @@ import {
   isTextEditable,
   rgbToHex,
 } from '@/components/theme/theme-editor-dom';
-import { applyThemeMediaToDocument, buildThemeOverrideCss } from '@/components/theme/theme-override-css';
+import { applyLayoutThemeMedia, buildSiteThemeCss } from '@/components/theme/theme-override-css';
 import { ThemeEditorPagePicker } from '@/components/admin/theme/theme-editor-page-picker';
+import { SiteEditorRail, type SiteEditorPanel } from '@/components/admin/theme/site-editor-rail';
 import { LAYOUT_THEME_DEFAULTS } from '@/lib/layout-theme-defaults';
 import {
   THEME_EDITOR_CORE_PAGES,
@@ -175,13 +176,21 @@ interface SelectedElement {
   selector?: string;
 }
 
-export function VisualEditor({ hideControls = false }: { hideControls?: boolean }) {
+export function VisualEditor({
+  hideControls = false,
+  initialPanel = 'theme',
+}: {
+  hideControls?: boolean;
+  initialPanel?: SiteEditorPanel;
+}) {
   const [allPages, setAllPages] = useState(AVAILABLE_PAGES);
   const [selectedPage, setSelectedPage] = useState(AVAILABLE_PAGES[0]);
   const [settings, setSettings] = useState<ThemeSettings>(DEFAULT_SETTINGS);
   const [originalSettings, setOriginalSettings] = useState<ThemeSettings>(DEFAULT_SETTINGS);
+  const [settingsReady, setSettingsReady] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
+  const [panel, setPanel] = useState<SiteEditorPanel>(initialPanel);
   const [isEditing, setIsEditing] = useState(false);
   const [elementStyles, setElementStyles] = useState<Record<string, string>>({});
   const [elementTextContent, setElementTextContent] = useState<string>('');
@@ -203,9 +212,12 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
         ]);
         const globalData = globalRes.ok ? await globalRes.json() : {};
         const visualData = visualRes.ok ? await visualRes.json() : {};
-        const merged = { ...DEFAULT_SETTINGS, ...globalData, ...visualData };
-        setSettings(merged);
-        setOriginalSettings(merged);
+        if (globalRes.ok || visualRes.ok) {
+          const merged = { ...DEFAULT_SETTINGS, ...globalData, ...visualData };
+          setSettings(merged);
+          setOriginalSettings(merged);
+          setSettingsReady(true);
+        }
       } catch (error) {
         console.error('Error fetching theme settings:', error);
       }
@@ -863,25 +875,26 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
     style.textContent = css;
   };
 
-  const applyThemeToIframe = useCallback(() => {
-    const iframe = iframeRef.current;
-    if (!iframe?.contentDocument) return;
+  const applyThemeToIframe = useCallback((doc?: Document | null) => {
+    const iframeDoc = doc ?? iframeRef.current?.contentDocument;
+    if (!iframeDoc || !settingsReady) return;
 
-    let style = iframe.contentDocument.getElementById('theme-override') as HTMLStyleElement;
-    if (!style) {
-      style = iframe.contentDocument.createElement('style');
-      style.id = 'theme-override';
-      if (!appendStyleToIframeDocument(iframe.contentDocument, style)) return;
+    let style = iframeDoc.getElementById('theme-override') as HTMLStyleElement | null;
+    const dirty = JSON.stringify(settings) !== JSON.stringify(originalSettings);
+    if (!dirty) {
+      if (style) style.textContent = '';
+      return;
     }
 
-    style.textContent = buildThemeOverrideCss(settings);
+    if (!style) {
+      style = iframeDoc.createElement('style');
+      style.id = 'theme-override';
+      if (!appendStyleToIframeDocument(iframeDoc, style)) return;
+    }
 
-    setTimeout(() => {
-      if (iframe.contentDocument) {
-        applyThemeMediaToDocument(iframe.contentDocument, iframe.contentWindow, settings);
-      }
-    }, 100);
-  }, [settings]);
+    style.textContent = buildSiteThemeCss(settings);
+    applyLayoutThemeMedia(iframeDoc, settings);
+  }, [settings, originalSettings, settingsReady]);
 
   useEffect(() => {
     if (iframeRef.current?.contentDocument) {
@@ -1101,8 +1114,6 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
     const hsl = hexToHsl(hex);
     setSettings(prev => ({ ...prev, [key]: hsl }));
   };
-
-  const categories = [...new Set(THEME_PROPERTIES.map(p => p.category))];
 
   const getComponentOptions = () => {
     if (!selectedElement) return null;
@@ -1371,7 +1382,7 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] gap-4">
+    <div className={hideControls ? "flex h-full min-h-0 flex-col gap-3 px-4 pb-4" : "flex h-[calc(100vh-200px)] flex-col gap-4"}>
       {!hideControls && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1392,7 +1403,7 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Enter site editor
+              Edit on the site
             </Button>
             <Button onClick={() => setIframeKey(k => k + 1)} variant="ghost" size="sm">
               <RotateCcw className="w-4 h-4 mr-2" />
@@ -1430,9 +1441,13 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
       )}
 
       {hideControls && (
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 text-sm font-semibold">Site Editor</span>
             <ThemeEditorPagePicker pages={allPages} selectedSlug={selectedPage.slug} onSelect={setSelectedPage} />
+          </div>
+
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
             <Button
               type="button"
               variant="secondary"
@@ -1443,11 +1458,12 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Site editor
+              Edit on the site
             </Button>
-          </div>
-
-          <div className="flex gap-2">
+            <Button onClick={() => setIframeKey((k) => k + 1)} variant="ghost" size="sm">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reload
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
@@ -1480,8 +1496,8 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_400px] gap-4 flex-1 min-h-0">
-        <div className="border rounded-lg overflow-hidden bg-background min-h-0">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_420px] gap-4">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-background">
           <div className="bg-muted p-2 flex items-center justify-between border-b">
             <div className="text-sm text-muted-foreground">Preview: {selectedPage.label}</div>
             <div className="flex items-center gap-2">
@@ -1512,7 +1528,7 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                         </div>
                       </div>
                       <div className="flex-shrink-0 border-b border-zinc-500/20 bg-zinc-500/10 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300">
-                        💡 Tip: Hold Shift and click to select child elements
+                        Click the preview to style one element. Hold Shift to pick a child.
                       </div>
                       <iframe
                         key={selectedPage.slug}
@@ -1523,16 +1539,14 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                           const iframe = e.currentTarget;
                           if (!iframe.contentDocument) return;
 
-                          let style = iframe.contentDocument.getElementById('theme-override') as HTMLStyleElement;
-                          if (!style) {
-                            style = iframe.contentDocument.createElement('style');
-                            style.id = 'theme-override';
-                            if (!appendStyleToIframeDocument(iframe.contentDocument, style)) return;
+                          applyThemeToIframe(iframe.contentDocument);
+                          let chrome = iframe.contentDocument.getElementById('editor-styles') as HTMLStyleElement | null;
+                          if (!chrome) {
+                            chrome = iframe.contentDocument.createElement('style');
+                            chrome.id = 'editor-styles';
+                            if (!appendStyleToIframeDocument(iframe.contentDocument, chrome)) return;
                           }
-
-                          style.textContent =
-                            buildThemeOverrideCss(settings) +
-                            `
+                          chrome.textContent = `
                             a { pointer-events: none !important; }
                             .editor-selected {
                               outline: 2px solid #52525b !important;
@@ -1545,12 +1559,6 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                               cursor: pointer !important;
                             }
                           `;
-
-                          setTimeout(() => {
-                            if (iframe.contentDocument) {
-                              applyThemeMediaToDocument(iframe.contentDocument, iframe.contentWindow, settings);
-                            }
-                          }, 100);
 
                           const handleClick = (ev: MouseEvent) => {
                             ev.preventDefault();
@@ -1625,11 +1633,11 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                       />
                     </div>
                     <div className="w-[400px] bg-background flex flex-col overflow-hidden min-h-0">
-                      <div className="p-4 border-b flex-shrink-0">
-                        <h3 className="font-semibold">
-                          {selectedElement ? 'Element Options' : 'Theme Properties'}
-                        </h3>
-                      </div>
+                      {selectedElement ? (
+                        <div className="flex-shrink-0 border-b p-4">
+                          <h3 className="font-semibold">Element Options</h3>
+                        </div>
+                      ) : null}
                       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
                         {selectedElement ? (
                             <div className="space-y-4">
@@ -1684,56 +1692,24 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                                 className="w-full"
                                 onClick={() => setSelectedElement(null)}
                               >
-                                Back to Theme Properties
+                                Back
                               </Button>
                             </div>
                           ) : (
-                            <Accordion type="multiple" className="w-full" defaultValue={categories}>
-                              {categories.map((category) => (
-                                <AccordionItem key={category} value={category}>
-                                  <AccordionTrigger className="text-sm font-medium">
-                                    {category}
-                                  </AccordionTrigger>
-                                  <AccordionContent>
-                                    <div className="space-y-4 pt-2">
-                                      {THEME_PROPERTIES.filter(p => p.category === category).map(prop => (
-                                        <div key={prop.key} className="space-y-2">
-                                          <Label className="text-xs">{prop.label}</Label>
-                                          {prop.type === 'hsl' ? (
-                                            <ColorPicker
-                                              value={hslToHex(settings[prop.key as keyof ThemeSettings] as string)}
-                                              onChange={(value) => {
-                                                const hsl = hexToHsl(value);
-                                                updateSetting(prop.key as keyof ThemeSettings, hsl);
-                                              }}
-                                            />
-                                          ) : prop.type === 'color' ? (
-                                            <ColorPicker
-                                              value={settings[prop.key as keyof ThemeSettings] as string}
-                                              onChange={(value) => updateSetting(prop.key as keyof ThemeSettings, value)}
-                                            />
-                                          ) : prop.type === 'number' ? (
-                                            <Input
-                                              type="number"
-                                              value={settings[prop.key as keyof ThemeSettings] as number}
-                                              onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, parseFloat(e.target.value) || 0)}
-                                              className="text-xs"
-                                            />
-                                          ) : (
-                                            <Input
-                                              type="text"
-                                              value={settings[prop.key as keyof ThemeSettings] as string}
-                                              onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, e.target.value)}
-                                              className="text-xs"
-                                            />
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </AccordionContent>
-                                </AccordionItem>
-                              ))}
-                            </Accordion>
+                            <SiteEditorRail
+                              panel={panel}
+                              onPanel={setPanel}
+                              slug={selectedPage.slug}
+                              label={selectedPage.label}
+                              theme={
+                                <ThemePropertyEditor
+                                  settings={settings}
+                                  hslToHex={hslToHex}
+                                  hexToHsl={hexToHsl}
+                                  updateSetting={updateSetting}
+                                />
+                              }
+                            />
                           )}
                       </div>
                     </div>
@@ -1744,25 +1720,25 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
             </div>
           </div>
           <div className="border-b border-zinc-500/20 bg-zinc-500/10 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300">
-            💡 Tip: Hold Shift and click to select child elements
+            Click the preview to style one element. Hold Shift to pick a child.
           </div>
           <iframe
             key={iframeKey}
             ref={iframeRef}
             src={selectedPage.path + '?theme-preview=true'}
-            className="w-full h-[calc(100%-72px)]"
+            className="min-h-0 w-full flex-1 border-0"
             sandbox="allow-same-origin allow-scripts"
           />
         </div>
 
-        <div className="border rounded-lg bg-background flex flex-col min-h-0 max-h-full">
-          <div className="p-4 border-b flex-shrink-0">
-            <h3 className="font-semibold">
-              {selectedElement ? 'Element Options' : 'Theme Properties'}
-            </h3>
-          </div>
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-background">
+          {selectedElement ? (
+            <div className="flex-shrink-0 border-b p-4">
+              <h3 className="font-semibold">Element Options</h3>
+            </div>
+          ) : null}
 
-          <ScrollArea className="flex-1 overflow-auto" type="always">
+          <ScrollArea className="min-h-0 flex-1" type="always">
             <div className="p-4">
               {selectedElement ? (
                 <div className="space-y-4">
@@ -1824,61 +1800,130 @@ export function VisualEditor({ hideControls = false }: { hideControls?: boolean 
                     className="w-full"
                     onClick={() => setSelectedElement(null)}
                   >
-                    Back to Theme Properties
+                    Back
                   </Button>
                 </div>
               ) : (
-                <Accordion type="multiple" className="w-full" defaultValue={categories}>
-                  {categories.map((category) => (
-                    <AccordionItem key={category} value={category}>
-                      <AccordionTrigger className="text-sm font-medium">
-                        {category}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-4 pt-2">
-                          {THEME_PROPERTIES.filter(p => p.category === category).map(prop => (
-                            <div key={prop.key} className="space-y-2">
-                              <Label className="text-xs">{prop.label}</Label>
-                              {prop.type === 'hsl' ? (
-                                <ColorPicker
-                                  value={hslToHex(settings[prop.key as keyof ThemeSettings] as string)}
-                                  onChange={(value) => {
-                                    const hsl = hexToHsl(value);
-                                    updateSetting(prop.key as keyof ThemeSettings, hsl);
-                                  }}
-                                />
-                              ) : prop.type === 'color' ? (
-                                <ColorPicker
-                                  value={settings[prop.key as keyof ThemeSettings] as string}
-                                  onChange={(value) => updateSetting(prop.key as keyof ThemeSettings, value)}
-                                />
-                              ) : prop.type === 'number' ? (
-                                <Input
-                                  type="number"
-                                  value={settings[prop.key as keyof ThemeSettings] as number}
-                                  onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, parseFloat(e.target.value) || 0)}
-                                  className="text-xs"
-                                />
-                              ) : (
-                                <Input
-                                  type="text"
-                                  value={settings[prop.key as keyof ThemeSettings] as string}
-                                  onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, e.target.value)}
-                                  className="text-xs"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+                <SiteEditorRail
+                  panel={panel}
+                  onPanel={setPanel}
+                  slug={selectedPage.slug}
+                  label={selectedPage.label}
+                  theme={
+                    <ThemePropertyEditor
+                      settings={settings}
+                      hslToHex={hslToHex}
+                      hexToHsl={hexToHsl}
+                      updateSetting={updateSetting}
+                    />
+                  }
+                />
               )}
             </div>
           </ScrollArea>
         </div>
       </div>
+    </div>
+  );
+}
+
+const THEME_CATEGORIES = [...new Set(THEME_PROPERTIES.map((prop) => prop.category))];
+
+function ThemePropertyEditor({
+  settings,
+  hslToHex,
+  hexToHsl,
+  updateSetting,
+}: {
+  settings: ThemeSettings;
+  hslToHex: (hsl: string) => string;
+  hexToHsl: (hex: string) => string;
+  updateSetting: (key: keyof ThemeSettings, value: string | number) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState<string[]>(['Base Colors', 'Theme Colors']);
+  const q = query.trim().toLowerCase();
+
+  useEffect(() => {
+    if (!q) return;
+    const matched = [
+      ...new Set(
+        THEME_PROPERTIES.filter(
+          (prop) => prop.label.toLowerCase().includes(q) || prop.key.toLowerCase().includes(q),
+        ).map((prop) => prop.category),
+      ),
+    ];
+    setOpen(matched);
+  }, [q]);
+
+  const groups = THEME_CATEGORIES.map((category) => ({
+    category,
+    props: THEME_PROPERTIES.filter(
+      (prop) =>
+        prop.category === category &&
+        (!q || prop.label.toLowerCase().includes(q) || prop.key.toLowerCase().includes(q)),
+    ),
+  })).filter((group) => group.props.length > 0);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Colors and type for the whole site. Copy for the page you are previewing is under This page.
+      </p>
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search colors and type"
+        className="h-8 text-xs"
+      />
+      {groups.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No matches.</p>
+      ) : (
+        <Accordion type="multiple" className="w-full" value={open} onValueChange={setOpen}>
+          {groups.map((group) => (
+            <AccordionItem key={group.category} value={group.category}>
+              <AccordionTrigger className="text-sm font-medium">{group.category}</AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-2">
+                  {group.props.map((prop) => {
+                    const value = settings[prop.key as keyof ThemeSettings];
+                    return (
+                      <div key={prop.key} className="space-y-2">
+                        <Label className="text-xs">{prop.label}</Label>
+                        {prop.type === 'hsl' ? (
+                          <ColorPicker
+                            value={hslToHex(String(value ?? ''))}
+                            onChange={(next) => updateSetting(prop.key as keyof ThemeSettings, hexToHsl(next))}
+                          />
+                        ) : prop.type === 'color' ? (
+                          <ColorPicker
+                            value={String(value ?? '')}
+                            onChange={(next) => updateSetting(prop.key as keyof ThemeSettings, next)}
+                          />
+                        ) : prop.type === 'number' ? (
+                          <Input
+                            type="number"
+                            value={typeof value === 'number' ? value : Number(value) || 0}
+                            onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, parseFloat(e.target.value) || 0)}
+                            className="text-xs"
+                          />
+                        ) : (
+                          <Input
+                            type="text"
+                            value={value == null ? '' : String(value)}
+                            onChange={(e) => updateSetting(prop.key as keyof ThemeSettings, e.target.value)}
+                            className="text-xs"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      )}
     </div>
   );
 }
