@@ -1,7 +1,8 @@
 {
-  "version": "2.3.7",
+  "version": "2.3.8",
   "releasedAt": "2026-10-12",
   "notes": [
+    "A logo address shows in the navbar and the admin sidebar, and saving a color keeps that color on the preview.",
     "The Site Editor is easier to use, and Detailed still reaches every color and control.",
     "Admin includes an API reference for this site.",
     "Updating the site finishes building the pages again, so the version you see is the version that is running.",
@@ -22,6 +23,9 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "The navbar and the admin sidebar use the logo address you save. A large file stays in the logo box.",
+    "Saving a color in the Site Editor reloads the preview, so the color you saved stays on screen.",
+    "Editing the theme no longer resizes the rest of the page.",
     "Site Editor Detailed lists every control. Clicking a labeled part of the preview opens that field.",
     "A demo leaderboard fills Time played on every tab.",
     "A site update no longer stops while installing the frontend, which had left the new version number on the old pages.",

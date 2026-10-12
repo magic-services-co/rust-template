@@ -18,14 +18,25 @@ export function getStoredTheme(): StoredTheme | null {
   }
 }
 
+const LAYOUT_SCALE_KEYS = new Set([
+  'spacing',
+  'fontFamily',
+  'borderRadius',
+  'backgroundOpacity',
+  'backgroundImage',
+  'logoImage',
+  'faviconImage',
+]);
+
 export function themeToCss(theme: StoredTheme): string {
   const lines: string[] = [];
   for (const [key, value] of Object.entries(theme)) {
-    if (key === 'enabled') continue;
+    if (key === 'enabled' || LAYOUT_SCALE_KEYS.has(key)) continue;
     if (value === undefined || value === null) continue;
     const cssVar = '--' + camelToKebab(key);
+    if (cssVar === '--spacing' || cssVar.startsWith('--text-') || cssVar.startsWith('--font-')) continue;
     const cssValue = typeof value === 'number' ? String(value) : String(value);
-    lines.push(`${cssVar}: ${cssValue}`);
+    lines.push(`${cssVar}: ${cssValue.replace(/[;{}]/g, '')}`);
   }
   return lines.length ? `:root { ${lines.join('; ')} }` : '';
 }

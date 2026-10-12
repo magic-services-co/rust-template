@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import {
@@ -24,16 +23,23 @@ export function BrandMark({
   const color = wordmarkColor || LAYOUT_THEME_DEFAULTS.primaryTitleColor;
   const isFooter = size === "footer";
   const px = isFooter ? 48 : 50;
+  const src = (logoImage || LAYOUT_THEME_DEFAULTS.logoImage).trim();
 
   return (
     <Link href="/" className="flex shrink-0 items-center" style={{ gap: isFooter ? 12 : 10 }}>
-      <Image
-        src={logoImage || LAYOUT_THEME_DEFAULTS.logoImage}
+      <img
+        src={src}
         alt="Server Logo"
         width={px}
         height={px}
-        className={isFooter ? "size-12 object-contain" : "size-[50px] object-cover"}
-        style={isFooter ? { boxShadow: "0px 6px 24px 0px rgba(0,0,0,0.42)" } : undefined}
+        className="shrink-0 object-contain"
+        style={{
+          width: px,
+          height: px,
+          maxWidth: px,
+          maxHeight: px,
+          boxShadow: isFooter ? "0px 6px 24px 0px rgba(0,0,0,0.42)" : undefined,
+        }}
       />
       <span className="flex flex-col items-start">
         <span
@@ -62,3 +68,4 @@ export function BrandMark({
     </Link>
   );
 }
+

@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 
 import { useQuery } from "@tanstack/react-query"
+import { useSavedPageTheme } from "@/hooks/use-saved-page-theme"
 
 import { NavMain } from "@/components/admin/navigation/nav-main"
 import { NavUser } from "@/components/admin/navigation/nav-user"
@@ -202,6 +203,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: siteSettings, isLoading } = useSiteSettings();
+  const { data: layoutTheme } = useSavedPageTheme("layout");
   const { data: logoImage } = useQuery({
     queryKey: ["themeSettings", "logoImage"],
     queryFn: async () => {
@@ -209,13 +211,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         headers: { Accept: "application/json" },
         credentials: "include",
       });
-      if (!res.ok) return LAYOUT_THEME_DEFAULTS.logoImage;
+      if (!res.ok) return "";
       const data = (await res.json()) as { logoImage?: string };
-      return data.logoImage || LAYOUT_THEME_DEFAULTS.logoImage;
+      return data.logoImage?.trim() || "";
     },
     staleTime: 60 * 1000,
   });
-  const logoSrc = logoImage || LAYOUT_THEME_DEFAULTS.logoImage;
+  const layoutLogo = typeof layoutTheme?.logoImage === "string" ? layoutTheme.logoImage.trim() : "";
+  const logoSrc = layoutLogo || logoImage || LAYOUT_THEME_DEFAULTS.logoImage;
   const [logoFailed, setLogoFailed] = React.useState(false);
   React.useEffect(() => {
     setLogoFailed(false);
@@ -236,7 +239,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img
                     src={logoSrc}
                     alt=""
-                    className="size-8 shrink-0 rounded-lg object-contain"
+                    width={32}
+                    height={32}
+                    className="shrink-0 rounded-lg object-contain"
+                    style={{ width: 32, height: 32, maxWidth: 32, maxHeight: 32 }}
                     onError={() => setLogoFailed(true)}
                   />
                 )}

@@ -178,6 +178,7 @@ export function SiteEditorWorkspace({ initialPanel = "theme" }: { initialPanel?:
       setSettings(next);
       setSaved(next);
       persistTheme(next);
+      setIframeKey((key) => key + 1);
       toast.success("Theme saved");
     } catch {
       toast.error("Could not save the theme");

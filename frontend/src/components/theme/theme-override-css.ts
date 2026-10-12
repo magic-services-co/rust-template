@@ -212,8 +212,16 @@ export function applyLayoutThemeMedia(doc: Document, settings: ThemeOverridePayl
 
   if (!settings.logoImage) return;
   doc.querySelectorAll<HTMLImageElement>("header a img, footer a img").forEach((img) => {
-    if (img.alt.toLowerCase().includes("logo")) {
-      img.src = settings.logoImage;
-    }
+    if (!img.alt.toLowerCase().includes("logo")) return;
+    const px = img.closest("footer") ? "48px" : "50px";
+    img.removeAttribute("srcset");
+    img.removeAttribute("sizes");
+    img.src = settings.logoImage.trim();
+    img.style.setProperty("width", px, "important");
+    img.style.setProperty("height", px, "important");
+    img.style.setProperty("max-width", px, "important");
+    img.style.setProperty("max-height", px, "important");
+    img.style.setProperty("object-fit", "contain", "important");
   });
 }
+
