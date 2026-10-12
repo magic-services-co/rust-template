@@ -5,13 +5,15 @@
     <AssemblyName>MagicCore</AssemblyName>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>2.1.1</Version>
+    <Version>2.1.2</Version>
     <Authors>Magic Services / Vinni P.</Authors>
     <Description>Harmony mod for Magic template leaderboards, linking, bans, and Oxide/Carbon group sync.</Description>
     <LangVersion>10.0</LangVersion>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>CS1591;CS0618</NoWarn>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>

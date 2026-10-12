@@ -207,7 +207,21 @@ namespace MagicCore
 
         private static bool IsDll(byte[] bytes)
         {
-            return bytes != null && bytes.Length > 64 && bytes[0] == (byte)'M' && bytes[1] == (byte)'Z';
+            if (bytes == null || bytes.Length < 128 || bytes[0] != (byte)'M' || bytes[1] != (byte)'Z')
+            {
+                return false;
+            }
+
+            var lfanew = bytes[0x3c] | (bytes[0x3d] << 8) | (bytes[0x3e] << 16) | (bytes[0x3f] << 24);
+            if (lfanew < 64 || lfanew > bytes.Length - 4)
+            {
+                return false;
+            }
+
+            return bytes[lfanew] == (byte)'P'
+                && bytes[lfanew + 1] == (byte)'E'
+                && bytes[lfanew + 2] == 0
+                && bytes[lfanew + 3] == 0;
         }
 
         private static bool IsNewer(string remote, string local)

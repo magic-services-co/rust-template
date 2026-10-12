@@ -1,4 +1,6 @@
 * text=auto eol=lf
+*.dll binary
+*.pdb binary
 
 *.blade.php diff=html
 *.css diff=css
