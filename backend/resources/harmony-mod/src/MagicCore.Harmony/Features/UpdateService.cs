@@ -21,7 +21,7 @@ namespace MagicCore
             var cfg = ModConfig.Current;
             if (cfg == null || !cfg.HasApi())
             {
-                Say(player, "MagicCore update needs API_END_POINT and API_KEY in HarmonyMods/MagicCore.json.");
+                Say(player, "MagicCore update needs API_END_POINT and API_KEY in HarmonyMods_Data/MagicCore/MagicCore.json.");
                 return;
             }
 
@@ -146,7 +146,7 @@ namespace MagicCore
         {
             try
             {
-                var dir = Path.GetDirectoryName(ConfigStore.Path);
+                var dir = ConfigStore.ModsDirectory;
                 if (string.IsNullOrEmpty(dir))
                 {
                     Say(null, "Could not find the HarmonyMods folder.");
@@ -181,8 +181,7 @@ namespace MagicCore
         {
             try
             {
-                var dir = Path.GetDirectoryName(ConfigStore.Path);
-                var path = Path.Combine(dir ?? ".", "MagicCore.version");
+                var path = Path.Combine(ConfigStore.ModsDirectory, "MagicCore.version");
                 return File.Exists(path) ? File.ReadAllText(path).Trim() : string.Empty;
             }
             catch

@@ -31,6 +31,36 @@ namespace MagicCore
             return stat;
         }
 
+        public static void Announce(BasePlayer player)
+        {
+            if (player == null || ModConfig.Current == null || !ModConfig.Current.HasApi())
+            {
+                return;
+            }
+
+            var stat = For(player);
+            if (stat == null || stat.SteamId == 0)
+            {
+                return;
+            }
+
+            ApiClient.Post("leaderboard/stats", new
+            {
+                source = string.IsNullOrEmpty(ModConfig.Current.StatsSource) ? "core" : ModConfig.Current.StatsSource,
+                steam_id = stat.SteamId.ToString(),
+                server_id = ModConfig.Current.ServerId,
+                wipe_id = WipeService.CurrentWipeId ?? 0,
+                username = stat.UserName,
+                stats = new Dictionary<string, int>()
+            }, response =>
+            {
+                if (!response.Ok)
+                {
+                    Log.DebugMsg("Player announce failed: " + response.Status + " " + response.Body);
+                }
+            });
+        }
+
         public static PlayerStat For(ulong steamId)
         {
             if (steamId == 0)

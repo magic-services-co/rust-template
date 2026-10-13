@@ -18,7 +18,7 @@ The old MagicCore plugin was an Oxide `RustPlugin`. This build:
 1. Build `MagicCore.dll` (see below) or copy a release DLL.
 2. Put it in `HarmonyMods/` next to `RustDedicated.exe`.
 3. Start the server, or run `harmony.load MagicCore`.
-4. Edit `HarmonyMods/MagicCore.json` (created on first load).
+4. Edit `HarmonyMods_Data/MagicCore/MagicCore.json` (created on first load).
 5. Restart once, or `harmony.unload MagicCore` then `harmony.load MagicCore`.
 
 Oxide or Carbon must also be installed if you want real permission groups. Vanilla Harmony-only servers can still collect stats and bans; group grant/revoke will no-op besides log lines.

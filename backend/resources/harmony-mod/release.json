@@ -1,12 +1,13 @@
 {
-  "version": "2.1.2",
+  "version": "2.1.5",
   "releasedAt": "2026-10-12",
   "notes": [
-    "A download that is not a real MagicCore.dll is left alone, so a bad file cannot replace the mod."
+    "A player is reported to the site as soon as they connect.",
+    "MagicCore.json is created in HarmonyMods_Data/MagicCore."
   ],
   "added": [],
   "changed": [
-    "The update download must be a Windows assembly before it replaces HarmonyMods/MagicCore.dll."
+    "The mod config is no longer written next to MagicCore.dll."
   ],
   "removed": []
 }

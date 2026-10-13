@@ -9,13 +9,14 @@ namespace MagicCore.Patches
     {
         static bool Prepare() => TargetMethod() != null;
 
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(CollectibleEntity), "DoPickup", "Pickup");
+        static MethodBase TargetMethod() =>
+            PatchTargets.Bindable(PatchTargets.Find(typeof(CollectibleEntity), "DoPickup", "Pickup"), "reciever");
 
-        static void Postfix(CollectibleEntity __instance, BasePlayer player)
+        static void Postfix(CollectibleEntity __instance, BasePlayer reciever)
         {
             try
             {
-                if (__instance == null || player == null)
+                if (__instance == null || reciever == null)
                 {
                     return;
                 }
@@ -27,7 +28,7 @@ namespace MagicCore.Patches
                     amount = (int)__instance.itemList[0].amount;
                 }
 
-                var stats = StatsService.For(player);
+                var stats = StatsService.For(reciever);
                 switch (collectibleName)
                 {
                     case "wood":
@@ -72,13 +73,12 @@ namespace MagicCore.Patches
         static bool Prepare() => TargetMethod() != null;
 
         static MethodBase TargetMethod() =>
-            PatchTargets.Find(typeof(ResourceDispenser), "GiveResourceFromItem", "AssignFinishBonus");
+            PatchTargets.Bindable(PatchTargets.Find(typeof(ResourceDispenser), "ApplyItemOwnership"), "player", "item");
 
-        static void Postfix(ResourceDispenser __instance, object entity, Item item)
+        static void Postfix(BasePlayer player, Item item)
         {
             try
             {
-                var player = (entity as BaseEntity)?.ToPlayer() ?? entity as BasePlayer;
                 if (player == null || item?.info == null)
                 {
                     return;
@@ -123,41 +123,12 @@ namespace MagicCore.Patches
     }
 
     [HarmonyPatch]
-    internal static class DispenserBonusPatch
-    {
-        static bool Prepare()
-        {
-            var gather = PatchTargets.Find(typeof(ResourceDispenser), "GiveResourceFromItem");
-            var bonus = PatchTargets.Find(typeof(ResourceDispenser), "AssignFinishBonus");
-            return gather != null && bonus != null;
-        }
-
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(ResourceDispenser), "AssignFinishBonus");
-
-        static void Postfix(ResourceDispenser __instance, BasePlayer player, Item item)
-        {
-            try
-            {
-                if (player == null || item?.info == null)
-                {
-                    return;
-                }
-
-                DispenserGatherPatch.ApplyGather(player, item.info.shortname, item.amount);
-            }
-            catch (Exception ex)
-            {
-                Log.Exception(ex, "DispenserBonus");
-            }
-        }
-    }
-
-    [HarmonyPatch]
     internal static class FishGutPatch
     {
         static bool Prepare() => TargetMethod() != null;
 
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(Item), "UseItem", "DoAction");
+        static MethodBase TargetMethod() =>
+            PatchTargets.Bindable(PatchTargets.Find(typeof(Item), "DoAction"), "action", "player");
 
         static void Postfix(Item __instance, string action, BasePlayer player)
         {

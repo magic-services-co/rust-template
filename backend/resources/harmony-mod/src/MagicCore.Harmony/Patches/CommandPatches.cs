@@ -17,7 +17,7 @@ namespace MagicCore.Patches
                 return null;
             }
 
-            return AccessTools.Method(chat, "sayAs") ?? PatchTargets.Find(chat, "sayAs", "SayAs");
+            return PatchTargets.Bindable(PatchTargets.Find(chat, "sayAs", "SayAs"), "message", "player");
         }
 
         static bool Prefix(string message, BasePlayer player)

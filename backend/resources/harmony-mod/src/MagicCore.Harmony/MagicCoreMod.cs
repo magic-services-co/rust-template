@@ -6,7 +6,7 @@ namespace MagicCore
 {
     public sealed class MagicCoreMod : IHarmonyModHooks
     {
-        public const string Version = "2.1.2";
+        public const string Version = "2.1.5";
         public const string HarmonyId = "com.magicservices.magiccore";
 
         private static MagicCoreMod _instance;
@@ -115,6 +115,7 @@ namespace MagicCore
             }
 
             StatsService.For(player);
+            StatsService.Announce(player);
             RoleSyncService.SyncPlayer(player);
             BanService.Enqueue(player);
         }

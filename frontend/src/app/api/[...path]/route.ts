@@ -82,6 +82,7 @@ function copyBackendResponseHeaders(res: Response): Headers {
       lower === 'content-encoding' ||
       lower === 'transfer-encoding' ||
       lower === 'connection' ||
+      lower === 'content-length' ||
       lower === 'set-cookie'
     ) {
       return;
@@ -193,7 +194,8 @@ async function proxy(
 
   const resHeaders = copyBackendResponseHeaders(res);
 
-  const resBody = await res.text();
+  // Bytes, not text. Decoding as UTF-8 rewrites MagicCore.dll (and any other binary download).
+  const resBody = await res.arrayBuffer();
   return new NextResponse(resBody, {
     status: res.status,
     statusText: res.statusText,

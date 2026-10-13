@@ -12,16 +12,18 @@ namespace MagicCore.Patches
         static MethodBase TargetMethod() =>
             PatchTargets.Find(typeof(HackableLockedCrate), "StartHacking", "PlayerStartedHacking", "CreateHackProgress");
 
-        static void Postfix(HackableLockedCrate __instance, BasePlayer player)
+        static void Postfix(HackableLockedCrate __instance)
         {
             try
             {
-                var hacker = player;
-                if (hacker == null && __instance != null)
+                BasePlayer hacker = null;
+                if (__instance != null)
                 {
-                    var field = AccessTools.Field(__instance.GetType(), "originalHackerPlayer")
-                                ?? AccessTools.Field(__instance.GetType(), "hackerPlayer");
-                    hacker = field?.GetValue(__instance) as BasePlayer;
+                    var field = AccessTools.Field(__instance.GetType(), "originalHackerPlayerId");
+                    if (field != null && field.GetValue(__instance) is ulong id && id != 0)
+                    {
+                        hacker = BasePlayer.FindByID(id) ?? BasePlayer.FindSleeping(id);
+                    }
                 }
 
                 if (hacker != null)
@@ -44,16 +46,16 @@ namespace MagicCore.Patches
         static MethodBase TargetMethod()
         {
             var type = PatchTargets.Type("BaseMission") ?? typeof(BaseMission);
-            return PatchTargets.Find(type, "OnMissionStarted", "MissionStart");
+            return PatchTargets.Bindable(PatchTargets.Find(type, "OnMissionStarted", "MissionStart"), "assignee");
         }
 
-        static void Postfix(BasePlayer player)
+        static void Postfix(BasePlayer assignee)
         {
             try
             {
-                if (player != null)
+                if (assignee != null)
                 {
-                    StatsService.For(player).MissionsStarted++;
+                    StatsService.For(assignee).MissionsStarted++;
                 }
             }
             catch (Exception ex)
@@ -71,16 +73,16 @@ namespace MagicCore.Patches
         static MethodBase TargetMethod()
         {
             var type = PatchTargets.Type("BaseMission") ?? typeof(BaseMission);
-            return PatchTargets.Find(type, "OnMissionSucceeded", "MissionSuccess", "OnCompleted");
+            return PatchTargets.Bindable(PatchTargets.Find(type, "OnMissionSucceeded", "MissionSuccess", "OnCompleted"), "assignee");
         }
 
-        static void Postfix(BasePlayer player)
+        static void Postfix(BasePlayer assignee)
         {
             try
             {
-                if (player != null)
+                if (assignee != null)
                 {
-                    StatsService.For(player).MissionsCompleted++;
+                    StatsService.For(assignee).MissionsCompleted++;
                 }
             }
             catch (Exception ex)
@@ -95,7 +97,8 @@ namespace MagicCore.Patches
     {
         static bool Prepare() => TargetMethod() != null;
 
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(VehicleSpawner), "SpawnVehicle");
+        static MethodBase TargetMethod() =>
+            PatchTargets.Bindable(PatchTargets.Find(typeof(VehicleSpawner), "SpawnVehicle"), "prefabToSpawn", "newOwner");
 
         static void Prefix(string prefabToSpawn, BasePlayer newOwner)
         {

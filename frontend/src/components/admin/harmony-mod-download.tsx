@@ -31,17 +31,29 @@ function ReleaseList({ title, items }: { title: string; items?: string[] }) {
     )
 }
 
-function authHeaders(): Record<string, string> {
+function authHeaders(accept = "application/json"): Record<string, string> {
     const token = getAuthToken()
-    const headers: Record<string, string> = { Accept: "application/json" }
+    const headers: Record<string, string> = { Accept: accept }
     if (token) headers.Authorization = `Bearer ${token}`
     return headers
 }
 
+async function assertHarmonyDownload(blob: Blob, contentType: string | null): Promise<void> {
+    if (contentType && /json|text\/html|text\/plain/i.test(contentType)) {
+        throw new Error("The download was not the Harmony mod")
+    }
+    const prefix = new Uint8Array(await blob.slice(0, 2).arrayBuffer())
+    const isDll = prefix[0] === 0x4d && prefix[1] === 0x5a && blob.size >= 1024
+    const isZip = prefix[0] === 0x50 && prefix[1] === 0x4b && blob.size >= 64
+    if (!isDll && !isZip) {
+        throw new Error("The download was not a MagicCore.dll")
+    }
+}
+
 function filenameFromDisposition(header: string | null): string {
-    if (!header) return "MagicCore-Harmony.zip"
+    if (!header) return "MagicCore.dll"
     const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(header)
-    if (!match?.[1]) return "MagicCore-Harmony.zip"
+    if (!match?.[1]) return "MagicCore.dll"
     try {
         return decodeURIComponent(match[1].replace(/"/g, ""))
     } catch {
@@ -57,13 +69,14 @@ export function HarmonyModDownloadButton() {
         try {
             const response = await fetch(backendApi("admin/system-control/harmony/download"), {
                 credentials: "include",
-                headers: authHeaders(),
+                headers: authHeaders("application/octet-stream, application/zip, */*"),
             })
             if (!response.ok) {
                 const body = await response.json().catch(() => ({}))
                 throw new Error(body.error || body.message || "Could not download the Harmony mod")
             }
             const blob = await response.blob()
+            await assertHarmonyDownload(blob, response.headers.get("content-type"))
             const filename = filenameFromDisposition(response.headers.get("content-disposition"))
             const url = URL.createObjectURL(blob)
             const link = document.createElement("a")

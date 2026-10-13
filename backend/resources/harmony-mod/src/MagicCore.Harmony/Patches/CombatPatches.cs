@@ -10,7 +10,8 @@ namespace MagicCore.Patches
     {
         static bool Prepare() => TargetMethod() != null;
 
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(BaseCombatEntity), "Die", "OnKilled");
+        static MethodBase TargetMethod() =>
+            PatchTargets.Bindable(PatchTargets.Find(typeof(BaseCombatEntity), "Die", "OnKilled"), "info");
 
         static void Postfix(BaseCombatEntity __instance, HitInfo info)
         {
@@ -87,7 +88,10 @@ namespace MagicCore.Patches
     {
         static bool Prepare() => TargetMethod() != null;
 
-        static MethodBase TargetMethod() => PatchTargets.Find(typeof(BaseCombatEntity), "OnAttacked");
+        static MethodBase TargetMethod() =>
+            PatchTargets.Bindable(
+                PatchTargets.FindSignature(typeof(BaseCombatEntity), "OnAttacked", typeof(HitInfo)),
+                "info");
 
         static void Postfix(BaseCombatEntity __instance, HitInfo info)
         {
@@ -115,11 +119,11 @@ namespace MagicCore.Patches
         static MethodBase TargetMethod() =>
             PatchTargets.Find(typeof(BaseProjectile), "LaunchProjectile", "CreateProjectileFiredEvents", "ServerUse");
 
-        static void Postfix(BaseProjectile __instance, BasePlayer player)
+        static void Postfix(BaseProjectile __instance)
         {
             try
             {
-                var owner = player ?? __instance?.GetOwnerPlayer();
+                var owner = __instance?.GetOwnerPlayer();
                 if (owner != null)
                 {
                     StatsService.For(owner).BulletsFired++;
@@ -143,16 +147,12 @@ namespace MagicCore.Patches
             return PatchTargets.Find(launcher ?? typeof(BaseProjectile), "SV_Launch", "LaunchProjectile");
         }
 
-        static void Postfix(object __instance, BasePlayer player)
+        static void Postfix(object __instance)
         {
             try
             {
-                var owner = player;
                 var entity = __instance as BaseEntity;
-                if (owner == null && entity != null)
-                {
-                    owner = entity.ToPlayer() ?? (entity as HeldEntity)?.GetOwnerPlayer();
-                }
+                var owner = entity == null ? null : entity.ToPlayer() ?? (entity as HeldEntity)?.GetOwnerPlayer();
 
                 if (owner == null || entity == null)
                 {
@@ -196,11 +196,11 @@ namespace MagicCore.Patches
 
         static MethodBase TargetMethod() => PatchTargets.Find(typeof(ThrownWeapon), "DoThrow", "DoDrop");
 
-        static void Postfix(ThrownWeapon __instance, BasePlayer player)
+        static void Postfix(ThrownWeapon __instance)
         {
             try
             {
-                var owner = player ?? __instance?.GetOwnerPlayer();
+                var owner = __instance?.GetOwnerPlayer();
                 if (owner == null || __instance == null)
                 {
                     return;

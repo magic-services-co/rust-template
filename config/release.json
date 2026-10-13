@@ -1,7 +1,9 @@
 {
-  "version": "2.3.14",
+  "version": "2.3.15",
   "releasedAt": "2026-10-12",
   "notes": [
+    "A player who joins the server is added to Admin users.",
+    "MagicCore 2.1.5 reports that player as soon as they connect, and its config is stored in HarmonyMods_Data.",
     "Players loaded from BattleMetrics bans show their Steam name and profile picture on Admin users.",
     "The leaderboard shows each player's Steam profile picture, including pictures Steam serves from its current picture network.",
     "A site update no longer prints a long list of peer-dependency warnings while installing the frontend.",
@@ -28,6 +30,8 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "Joining the server adds that player to Admin users.",
+    "The MagicCore download from admin is the DLL.",
     "A BattleMetrics ban uses the player's Steam name and profile picture. A name saved as a Steam ID is replaced the next time bans are loaded.",
     "Leaderboard names use the Steam profile picture. The first letter of the name stays when Steam has no picture.",
     "A site update restarts the frontend onto the build it just installed.",
