@@ -61,12 +61,7 @@ function steamAvatarSrc(value: unknown): string {
     const url = value.trim();
     try {
         const host = new URL(url).hostname.toLowerCase();
-        if (
-            host === "avatars.steamstatic.com" ||
-            host === "avatars.akamai.steamstatic.com" ||
-            host === "avatars.cloudflare.steamstatic.com" ||
-            host === "steamcdn-a.akamaihd.net"
-        ) {
+        if (host === "steamcdn-a.akamaihd.net" || host.endsWith(".steamstatic.com")) {
             return url;
         }
     } catch {
