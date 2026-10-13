@@ -78,7 +78,7 @@ start_frontend() {
   echo "Starting Next.js on port ${PORT}…"
   (
     cd "$FRONTEND"
-    nohup "$NPM_BIN" run start -- --hostname 0.0.0.0 --port "$PORT" >>"$LOG" 2>&1 &
+    nohup "$NPM_BIN" run start -- --hostname 0.0.0.0 --port "$PORT" >>"$LOG" 2>&1 9>&- &
     echo $! >"$PIDFILE"
   )
   local _

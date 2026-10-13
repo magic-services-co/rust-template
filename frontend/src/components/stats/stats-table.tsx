@@ -1,7 +1,7 @@
 "use client";
 import { appTableFeatures, type AppTableFeatures } from "@/lib/table-features"
 
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
     ColumnDef,
     flexRender,
@@ -56,6 +56,25 @@ const EMPTY_ROWS: Record<string, any>[] = []
 const EMPTY_SORTING: SortingState = []
 const HIDDEN_COLUMNS = { steam_id: false }
 
+function steamAvatarSrc(value: unknown): string {
+    if (typeof value !== "string") return "";
+    const url = value.trim();
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        if (
+            host === "avatars.steamstatic.com" ||
+            host === "avatars.akamai.steamstatic.com" ||
+            host === "avatars.cloudflare.steamstatic.com" ||
+            host === "steamcdn-a.akamaihd.net"
+        ) {
+            return url;
+        }
+    } catch {
+        return "";
+    }
+    return "";
+}
+
 function PlayerCell({
     row,
     theme,
@@ -65,14 +84,27 @@ function PlayerCell({
 }) {
     const username = String(row.username ?? "Unknown");
     const sid = String(row.steam_id ?? "");
+    const avatar = steamAvatarSrc(row.avatar);
+    const [avatarFailed, setAvatarFailed] = useState(false);
     return (
         <div className="flex items-center gap-2 text-left">
+            {avatar && !avatarFailed ? (
+                <img
+                    src={avatar}
+                    alt=""
+                    width={27}
+                    height={27}
+                    className="size-[27px] shrink-0 rounded-[4px] border border-[rgba(161,191,218,0.3)] object-cover"
+                    onError={() => setAvatarFailed(true)}
+                />
+            ) : (
             <div
                 className="flex size-[27px] shrink-0 items-center justify-center rounded-[4px] border border-[rgba(161,191,218,0.3)] text-[12px] text-[#dff7ff]"
                 style={{ backgroundImage: "linear-gradient(135deg, rgb(48, 65, 80) 0%, rgb(17, 25, 33) 100%)" }}
             >
                 {username.charAt(0).toUpperCase()}
             </div>
+            )}
             <Link
                 href={`https://steamcommunity.com/profiles/${sid}`}
                 target="_blank"
