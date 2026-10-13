@@ -1,7 +1,8 @@
 {
-  "version": "2.3.13",
+  "version": "2.3.14",
   "releasedAt": "2026-10-12",
   "notes": [
+    "Players loaded from BattleMetrics bans show their Steam name and profile picture on Admin users.",
     "The leaderboard shows each player's Steam profile picture, including pictures Steam serves from its current picture network.",
     "A site update no longer prints a long list of peer-dependency warnings while installing the frontend.",
     "A site update compiles MagicCore before it is published, and the site will not serve a DLL the game cannot load.",
@@ -27,6 +28,7 @@
     "Admin shows a warning when the PayNow key is missing or cannot run the store."
   ],
   "changed": [
+    "A BattleMetrics ban uses the player's Steam name and profile picture. A name saved as a Steam ID is replaced the next time bans are loaded.",
     "Leaderboard names use the Steam profile picture. The first letter of the name stays when Steam has no picture.",
     "A site update restarts the frontend onto the build it just installed.",
     "The frontend uses ESLint 9 and TypeScript 6.0, which the Next.js lint plugins accept, so an update does not warn about those packages.",
