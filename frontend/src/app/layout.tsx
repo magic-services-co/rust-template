@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers/providers";
 import { backendApi } from "@/lib/api";
+import { firstShareImage, requestOrigin } from "@/lib/metadata";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { ConditionalAnalytics } from "@/components/conditional-analytics";
 import { UserActivityTracker } from "@/components/user-activity-tracker";
@@ -31,16 +32,35 @@ export async function generateMetadata() {
 
   let siteMetadata: Record<string, unknown> | null = null;
   try {
-    const res = await fetch(backendApi("data?include=siteMetadata"), {
+    const res = await fetch(backendApi("data?include=siteMetadata,themeSettings,layoutChrome"), {
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ["public-pages"] },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     const data = res.ok ? await res.json() : {};
     siteMetadata = (data?.siteMetadata as Record<string, unknown>) ?? null;
+    const themeLogo = (data?.themeSettings as { logoImage?: string } | undefined)?.logoImage;
+    const layoutLogo = (data?.layoutChrome as { logoImage?: string } | undefined)?.logoImage;
+    siteMetadata = {
+      ...(siteMetadata ?? {}),
+      logoImage: layoutLogo?.trim() || themeLogo?.trim() || "",
+    };
   } catch {
     // ignore - use defaults
   }
+
+  const origin = await requestOrigin();
+  const logoImage = (siteMetadata?.logoImage as string | undefined) || null;
+  const shareImage = firstShareImage(
+    [siteMetadata?.ogImageUrl as string | undefined, siteMetadata?.siteImageUrl as string | undefined],
+    logoImage,
+    origin,
+  );
+  const twitterImage = firstShareImage(
+    [siteMetadata?.twitterImageUrl as string | undefined, shareImage],
+    logoImage,
+    origin,
+  );
 
   return {
     title: siteMetadata?.siteTitle || 'Magic Rust Template',
@@ -58,15 +78,15 @@ export async function generateMetadata() {
 
       siteName: siteMetadata?.siteName,
 
-      images: siteMetadata?.ogImageUrl ? [
+      images: shareImage ? [
         {
-          url: siteMetadata.ogImageUrl,
+          url: shareImage,
 
           width: 1200,
 
           height: 630,
 
-          alt: siteMetadata?.ogImageAlt || 'Default Open Graph Image',
+          alt: siteMetadata?.ogImageAlt || 'Site logo',
         },
       ] : [],
 
@@ -80,7 +100,7 @@ export async function generateMetadata() {
 
       description: siteMetadata?.twitterDescription || siteMetadata?.siteDescription || 'A powerful Rust server website template',
 
-      images: siteMetadata?.twitterImageUrl ? [siteMetadata.twitterImageUrl] : [],
+      images: twitterImage ? [twitterImage] : [],
     },
   };
 }
@@ -88,9 +108,6 @@ export async function generateMetadata() {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-
 }
 
 export default async function RootLayout({
@@ -108,7 +125,7 @@ export default async function RootLayout({
     try {
       const res = await fetch(backendApi("data?include=themeSettings"), {
         headers: { Accept: "application/json" },
-        next: { revalidate: 60 },
+        next: { revalidate: 60, tags: ["public-pages"] },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       const data = res.ok ? await res.json() : {};

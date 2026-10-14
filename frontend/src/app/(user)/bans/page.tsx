@@ -12,7 +12,7 @@ export async function generateMetadata() {
 }
 
 export default async function BansPage() {
-    const res = await fetch(backendApi("data?include=pageTheme:bans"), { headers: { Accept: "application/json" }, next: { revalidate: 60 } });
+    const res = await fetch(backendApi("data?include=pageTheme:bans"), { headers: { Accept: "application/json" }, next: { revalidate: 60, tags: ["public-pages"] } });
     const data = res.ok ? await res.json() : {};
     const pageTheme = data.pageTheme;
 

@@ -16,7 +16,7 @@ export async function generateMetadata() {
 export default async function Page() {
   const res = await fetch(backendApi("data?include=pageTheme:leaderboard"), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
   const data = res.ok ? await res.json() : {};
   const pageTheme = data.pageTheme;

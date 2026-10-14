@@ -18,7 +18,7 @@ export default async function TermsPage() {
       ...(host && { Host: host }),
       ...(host && { "X-Forwarded-Host": host }),
     },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
   const data = res.ok ? await res.json() : {};
   const pageTheme = data.pageTheme;

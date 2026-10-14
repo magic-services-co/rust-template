@@ -34,7 +34,7 @@ export default async function SupportPage() {
   const isSignedIn = !!session;
   const res = await fetch(backendApi("data?include=themeSettings,pageTheme:support"), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
   const data = res.ok ? await res.json() : {};
   const theme = readTheme(data.pageTheme);

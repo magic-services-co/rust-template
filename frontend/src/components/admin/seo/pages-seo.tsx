@@ -67,6 +67,14 @@ const newPageSchema = z.object({
 
 type NewPageFormValues = z.infer<typeof newPageSchema>;
 
+type SeoPageRecord = {
+    slug: string;
+    label?: string;
+    path?: string;
+    custom?: boolean;
+    fallbackTitle?: string | null;
+};
+
 export function PagesSeoForm() {
     const [selectedPage, setSelectedPage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,7 +95,7 @@ export function PagesSeoForm() {
                 }
                 throw new Error('Failed to fetch page metadata');
             }
-            return response.json();
+            return response.json() as Promise<SeoPageRecord[]>;
         },
     });
 
@@ -105,7 +113,7 @@ export function PagesSeoForm() {
                 }
                 throw new Error('Failed to fetch page metadata');
             }
-            return response.json();
+            return response.json() as Promise<SeoPageRecord & PageMetadataFormValues>;
         },
         enabled: !!selectedPage,
     });
@@ -288,13 +296,18 @@ export function PagesSeoForm() {
             <div className="w-1/4 pr-4">
                 <Tabs orientation="vertical" value={selectedPage || undefined} onValueChange={setSelectedPage}>
                     <TabsList className="flex flex-col h-full">
-                        {pages?.map((page: { slug: string }) => (
+                        {pages?.map((page: SeoPageRecord) => (
                             <TabsTrigger
                                 key={page.slug}
                                 value={page.slug}
-                                className="capitalize w-full"
+                                className="h-auto w-full py-2 capitalize"
                             >
-                                {page.slug}
+                                <span className="flex flex-col items-start text-left">
+                                    <span>{page.label || page.slug}</span>
+                                    {page.custom && page.path ? (
+                                        <span className="text-xs font-normal normal-case text-muted-foreground">{page.path}</span>
+                                    ) : null}
+                                </span>
                             </TabsTrigger>
                         ))}
                     </TabsList>
@@ -352,7 +365,7 @@ export function PagesSeoForm() {
                                             </Popover>
                                         </div>
                                         <FormControl>
-                                            <Input {...field} disabled={isDisabled} />
+                                            <Input {...field} disabled={isDisabled || Boolean(selectedPageData?.custom)} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -375,7 +388,11 @@ export function PagesSeoForm() {
                                             </Popover>
                                         </div>
                                         <FormControl>
-                                            <Input {...field} disabled={isDisabled} />
+                                            <Input
+                                                {...field}
+                                                disabled={isDisabled}
+                                                placeholder={selectedPageData?.fallbackTitle ? `Leave blank to use “${selectedPageData.fallbackTitle}”` : undefined}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -398,7 +415,11 @@ export function PagesSeoForm() {
                                             </Popover>
                                         </div>
                                         <FormControl>
-                                            <Textarea {...field} disabled={isDisabled} />
+                                            <Textarea
+                                                {...field}
+                                                disabled={isDisabled}
+                                                placeholder={selectedPageData?.custom ? "Leave blank to use the site description" : undefined}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -485,7 +506,7 @@ export function PagesSeoForm() {
                                                     <Info className="h-4 w-4 text-muted-foreground" />
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-80 p-3 text-muted-foreground text-sm">
-                                                    The URL of the image used when the page is shared on social media.
+                                                    The image used when this page is shared. If it is empty, the site share image is used, then the site logo.
                                                 </PopoverContent>
                                             </Popover>
                                         </div>

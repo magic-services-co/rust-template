@@ -5,6 +5,7 @@ import { backendApi } from "@/lib/api";
 import { LicenseRequiredBlock } from "@/components/license-required-block";
 import { UserLayoutClient } from "./user-layout-client";
 import type { LayoutTheme } from "@/lib/layout-theme-defaults";
+import { PublicStructuredData } from "@/components/seo/public-structured-data";
 
 export const metadata = {};
 
@@ -60,7 +61,7 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
       ...(host && { Host: host }),
       ...(host && { "X-Forwarded-Host": host }),
     },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
 
   if (res.status === 403) {
@@ -86,6 +87,7 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
 
   return (
     <UserLayoutClient navItems={navItems} theme={theme} siteName={siteName}>
+      <PublicStructuredData />
       {safeChildren}
     </UserLayoutClient>
   );

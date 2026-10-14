@@ -305,4 +305,8 @@ if [[ -f "$nginx_site" ]] && ! grep -q 'client_max_body_size' "$nginx_site"; the
   fi
 fi
 
+if [[ -f "$ROOT/scripts/ensure-laravel-scheduler.sh" ]]; then
+  bash "$ROOT/scripts/ensure-laravel-scheduler.sh" "$ROOT" || echo "Could not configure the Laravel scheduler." >&2
+fi
+
 echo "Self-update finished."

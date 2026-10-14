@@ -23,6 +23,10 @@ if [[ "$remote" == *rust-template-source* ]]; then
   exit 0
 fi
 
+if [[ -f "$ROOT/scripts/ensure-laravel-scheduler.sh" ]]; then
+  bash "$ROOT/scripts/ensure-laravel-scheduler.sh" "$ROOT" || echo "Could not configure the Laravel scheduler." >&2
+fi
+
 if [[ ! -f "$FRONTEND/.next/BUILD_ID" ]]; then
   echo "No production frontend build yet."
   exit 0

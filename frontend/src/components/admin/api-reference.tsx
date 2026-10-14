@@ -48,6 +48,15 @@ const referenceCss = `
 export function ApiReference() {
   return (
     <div className="-mx-4 -my-6 min-h-[calc(100svh-4rem)] bg-[#060608]">
+      <div className="border-b border-white/10 px-6 py-4 text-sm leading-6 text-zinc-300">
+        <p className="font-medium text-zinc-100">Sign-in cookie and bearer token</p>
+        <p className="pt-1">
+          Signing in sets an <span className="font-mono text-xs">auth_token</span> cookie. Every admin route accepts that cookie. A script that does not send the cookie must send <span className="font-mono text-xs">Authorization: Bearer</span> with the same token.
+        </p>
+        <p className="pt-2">
+          An API key is separate. Send it as a bearer token or as <span className="font-mono text-xs">X-Api-Key</span>. It works only on admin routes that allow that key. Other admin routes still accept the cookie or a Sanctum bearer token.
+        </p>
+      </div>
       <ApiReferenceReact
         configuration={{
           url: "/api/admin/openapi.json",

@@ -13,7 +13,7 @@ export async function generateMetadata() {
 export default async function MapsViewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: rawId } = await params;
     const id = typeof rawId === "string" ? rawId : "";
-    const res = await fetch(backendApi("data?include=themeSettings,pageTheme:maps"), { headers: { Accept: "application/json" }, next: { revalidate: 60 } });
+    const res = await fetch(backendApi("data?include=themeSettings,pageTheme:maps"), { headers: { Accept: "application/json" }, next: { revalidate: 60, tags: ["public-pages"] } });
     const data = res.ok ? await res.json() : {};
     const pageTheme = data.pageTheme;
     const rawSettings = pageTheme && "settings" in pageTheme ? pageTheme.settings : null;

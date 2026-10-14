@@ -5,6 +5,7 @@ import { useQueryState } from "nuqs";
 import React from "react";
 import { GlobalSeoForm } from "./global-seo";
 import { PagesSeoForm } from "./pages-seo";
+import { SitemapForm } from "./sitemap-form";
 
 interface TabOption {
     key: string;
@@ -17,6 +18,7 @@ interface TabOption {
 const tabOptions = [
     { key: "global_seo", label: "Global SEO", component: <GlobalSeoForm /> },
     { key: "pages_seo", label: "Pages SEO", component: <PagesSeoForm /> },
+    { key: "sitemap", label: "Sitemap", component: <SitemapForm /> },
 ];
 
 

@@ -156,14 +156,6 @@ export default function UserTickets({ userId }: { userId: string }) {
         },
     })
 
-    React.useEffect(() => {
-        if (statusFilter !== "all") {
-            table.getColumn("status")?.setFilterValue(statusFilter)
-        } else {
-            table.getColumn("status")?.setFilterValue(undefined)
-        }
-    }, [statusFilter, table])
-
     const columnNames: Record<string, string> = {
         id: "Ticket ID",
         status: "Status",

@@ -13,7 +13,7 @@ export async function generateMetadata() {
 }
 
 export default async function MapsPage() {
-    const res = await fetch(backendApi("data?include=themeSettings,pageTheme:maps"), { headers: { Accept: "application/json" }, next: { revalidate: 60 } });
+    const res = await fetch(backendApi("data?include=themeSettings,pageTheme:maps"), { headers: { Accept: "application/json" }, next: { revalidate: 60, tags: ["public-pages"] } });
     const data = res.ok ? await res.json() : {};
     const pageTheme = data.pageTheme;
     const theme = parsePageTheme(pageTheme && "settings" in pageTheme ? pageTheme.settings : undefined, "maps");

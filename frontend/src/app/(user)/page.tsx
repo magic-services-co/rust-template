@@ -42,7 +42,7 @@ export default async function Home() {
   try {
     const res = await fetch(backendApi("data?include=themeSettings,siteSettings,pageTheme:home"), {
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ["public-pages"] },
     });
     const data = res.ok ? await res.json() : {};
     const rawTheme = data.themeSettings;
@@ -76,7 +76,7 @@ export default async function Home() {
       if (userIds.length > 0) {
         const usersRes = await fetch(backendApi(`data?include=${encodeURIComponent("users:" + userIds.join(","))}`), {
           headers: { Accept: "application/json" },
-          next: { revalidate: 60 },
+          next: { revalidate: 60, tags: ["public-pages"] },
         });
         const usersData = usersRes.ok ? await usersRes.json() : {};
         const usersWithRoles: UserWithRoles[] = Array.isArray(usersData.users) ? usersData.users : [];

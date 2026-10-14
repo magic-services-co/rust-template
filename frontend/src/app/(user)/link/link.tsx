@@ -32,11 +32,20 @@ import { lootyItemImageUrl } from "@/lib/looty-item-image";
 interface LinkProps {
     user?: UserSession | null;
     linkStatus?: "success" | "error" | null;
+    initialKits?: PublicLinkedKit[];
 }
 
 type LinkedKitItem = { shortname: string; amount: number };
 
+type PublicLinkedKit = {
+    id?: number;
+    label?: string;
+    kitName?: string;
+    items?: LinkedKitItem[];
+};
+
 type LinkedKitResponse = {
+    kits?: PublicLinkedKit[];
     kitName?: string;
     items?: LinkedKitItem[];
 };
@@ -172,24 +181,35 @@ function StepConnector({ filled }: { filled: boolean }) {
     );
 }
 
-export default function AccountLinkStepper({ user, linkStatus }: LinkProps) {
+export default function AccountLinkStepper({ user, linkStatus, initialKits }: LinkProps) {
     const step = getStepStatus(user);
     const queryClient = useQueryClient();
     const { data: settings } = useSiteSettings();
     const router = useRouter();
     const [isLinkingDiscord, setIsLinkingDiscord] = useState(false);
+    const [selectedKit, setSelectedKit] = useState(0);
 
     const kitQuery = useQuery({
         queryKey: ["link-kit"],
         queryFn: async () => {
             const response = await fetch(backendApi("link/kit"), { headers: { Accept: "application/json" } });
-            if (!response.ok) return { kitName: "linked", items: [] } satisfies LinkedKitResponse;
+            if (!response.ok) return { kits: [] } satisfies LinkedKitResponse;
             return (await response.json()) as LinkedKitResponse;
         },
+        initialData: initialKits ? { kits: initialKits } : undefined,
         staleTime: 60_000,
     });
-    const kitItems = kitQuery.data?.items ?? [];
-    const kitName = (kitQuery.data?.kitName || "linked").trim();
+    const kits = useMemo(() => {
+        const rows = kitQuery.data?.kits;
+        if (rows && rows.length > 0) return rows;
+        if (kitQuery.data?.items) {
+            return [{ label: "All servers", kitName: kitQuery.data.kitName, items: kitQuery.data.items }];
+        }
+        return [];
+    }, [kitQuery.data]);
+    const activeKit = kits[selectedKit] ?? kits[0];
+    const kitItems = activeKit?.items ?? [];
+    const kitName = (activeKit?.kitName || "linked").trim();
 
     const isGroupEnabled = useMemo(() => {
         return !!settings?.steamGroupId && !!settings?.steamGroupUrl;
@@ -299,6 +319,28 @@ export default function AccountLinkStepper({ user, linkStatus }: LinkProps) {
                             </p>
                         </div>
                     </div>
+
+                    {kits.length > 1 ? (
+                        <div className="flex flex-wrap gap-1.5 pt-3">
+                            {kits.map((kit, index) => {
+                                const active = (kits[selectedKit] ? selectedKit : 0) === index;
+                                return (
+                                    <button
+                                        key={kit.id ?? kit.label ?? index}
+                                        type="button"
+                                        onClick={() => setSelectedKit(index)}
+                                        className="max-w-full truncate border px-2 py-1 font-mono text-[8px] tracking-[0.8px]"
+                                        style={{
+                                            borderColor: active ? "#ba9142" : "rgba(255,255,255,0.12)",
+                                            color: active ? "#f0c970" : "rgba(236,243,252,0.7)",
+                                        }}
+                                    >
+                                        {kit.label || kit.kitName || "Kit"}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : null}
 
                     <div className="flex items-center gap-[7px] pl-[46px] pt-[17px] font-mono text-[8px] tracking-[0.85px]" style={{ color: "rgba(186,145,66,0.7)" }}>
                         <span>{kitItems.length} {kitItems.length === 1 ? "ITEM" : "ITEMS"}</span>

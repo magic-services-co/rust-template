@@ -16,7 +16,7 @@ export async function getProducts(
   const url = query ? `${backendApi("store/products")}?${query}` : backendApi("store/products");
   const res = await fetch(url, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 300 },
+    next: { revalidate: 300, tags: ["public-pages"] },
   });
   if (!res.ok) return { data: [] };
   const json = await res.json();

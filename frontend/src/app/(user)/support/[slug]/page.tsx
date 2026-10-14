@@ -25,7 +25,7 @@ export default async function SupportCategoryPage({ params }: { params: Promise<
 
   const res = await fetch(backendApi("data?include=themeSettings,pageTheme:support"), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
   const data = res.ok ? await res.json() : {};
   const pageTheme = data.pageTheme;
@@ -45,7 +45,7 @@ export default async function SupportCategoryPage({ params }: { params: Promise<
 
   const categoryRes = await fetch(backendApi(`support/${slug}`), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 30 },
+    next: { revalidate: 30, tags: ["public-pages"] },
   });
   const category = categoryRes.ok ? await categoryRes.json() : null;
   const categoryName = typeof category?.name === "string" ? category.name : slug.replace(/-/g, " ");

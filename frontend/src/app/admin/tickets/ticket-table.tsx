@@ -46,7 +46,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { parseAsInteger, useQueryState } from "nuqs"
 import { useDebouncedCallback } from "use-debounce"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import { backendApi } from "@/lib/api"
 import { getAuthToken } from "@/lib/laravel-auth"
 
@@ -209,13 +209,6 @@ export default function TicketTable() {
         pageCount: Math.ceil((data?.pagination?.totalItems ?? 0) / pageSize),
     })
 
-    useEffect(() => {
-        if (statusFilter !== "all") {
-            table.getColumn("status")?.setFilterValue(statusFilter)
-        } else {
-            table.getColumn("status")?.setFilterValue(undefined)
-        }
-    }, [statusFilter, table])
     return (
         <Card className="bg-secondary/15 border-border/5 backdrop-blur">
             <CardContent>

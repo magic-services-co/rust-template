@@ -31,7 +31,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
     const themeRes = await fetch(backendApi("data?include=themeSettings,pageTheme:support"), {
         headers: { Accept: "application/json" },
-        next: { revalidate: 60 },
+        next: { revalidate: 60, tags: ["public-pages"] },
     });
     const themeData = themeRes.ok ? await themeRes.json() : {};
     const pageTheme = themeData.pageTheme;

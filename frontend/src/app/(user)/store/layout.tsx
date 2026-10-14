@@ -14,7 +14,7 @@ export default async function Layout({
 }>) {
   const res = await fetch(backendApi("data?include=siteSettings,themeSettings,pageTheme:store"), {
     headers: { Accept: "application/json" },
-    next: { revalidate: 60 },
+    next: { revalidate: 60, tags: ["public-pages"] },
   });
   const data = res.ok ? await res.json() : {};
   const pageTheme = data.pageTheme;

@@ -5,6 +5,7 @@ import DynamicBreadcrumbs from "@/components/dynamic-breadcrumbs"
 import { AdminPageViewLogger } from "@/components/admin/admin-page-view-logger"
 import { AdminActionLogger } from "@/components/admin/admin-action-logger"
 import { AdminReleaseBadge } from "@/components/admin/admin-release-badge"
+import { PurgeCacheButton } from "@/components/admin/purge-cache-button"
 import { PayNowKeyWarning } from "@/components/admin/paynow-key-warning"
 import { Suspense } from "react"
 import { headers } from "next/headers"
@@ -12,7 +13,7 @@ import { redirect } from "next/navigation"
 import { backendApi } from "@/lib/api"
 
 export async function generateMetadata() {
-    const res = await fetch(backendApi("data?include=siteSettings"), { headers: { Accept: "application/json" }, next: { revalidate: 60 } });
+    const res = await fetch(backendApi("data?include=siteSettings"), { headers: { Accept: "application/json" }, next: { revalidate: 60, tags: ["public-pages"] } });
     const data = res.ok ? await res.json() : {};
     const siteSettings = data.siteSettings;
     return {
@@ -57,7 +58,7 @@ export default async function DashboardLayout({
             <AdminActionLogger />
             <AppSidebar />
             <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+                <header className="flex h-16 w-full shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                     <div className="flex items-center gap-2 px-4">
                         <SidebarTrigger className="-ml-1" />
                         <Separator orientation="vertical" className="mr-2 h-4" />
@@ -67,6 +68,7 @@ export default async function DashboardLayout({
                         <Separator orientation="vertical" className="mx-2 h-4" />
                         <AdminReleaseBadge />
                     </div>
+                    <PurgeCacheButton />
                 </header>
                 <div className="flex flex-1 flex-col gap-4 p-4 py-6">
                     <PayNowKeyWarning />

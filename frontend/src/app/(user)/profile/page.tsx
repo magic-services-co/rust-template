@@ -19,7 +19,7 @@ export default async function Page() {
         redirect("/link");
     }
 
-    const res = await fetch(backendApi("data?include=pageTheme:profile"), { headers: { Accept: "application/json" }, next: { revalidate: 60 } });
+    const res = await fetch(backendApi("data?include=pageTheme:profile"), { headers: { Accept: "application/json" }, next: { revalidate: 60, tags: ["public-pages"] } });
     const data = res.ok ? await res.json() : {};
     const pageTheme = data.pageTheme;
 

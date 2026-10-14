@@ -12,11 +12,11 @@ export default async function Page() {
   const [serversRes, leaderboardRes] = await Promise.all([
     fetch(backendApi("data?include=pageTheme:servers"), {
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ["public-pages"] },
     }),
     fetch(backendApi("data?include=pageTheme:leaderboard"), {
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ["public-pages"] },
     }),
   ]);
 
