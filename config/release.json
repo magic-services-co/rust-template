@@ -1,30 +1,14 @@
 {
-  "version": "2.3.16",
-  "releasedAt": "2026-10-14",
+  "version": "2.3.17",
+  "releasedAt": "2026-10-15",
   "notes": [
-    "Each server tag or server can have its own linked kit, and the Link page shows the one you pick.",
-    "The sitemap lists the real public pages, including Link, and SEO settings can leave a page out.",
-    "A custom page can have its own search title, description, and share image.",
-    "Phones can pinch-zoom again.",
-    "Purge cache in the admin header makes a change show on the public site right away.",
-    "Opening Tickets no longer traps the admin sidebar, and wipe automations run after an update."
+    "The Site Editor can set the icon that shows in the browser tab."
   ],
   "added": [
-    "A linked kit can apply to a server tag, one server, or the whole site.",
-    "SEO settings include a Sitemap list, and each page can be left out.",
-    "Public pages tell search engines their official address, and describe the site, the server list, and store products.",
-    "The API reference explains the sign-in cookie, a bearer token, and an API key.",
-    "Admin has a Purge cache button."
+    "Site Editor has a Favicon field on the theme panel and next to the logo."
   ],
   "changed": [
-    "The Link page shows the kit for the tag or server you pick.",
-    "The sitemap includes Link and the real store tabs, and leaves out a page that only redirects.",
-    "A custom page uses its own title and description. When no share image is set, the site logo is used.",
-    "Visitors can zoom the page on a phone.",
-    "Purge cache clears the public page copy. That copy otherwise lasts about a minute, or about five minutes on the store.",
-    "Opening Tickets no longer blocks the rest of the admin sidebar.",
-    "Wipe automations can run, and a site update installs the scheduler that fires them.",
-    "Admin routes accept the sign-in cookie. A script can send that cookie or a bearer token."
+    "The browser tab uses the favicon you save. The old built-in icon no longer replaces it."
   ],
   "removed": []
 }

@@ -55,6 +55,10 @@ export function SiteEditorTokens({
         <p className="text-xs text-muted-foreground">
           Change a few colors and the related ones follow. Open Detailed when you want one button state on its own.
         </p>
+        <FaviconField
+          value={String(settings.faviconImage ?? "")}
+          onChange={(value) => onChange({ ...settings, faviconImage: value })}
+        />
         {LINKED_CONTROLS.map((control) => (
           <LinkedRow
             key={control.id}
@@ -214,6 +218,31 @@ function TokenRow({
         )}
         {field.hint ? <p className="mt-1 text-[11px] text-muted-foreground">{field.hint}</p> : null}
       </div> : null}
+    </div>
+  );
+}
+
+function FaviconField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const src = value.trim();
+  return (
+    <div className="space-y-2 rounded-md border p-2">
+      <div className="flex items-center gap-2">
+        {src ? (
+          <img src={src} alt="" className="h-8 w-8 rounded-sm border bg-white object-contain" />
+        ) : null}
+        <span className="text-sm font-medium">Favicon</span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        The icon in the browser tab. Paste a square PNG, ICO, or SVG URL, then save the theme. Use Purge cache if the old icon stays.
+      </p>
+      <Input
+        id="site-editor-favicon"
+        aria-label="Favicon"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="/favicon.ico"
+        className="h-8 text-xs"
+      />
     </div>
   );
 }

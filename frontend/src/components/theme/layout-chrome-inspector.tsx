@@ -142,22 +142,21 @@ export function LayoutChromeInspector({
       }
       if (!res.ok) throw new Error("save failed");
 
-      const globalRes = await fetch(backendApi("admin/theme?mode=global"), {
-        credentials: "include",
-        headers: { Accept: "application/json", ...(headers.Authorization ? { Authorization: headers.Authorization } : {}) },
-      });
-      const global = globalRes.ok ? await globalRes.json() : {};
+      const readHeaders = { Accept: "application/json", ...(headers.Authorization ? { Authorization: headers.Authorization } : {}) };
       const mapped: Record<string, string> = {};
       for (const [chromeKey, themeKey] of Object.entries(LAYOUT_CHROME_THEME_SETTINGS_MAP)) {
         mapped[themeKey] = theme[chromeKey as keyof LayoutChromeTheme];
       }
-      await fetch(backendApi("admin/theme?mode=global"), {
+      const visualRes = await fetch(backendApi("admin/theme?mode=visual"), { credentials: "include", headers: readHeaders });
+      const visual = visualRes.ok ? await visualRes.json() : {};
+      const savedTheme = await fetch(backendApi("admin/theme?mode=visual"), {
         method: "POST",
         credentials: "include",
         headers,
-        body: JSON.stringify({ ...global, ...mapped, enabled: true, mode: "global" }),
+        body: JSON.stringify({ ...visual, ...mapped, enabled: true, mode: "visual" }),
       });
-      persistTheme({ ...global, ...mapped, enabled: true });
+      if (!savedTheme.ok) throw new Error("save failed");
+      persistTheme({ ...visual, ...mapped, enabled: true });
 
       setSettings(nextSettings);
       setBaseline(theme);

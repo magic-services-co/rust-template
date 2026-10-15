@@ -65,7 +65,7 @@ export const TOKEN_FIELDS: TokenField[] = [
   { key: "borderRadius", label: "Corner radius", type: "text", group: "Branding" },
   { key: "spacing", label: "Spacing", type: "text", group: "Branding" },
   { key: "logoImage", label: "Logo", type: "text", group: "Branding" },
-  { key: "faviconImage", label: "Favicon", type: "text", group: "Branding" },
+  { key: "faviconImage", label: "Favicon", type: "text", group: "Branding", hint: "Browser tab icon. Use a square PNG, ICO, or SVG URL." },
 ];
 
 export const TOKEN_KEY_SET = new Set<string>(TOKEN_FIELDS.map((field) => field.key));

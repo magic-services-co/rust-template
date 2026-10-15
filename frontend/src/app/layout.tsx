@@ -20,6 +20,15 @@ const inter = Inter({
 
 const FETCH_TIMEOUT_MS = 5000;
 
+function faviconFromPayload(data: {
+  themeSettings?: { faviconImage?: string };
+  layoutChrome?: { faviconImage?: string };
+}): string {
+  const fromTheme = data.themeSettings?.faviconImage?.trim();
+  const fromChrome = data.layoutChrome?.faviconImage?.trim();
+  return fromTheme || fromChrome || "/favicon.ico";
+}
+
 export async function generateMetadata() {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") ?? "";
@@ -44,6 +53,7 @@ export async function generateMetadata() {
     siteMetadata = {
       ...(siteMetadata ?? {}),
       logoImage: layoutLogo?.trim() || themeLogo?.trim() || "",
+      faviconImage: faviconFromPayload(data),
     };
   } catch {
     // ignore - use defaults
@@ -62,8 +72,11 @@ export async function generateMetadata() {
     origin,
   );
 
+  const faviconImage = (siteMetadata?.faviconImage as string | undefined) || "/favicon.ico";
+
   return {
     title: siteMetadata?.siteTitle || 'Magic Rust Template',
+    icons: { icon: faviconImage },
 
     description: siteMetadata?.siteDescription || 'A powerful Rust server website template',
 
@@ -116,30 +129,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const timestamp = Date.now();
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") ?? "";
-  const isAuthRoute = pathname.startsWith("/auth");
-
-  let faviconUrl = '/favicon.ico';
-  if (!isAuthRoute) {
-    try {
-      const res = await fetch(backendApi("data?include=themeSettings"), {
-        headers: { Accept: "application/json" },
-        next: { revalidate: 60, tags: ["public-pages"] },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
-      const data = res.ok ? await res.json() : {};
-      const theme = data?.themeSettings as { faviconImage?: string } | undefined;
-      if (theme?.faviconImage) faviconUrl = theme.faviconImage;
-    } catch {
-      // ignore
-    }
-  }
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href={faviconUrl} />
         <link rel="stylesheet" href={`/api/admin/theme/styles?v=${timestamp}`} />
         <link rel="stylesheet" href={`/api/admin/page-elements/styles?v=${timestamp}`} />
       </head>

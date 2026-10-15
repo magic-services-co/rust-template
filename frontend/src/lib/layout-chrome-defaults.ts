@@ -2,6 +2,7 @@ import { LAYOUT_THEME_DEFAULTS, LEGAL_THEME_DEFAULTS } from "@/lib/layout-theme-
 
 export const LAYOUT_CHROME_DEFAULTS = {
   logoImage: LAYOUT_THEME_DEFAULTS.logoImage,
+  faviconImage: LAYOUT_THEME_DEFAULTS.faviconImage,
   navWordmarkColor: LAYOUT_THEME_DEFAULTS.primaryTitleColor,
   navLinkColor: LAYOUT_THEME_DEFAULTS.navLinkColor,
   navLinkHoverColor: LAYOUT_THEME_DEFAULTS.navLinkHoverColor,
@@ -52,13 +53,14 @@ export type LayoutChromeField = {
 };
 
 export const LAYOUT_CHROME_GROUPS: { id: LayoutChromeGroupId; label: string; description: string }[] = [
-  { id: "nav", label: "Navigation", description: "Logo, links, underline, and the sign-in button." },
+  { id: "nav", label: "Navigation", description: "Logo, favicon, links, underline, and the sign-in button." },
   { id: "account", label: "Profile dropdown", description: "The menu that opens from the user photo." },
   { id: "footer", label: "Footer", description: "Background, tagline, link colors, and copyright." },
 ];
 
 export const LAYOUT_CHROME_FIELDS: LayoutChromeField[] = [
   { key: "logoImage", label: "Logo image", group: "nav", type: "url" },
+  { key: "faviconImage", label: "Favicon", hint: "The icon in the browser tab. Use a square PNG, ICO, or SVG URL.", group: "nav", type: "url" },
   { key: "navWordmarkColor", label: "Wordmark color", group: "nav", type: "color" },
   { key: "navLinkColor", label: "Link color", group: "nav", type: "color" },
   { key: "navLinkHoverColor", label: "Link hover color", group: "nav", type: "color" },
@@ -127,6 +129,7 @@ export function withLayoutChromeDefaults(
 
 export const LAYOUT_CHROME_THEME_SETTINGS_MAP = {
   logoImage: "logoImage",
+  faviconImage: "faviconImage",
   navWordmarkColor: "primaryTitleColor",
   navLinkColor: "navLinkColor",
   navLinkHoverColor: "navLinkHoverColor",
