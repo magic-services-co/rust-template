@@ -105,8 +105,12 @@ const nextConfig = {
                 protocol: 'https',
             },
             {
-                hostname: 'avatars.steamstatic.com',
                 protocol: 'https',
+                hostname: '**.steamstatic.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'steamcdn-a.akamaihd.net',
             },
             {
                 hostname: 'www.looty.cc',

@@ -5,18 +5,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { fetchServerTags } from "@/components/admin/servers/server-tag-picker"
+import { KitInventory, KitInventoryEditor, type KitSlotItem } from "@/components/kit-inventory"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { backendApi } from "@/lib/api"
+import { getAuthToken } from "@/lib/laravel-auth"
+import { rustItemMap, type RustItemInfo } from "@/lib/rust-items"
+import { prepareSanctumMutationHeaders } from "@/lib/sanctum-csrf"
 
 type KitSource = "plugin" | "manual"
 type KitScope = "site" | "server" | "tag"
 
-type KitItem = {
-    shortname: string
-    amount: number
-}
+type KitItem = KitSlotItem
 
 type LinkedKit = {
     id?: number
@@ -37,17 +40,21 @@ type ServerOption = {
     server_name: string
 }
 
-type TagOption = {
-    id: number
-    name: string
+function newKey(): string {
+    if (typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID()
+    }
+    const bytes = new Uint8Array(16)
+    crypto.getRandomValues(bytes)
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
-
-const selectClass =
-    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
 
 function emptyKit(): DraftKit {
     return {
-        key: `new-${crypto.randomUUID()}`,
+        key: `new-${newKey()}`,
         scope: "tag",
         serverId: "",
         tagId: null,
@@ -63,20 +70,28 @@ export function LinkedKitSettings() {
 
     const kitQuery = useQuery({
         queryKey: ["admin-linked-kit"],
-        queryFn: () => backendApi.get("admin/link/kit").json<{ kits?: LinkedKit[] }>(),
+        queryFn: () => fetchJson<{ kits?: LinkedKit[] }>("admin/link/kit"),
     })
 
     const serversQuery = useQuery({
         queryKey: ["linked-kit-servers"],
-        queryFn: () =>
-            backendApi.get("servers").json<{
-                data?: { servers?: ServerOption[] }[]
-            }>(),
+        queryFn: () => fetchJson<{ servers?: ServerOption[] }>("admin/servers"),
     })
 
     const tagsQuery = useQuery({
         queryKey: ["linked-kit-tags"],
-        queryFn: () => backendApi.get("admin/server-tags").json<{ tags?: TagOption[] }>(),
+        queryFn: fetchServerTags,
+    })
+
+    const rustItemsQuery = useQuery({
+        queryKey: ["rust-items"],
+        queryFn: async () => {
+            const response = await fetch("/api/rust-items", { headers: { Accept: "application/json" }, cache: "no-store" })
+            if (!response.ok) return rustItemMap([])
+            const data = (await response.json()) as RustItemInfo[]
+            return rustItemMap(Array.isArray(data) ? data : [])
+        },
+        staleTime: 60 * 60 * 1000,
     })
 
     useEffect(() => {
@@ -85,44 +100,65 @@ export function LinkedKitSettings() {
         setKits(
             rows.map((kit) => ({
                 ...kit,
-                key: String(kit.id ?? crypto.randomUUID()),
+                key: String(kit.id ?? newKey()),
                 serverId: kit.serverId ?? "",
-                items: kit.items ?? [],
+                kitName: kit.kitName ?? "",
+                items: (kit.items ?? []).map((item) => ({
+                    shortname: item.shortname ?? "",
+                    amount: item.amount ?? 1,
+                    slot: item.slot ?? null,
+                    condition: item.condition ?? null,
+                })),
             })),
         )
     }, [kitQuery.data])
 
     const save = useMutation({
-        mutationFn: () =>
-            backendApi
-                .put("admin/link/kit", {
-                    json: {
-                        kits: kits.map((kit) => ({
-                            id: kit.id,
-                            scope: kit.scope,
-                            serverId: kit.serverId || null,
-                            tagId: kit.scope === "tag" ? kit.tagId : null,
-                            kitName: kit.kitName.trim() || "linked",
-                            source: kit.source,
-                            items: kit.source === "manual" ? kit.items : [],
-                        })),
-                    },
-                })
-                .json<{ kits?: LinkedKit[] }>(),
+        mutationFn: async () => {
+            const headers = await prepareSanctumMutationHeaders({ json: true, bearerToken: getAuthToken() })
+            const response = await fetch(backendApi("admin/link/kit"), {
+                method: "PUT",
+                credentials: "include",
+                headers,
+                body: JSON.stringify({
+                    kits: kits.map((kit) => ({
+                        id: kit.id,
+                        scope: kit.scope,
+                        serverId: kit.serverId || null,
+                        tagId: kit.scope === "tag" ? kit.tagId : null,
+                        kitName: kit.kitName.trim() || "linked",
+                        source: kit.source,
+                        items: kit.source === "manual"
+                            ? kit.items
+                                .filter((item) => item.shortname.trim() !== "")
+                                .map((item) => ({
+                                    shortname: item.shortname.trim().toLowerCase(),
+                                    amount: item.amount,
+                                    slot: item.slot ?? null,
+                                    condition: item.condition ?? null,
+                                }))
+                            : [],
+                    })),
+                }),
+            })
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}))
+                throw new Error(typeof body.message === "string" ? body.message : "Could not save the linked kits")
+            }
+            return response.json() as Promise<{ kits?: LinkedKit[] }>
+        },
         onSuccess: async () => {
             toast.success("Linked kits saved")
             await queryClient.invalidateQueries({ queryKey: ["admin-linked-kit"] })
             await queryClient.invalidateQueries({ queryKey: ["link-kit"] })
         },
-        onError: async (error) => {
-            const message = await errorMessage(error)
-            toast.error(message ?? "Could not save the linked kits")
+        onError: (error: Error) => {
+            toast.error(error.message || "Could not save the linked kits")
         },
     })
 
-    const servers =
-        serversQuery.data?.data?.flatMap((category) => category.servers ?? []) ?? []
-    const tags = tagsQuery.data?.tags ?? []
+    const servers = serversQuery.data?.servers ?? []
+    const tags = tagsQuery.data ?? []
 
     const updateKit = (key: string, patch: Partial<DraftKit>) => {
         setKits((current) => current.map((kit) => (kit.key === key ? { ...kit, ...patch } : kit)))
@@ -161,87 +197,85 @@ export function LinkedKitSettings() {
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="space-y-2 text-sm">
-                                <span className="font-medium">Applies to</span>
-                                <select
-                                    className={selectClass}
+                            <div className="space-y-2 text-sm">
+                                <p className="font-medium">Applies to</p>
+                                <Select
                                     value={kit.scope}
-                                    onChange={(event) =>
-                                        updateKit(kit.key, { scope: event.target.value as KitScope })
-                                    }
+                                    onValueChange={(value) => updateKit(kit.key, { scope: value as KitScope })}
                                 >
-                                    <option value="tag">Server tag</option>
-                                    <option value="server">One server</option>
-                                    <option value="site">All servers</option>
-                                </select>
-                            </label>
-
-                            {kit.scope === "tag" ? (
-                                <label className="space-y-2 text-sm">
-                                    <span className="font-medium">Tag</span>
-                                    <select
-                                        className={selectClass}
-                                        value={kit.tagId ?? ""}
-                                        onChange={(event) =>
-                                            updateKit(kit.key, {
-                                                tagId: event.target.value ? Number(event.target.value) : null,
-                                            })
-                                        }
-                                    >
-                                        <option value="">Select a tag</option>
-                                        {tags.map((tag) => (
-                                            <option key={tag.id} value={tag.id}>
-                                                {tag.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                            ) : kit.scope === "server" || kit.source === "plugin" ? (
-                                <label className="space-y-2 text-sm">
-                                    <span className="font-medium">
-                                        {kit.scope === "site" ? "Read the kit from" : "Server"}
-                                    </span>
-                                    <select
-                                        className={selectClass}
-                                        value={kit.serverId ?? ""}
-                                        onChange={(event) => updateKit(kit.key, { serverId: event.target.value })}
-                                    >
-                                        <option value="">Select a server</option>
-                                        {servers.map((server) => (
-                                            <option key={server.server_id} value={server.server_id}>
-                                                {server.server_name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                            ) : null}
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-sm font-medium">Kit contents</p>
-                            <div className="flex flex-wrap gap-4 text-sm">
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        checked={kit.source === "plugin"}
-                                        onChange={() => updateKit(kit.key, { source: "plugin" })}
-                                    />
-                                    Read from the game server
-                                </label>
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        checked={kit.source === "manual"}
-                                        onChange={() => updateKit(kit.key, { source: "manual" })}
-                                    />
-                                    Enter items here
-                                </label>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Applies to" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="tag">Server tag</SelectItem>
+                                        <SelectItem value="server">One server</SelectItem>
+                                        <SelectItem value="site">All servers</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
+
                             {kit.scope === "tag" ? (
-                                <p className="text-xs text-muted-foreground">
-                                    Every server with this tag can report this kit. The Link page shows it under the tag name.
-                                </p>
+                                <div className="space-y-2 text-sm">
+                                    <p className="font-medium">Tag</p>
+                                    <Select
+                                        value={kit.tagId != null ? String(kit.tagId) : undefined}
+                                        onValueChange={(value) => updateKit(kit.key, { tagId: Number(value) })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={tags.length ? "Select a tag" : "No tags yet"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {tags.map((tag) => (
+                                                <SelectItem key={tag.id} value={String(tag.id)}>
+                                                    {tag.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ) : kit.scope === "server" || kit.source === "plugin" ? (
+                                <div className="space-y-2 text-sm">
+                                    <p className="font-medium">
+                                        {kit.scope === "site" ? "Read the kit from" : "Server"}
+                                    </p>
+                                    <Select
+                                        value={kit.serverId || undefined}
+                                        onValueChange={(value) => updateKit(kit.key, { serverId: value })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={servers.length ? "Select a server" : "No servers yet"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {servers.map((server) => (
+                                                <SelectItem key={server.server_id} value={server.server_id}>
+                                                    {server.server_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             ) : null}
+
+                            <div className="space-y-2 text-sm">
+                                <p className="font-medium">Kit contents</p>
+                                <Select
+                                    value={kit.source}
+                                    onValueChange={(value) => updateKit(kit.key, { source: value as KitSource })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="plugin">Read from the game server</SelectItem>
+                                        <SelectItem value="manual">Enter items here</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {kit.scope === "tag" ? (
+                                    <p className="text-xs text-muted-foreground">
+                                        Every server with this tag can report this kit. The Link page shows it under the tag name.
+                                    </p>
+                                ) : null}
+                            </div>
                         </div>
 
                         <label className="block space-y-2 text-sm">
@@ -260,58 +294,21 @@ export function LinkedKitSettings() {
                         ) : null}
 
                         {kit.source === "manual" ? (
+                            <KitInventoryEditor
+                                items={kit.items}
+                                catalog={rustItemsQuery.data}
+                                onChange={(items) => updateKit(kit.key, { items })}
+                            />
+                        ) : (
                             <div className="space-y-2">
-                                {kit.items.map((item, itemIndex) => (
-                                    <div key={`${kit.key}-${itemIndex}`} className="flex gap-2">
-                                        <Input
-                                            value={item.shortname}
-                                            placeholder="shortname"
-                                            onChange={(event) => {
-                                                const items = kit.items.slice()
-                                                items[itemIndex] = { ...item, shortname: event.target.value }
-                                                updateKit(kit.key, { items })
-                                            }}
-                                        />
-                                        <Input
-                                            type="number"
-                                            min={1}
-                                            className="w-28"
-                                            value={item.amount}
-                                            onChange={(event) => {
-                                                const items = kit.items.slice()
-                                                items[itemIndex] = {
-                                                    ...item,
-                                                    amount: Number(event.target.value) || 1,
-                                                }
-                                                updateKit(kit.key, { items })
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() =>
-                                                updateKit(kit.key, {
-                                                    items: kit.items.filter((_, current) => current !== itemIndex),
-                                                })
-                                            }
-                                        >
-                                            Remove
-                                        </Button>
-                                    </div>
-                                ))}
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() =>
-                                        updateKit(kit.key, {
-                                            items: [...kit.items, { shortname: "", amount: 1 }],
-                                        })
-                                    }
-                                >
-                                    Add item
-                                </Button>
+                                <p className="text-xs text-muted-foreground">
+                                    This kit is filled by the game server. Switch to entering items here to place them yourself.
+                                </p>
+                                <div className="max-w-[800px]">
+                                    <KitInventory items={kit.items} catalog={rustItemsQuery.data} />
+                                </div>
                             </div>
-                        ) : null}
+                        )}
                     </div>
                 ))}
 
@@ -329,14 +326,11 @@ export function LinkedKitSettings() {
     )
 }
 
-async function errorMessage(error: unknown): Promise<string | null> {
-    if (!error || typeof error !== "object" || !("response" in error)) return null
-    const response = (error as { response?: { json?: () => Promise<{ message?: string }> } }).response
-    if (!response?.json) return null
-    try {
-        const body = await response.json()
-        return body.message ?? null
-    } catch {
-        return null
-    }
+async function fetchJson<T>(path: string): Promise<T> {
+    const token = getAuthToken()
+    const headers: Record<string, string> = { Accept: "application/json" }
+    if (token) headers.Authorization = `Bearer ${token}`
+    const response = await fetch(backendApi(path), { credentials: "include", headers })
+    if (!response.ok) throw new Error("Request failed")
+    return response.json() as Promise<T>
 }

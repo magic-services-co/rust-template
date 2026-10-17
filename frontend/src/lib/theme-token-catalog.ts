@@ -1,7 +1,12 @@
 import { LAYOUT_THEME_DEFAULTS } from "@/lib/layout-theme-defaults";
 
 export type ThemeTokenKey = keyof typeof LAYOUT_THEME_DEFAULTS;
-export type ThemeTokenValues = { -readonly [K in ThemeTokenKey]: (typeof LAYOUT_THEME_DEFAULTS)[K] };
+
+type WidenThemeValue<T> = T extends number ? number : T extends string ? string : T;
+
+export type ThemeTokenValues = {
+  [K in ThemeTokenKey]: WidenThemeValue<(typeof LAYOUT_THEME_DEFAULTS)[K]>;
+};
 
 export type TokenFieldType = "hsl" | "color" | "text" | "number";
 

@@ -6,9 +6,11 @@ import { withSupportDefaults } from "@/lib/layout-theme-defaults";
 export function SupportPageShell({
   children,
   theme,
+  wide = false,
 }: {
   children: ReactNode;
   theme?: Record<string, unknown>;
+  wide?: boolean;
 }) {
   const t = withSupportDefaults(theme);
 
@@ -41,7 +43,11 @@ export function SupportPageShell({
         }}
       />
       <div
-        className="support-page relative mx-auto w-full max-w-[1200px] px-4 pb-12 pt-[157px] sm:px-6"
+        className={
+          wide
+            ? "support-page relative mx-auto w-full max-w-[1760px] px-4 pb-12 pt-[157px] sm:px-6 lg:px-10"
+            : "support-page relative mx-auto w-full max-w-[1200px] px-4 pb-12 pt-[157px] sm:px-6"
+        }
         style={{
           ["--support-kicker" as string]: t.kickerColor,
           ["--support-title" as string]: t.titleColor,

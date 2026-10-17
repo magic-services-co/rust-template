@@ -140,6 +140,12 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
   }
+
+  body[data-scroll-locked]:not(:has([role="dialog"])):not(:has([role="alertdialog"])) {
+    overflow: auto !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
 }
 
 @media (min-width: 1280px) {

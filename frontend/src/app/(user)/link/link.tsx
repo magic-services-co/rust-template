@@ -26,8 +26,10 @@ import { useRouter } from "next/navigation";
 import { LINKED_USERS_COUNT_QUERY_KEY, LinkedUsersCount } from "@/components/linked-users-count";
 import { cn } from "@/lib/utils";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { backendApi } from "@/lib/api";
-import { lootyItemImageUrl } from "@/lib/looty-item-image";
+import { KitInventory } from "@/components/kit-inventory";
+import { rustItemMap, type RustItemInfo } from "@/lib/rust-items";
 
 interface LinkProps {
     user?: UserSession | null;
@@ -35,7 +37,7 @@ interface LinkProps {
     initialKits?: PublicLinkedKit[];
 }
 
-type LinkedKitItem = { shortname: string; amount: number };
+type LinkedKitItem = { shortname: string; amount: number; slot?: string | null; condition?: number | null };
 
 type PublicLinkedKit = {
     id?: number;
@@ -49,45 +51,6 @@ type LinkedKitResponse = {
     kitName?: string;
     items?: LinkedKitItem[];
 };
-
-function formatKitQty(amount: number) {
-    return `x${amount.toLocaleString("en-US")}`;
-}
-
-function KitItemTile({ item }: { item: LinkedKitItem }) {
-    const [failed, setFailed] = useState(false);
-
-    return (
-        <div className="flex flex-col">
-            <div
-                className="relative flex h-[46px] items-center justify-center overflow-hidden rounded-[7px] border"
-                style={{
-                    borderColor: "rgba(255,255,255,0.1)",
-                    backgroundImage:
-                        "linear-gradient(131.54deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.06) 100%)",
-                }}
-                title={item.shortname}
-            >
-                {failed ? (
-                    <span className="px-1 text-center text-[8px] leading-[9px] text-[#ecf3fc]/70">{item.shortname}</span>
-                ) : (
-                    <img
-                        src={lootyItemImageUrl(item.shortname)}
-                        alt={item.shortname}
-                        className="absolute inset-0 size-full object-contain"
-                        onError={() => setFailed(true)}
-                    />
-                )}
-            </div>
-            <p
-                className="pt-1 text-right text-[9px] font-semibold leading-[9px]"
-                style={{ color: "rgba(239,246,255,0.78)" }}
-            >
-                {formatKitQty(item.amount)}
-            </p>
-        </div>
-    );
-}
 
 function getStepStatus(user?: UserSession | null) {
     const steamLinked = !!user?.steamId;
@@ -189,6 +152,17 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
     const [isLinkingDiscord, setIsLinkingDiscord] = useState(false);
     const [selectedKit, setSelectedKit] = useState(0);
 
+    const rustItemsQuery = useQuery({
+        queryKey: ["rust-items"],
+        queryFn: async () => {
+            const response = await fetch("/api/rust-items", { headers: { Accept: "application/json" }, cache: "no-store" });
+            if (!response.ok) return rustItemMap([]);
+            const data = (await response.json()) as RustItemInfo[];
+            return rustItemMap(Array.isArray(data) ? data : []);
+        },
+        staleTime: 60 * 60 * 1000,
+    });
+
     const kitQuery = useQuery({
         queryKey: ["link-kit"],
         queryFn: async () => {
@@ -207,10 +181,10 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
         }
         return [];
     }, [kitQuery.data]);
-    const activeKit = kits[selectedKit] ?? kits[0];
+    const activeIndex = kits[selectedKit] ? selectedKit : 0;
+    const activeKit = kits[activeIndex];
     const kitItems = activeKit?.items ?? [];
     const kitName = (activeKit?.kitName || "linked").trim();
-
     const isGroupEnabled = useMemo(() => {
         return !!settings?.steamGroupId && !!settings?.steamGroupUrl;
     }, [settings?.steamGroupId, settings?.steamGroupUrl]);
@@ -291,68 +265,71 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
                 }}
             />
 
-            <div className="relative flex flex-col lg:min-h-[456px] lg:flex-row">
+            <div className="relative flex flex-col lg:min-h-[560px] lg:flex-row">
                 <aside
-                    className="flex w-full shrink-0 flex-col border-b px-[30px] py-[28px] lg:w-[260px] lg:border-b-0 lg:border-r"
+                    className="flex w-full shrink-0 flex-col border-b px-6 py-8 sm:px-8 lg:w-[640px] lg:border-b-0 lg:border-r lg:px-10 lg:py-10"
                     style={{
                         borderColor: "rgba(106,130,157,0.22)",
                         backgroundImage:
                             "linear-gradient(180deg, rgba(7,10,14,0.24), rgba(6,9,12,0.48))",
                     }}
                 >
-                    <div className="flex items-center gap-3">
-                        <div
-                            className="flex size-[34px] shrink-0 items-center justify-center border"
-                            style={{
-                                backgroundColor: "rgba(65,34,5,0.36)",
-                                borderColor: "#ba9142",
-                            }}
-                        >
-                            <img src="/images/link/gift.svg" alt="" className="size-6" />
+                    <div className="flex items-center gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <div
+                                className="flex size-[34px] shrink-0 items-center justify-center border"
+                                style={{
+                                    backgroundColor: "rgba(65,34,5,0.36)",
+                                    borderColor: "#ba9142",
+                                }}
+                            >
+                                <img src="/images/link/gift.svg" alt="" className="size-6" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-mono text-[9px] leading-[9px] tracking-[1.25px]" style={{ color: "#ba9142" }}>
+                                    FREE REWARDS
+                                </p>
+                                <p className="pt-1 text-[14px] font-semibold leading-[14px]" style={{ color: "#ecf3fc" }}>
+                                    Linked Kit
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-mono text-[9px] leading-[9px] tracking-[1.25px]" style={{ color: "#ba9142" }}>
-                                FREE REWARDS
+
+                        {kits.length > 1 ? (
+                            <div className="ml-auto w-[min(100%,220px)] shrink-0">
+                                <Select value={String(activeIndex)} onValueChange={(value) => setSelectedKit(Number(value))}>
+                                    <SelectTrigger
+                                        aria-label="Server"
+                                        className="h-10 rounded-none border bg-[#0a0e13] text-[13px] font-semibold text-[#ecf3fc] focus:ring-[#ba9142] focus:ring-offset-0"
+                                        style={{ borderColor: "rgba(186,145,66,0.55)" }}
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {kits.map((kit, index) => (
+                                            <SelectItem key={kit.id ?? kit.label ?? index} value={String(index)}>
+                                                {kit.label || kit.kitName || "Server"}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        ) : activeKit?.label ? (
+                            <p className="ml-auto truncate text-right text-[13px] font-semibold" style={{ color: "#ecf3fc" }}>
+                                {activeKit.label}
                             </p>
-                            <p className="pt-1 text-[14px] font-semibold leading-[14px]" style={{ color: "#ecf3fc" }}>
-                                Linked Kit
-                            </p>
-                        </div>
+                        ) : null}
                     </div>
 
-                    {kits.length > 1 ? (
-                        <div className="flex flex-wrap gap-1.5 pt-3">
-                            {kits.map((kit, index) => {
-                                const active = (kits[selectedKit] ? selectedKit : 0) === index;
-                                return (
-                                    <button
-                                        key={kit.id ?? kit.label ?? index}
-                                        type="button"
-                                        onClick={() => setSelectedKit(index)}
-                                        className="max-w-full truncate border px-2 py-1 font-mono text-[8px] tracking-[0.8px]"
-                                        style={{
-                                            borderColor: active ? "#ba9142" : "rgba(255,255,255,0.12)",
-                                            color: active ? "#f0c970" : "rgba(236,243,252,0.7)",
-                                        }}
-                                    >
-                                        {kit.label || kit.kitName || "Kit"}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : null}
-
-                    <div className="flex items-center gap-[7px] pl-[46px] pt-[17px] font-mono text-[8px] tracking-[0.85px]" style={{ color: "rgba(186,145,66,0.7)" }}>
+                    <div className="flex items-center gap-[7px] pt-[14px] font-mono text-[8px] tracking-[0.85px]" style={{ color: "rgba(186,145,66,0.7)" }}>
                         <span>{kitItems.length} {kitItems.length === 1 ? "ITEM" : "ITEMS"}</span>
                         <span className="size-[2px] rounded-[1px] bg-[#ba9142]" />
                         <span>ACCESS IN /KIT {kitName.toUpperCase()}</span>
                     </div>
 
-                    {kitItems.length > 0 ? (
-                        <div className="grid grid-cols-4 gap-3 pt-[13px]">
-                            {kitItems.map((item, index) => (
-                                <KitItemTile key={`${item.shortname}-${index}`} item={item} />
-                            ))}
+                    {kits.length > 0 ? (
+                        <div className="mt-4">
+                            <KitInventory items={kitItems} catalog={rustItemsQuery.data} />
                         </div>
                     ) : (
                         <p className="pt-4 text-[11px] leading-4" style={{ color: "rgba(142,156,175,0.72)" }}>
@@ -374,7 +351,7 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
                     </p>
                 </aside>
 
-                <div className="flex min-w-0 flex-1 flex-col px-6 py-8 sm:px-[54px] sm:pb-[28px] sm:pt-[31px]">
+                <div className="flex min-w-0 flex-1 flex-col px-6 py-8 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
                     <LinkedUsersCount />
 
                     <div

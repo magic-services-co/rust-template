@@ -316,7 +316,7 @@ function ChromeFieldControl({
     <div className="space-y-2">
       <Label>{field.label}</Label>
       {field.hint ? <p className="text-xs text-muted-foreground">{field.hint}</p> : null}
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

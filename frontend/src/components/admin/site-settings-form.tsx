@@ -40,16 +40,15 @@ const siteSettingsSchema = z.object({
 export type SiteSettingsFormValues = z.infer<typeof siteSettingsSchema>
 
 function toFormValues(data: SiteSettings | null | undefined): SiteSettingsFormValues {
-    if (!data) return { name: "", storeId: "" }
     return {
-        name: data.name ?? "",
-        storeId: data.storeId ?? "",
-        discordInvite: data.discordInvite ?? undefined,
-        steamGroupId: data.steamGroupId ?? undefined,
-        steamGroupUrl: data.steamGroupUrl ?? undefined,
-        copyServerAddress: data.copyServerAddress,
-        showAdaptiveCurrencyOnStorefront: data.showAdaptiveCurrencyOnStorefront,
-        mapGridRetentionDays: data.mapGridRetentionDays ?? undefined,
+        name: data?.name ?? "",
+        storeId: data?.storeId ?? "",
+        discordInvite: data?.discordInvite ?? "",
+        steamGroupId: data?.steamGroupId ?? "",
+        steamGroupUrl: data?.steamGroupUrl ?? "",
+        copyServerAddress: data?.copyServerAddress ?? false,
+        showAdaptiveCurrencyOnStorefront: data?.showAdaptiveCurrencyOnStorefront ?? true,
+        mapGridRetentionDays: data?.mapGridRetentionDays ?? null,
     }
 }
 
@@ -123,7 +122,7 @@ export function SiteSettingsForm() {
                                     <FormItem>
                                         <FormLabel>Site Name</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormDescription>
                                             The name of your site as it will appear to users.
@@ -139,7 +138,7 @@ export function SiteSettingsForm() {
                                     <FormItem>
                                         <FormLabel>PayNow Store ID</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormDescription>
                                             The ID of your store.
@@ -155,7 +154,7 @@ export function SiteSettingsForm() {
                                     <FormItem>
                                         <FormLabel>Discord Invite URL</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormDescription>
                                             The invite URL for your Discord server (optional).
@@ -171,7 +170,7 @@ export function SiteSettingsForm() {
                                     <FormItem>
                                         <FormLabel>Steam Group ID</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormDescription>
                                             The ID of your Steam group (optional).
@@ -187,7 +186,7 @@ export function SiteSettingsForm() {
                                     <FormItem>
                                         <FormLabel>Steam Group URL</FormLabel>
                                         <FormControl>
-                                            <Input {...field} />
+                                            <Input {...field} value={field.value ?? ""} />
                                         </FormControl>
                                         <FormDescription>
                                             The URL of your Steam group (optional).

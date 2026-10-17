@@ -31,7 +31,7 @@ export default async function LinkPage() {
     const initialKits = await loadLinkedKits();
 
     return (
-        <SupportPageShell>
+        <SupportPageShell wide>
             <LinkTitles />
             <div className="pt-10">
                 <AccountLinkStepper user={session?.user} linkStatus={linkStatus ?? null} initialKits={initialKits} />

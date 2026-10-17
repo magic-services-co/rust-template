@@ -1,14 +1,18 @@
 {
-  "version": "2.3.17",
-  "releasedAt": "2026-10-15",
+  "version": "2.3.19",
+  "releasedAt": "2026-10-17",
   "notes": [
-    "The Site Editor can set the icon that shows in the browser tab."
+    "Linked kits can be built in Site settings as a Rust inventory, with item images and durability from Looty."
   ],
   "added": [
-    "Site Editor has a Favicon field on the theme panel and next to the logo."
+    "Place kit items in clothing, the main inventory, and the hotbar. Drag them between slots.",
+    "Click an empty slot to search for an item. Click an item to set the amount, and durability when the item has it."
   ],
   "changed": [
-    "The browser tab uses the favicon you save. The old built-in icon no longer replaces it."
+    "The Link page shows that inventory, with the server picker beside the kit title.",
+    "Kit dropdowns match the other admin selectors, and opening one no longer hides the page scrollbar.",
+    "Steam profile pictures load from the picture host Steam uses.",
+    "A custom favicon URL can be saved in the Site Editor."
   ],
   "removed": []
 }
