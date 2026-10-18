@@ -246,8 +246,14 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
     echo "npm is not installed." >&2
     exit 1
   fi
+  echo "Stopping Next.js before the build replaces its files…"
+  bash "$ROOT/frontend/scripts/restart-next.sh" stop
   echo "npm ci && npm run build (frontend)…"
-  (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build)
+  if ! (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build); then
+    echo "Frontend build failed. Starting the previous Next.js process if a build is still on disk." >&2
+    bash "$ROOT/frontend/scripts/restart-next.sh" || true
+    exit 1
+  fi
   echo "Restarting the site so the new pages are served…"
   bash "$ROOT/frontend/scripts/restart-next.sh"
 fi

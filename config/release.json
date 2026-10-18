@@ -1,15 +1,16 @@
 {
-  "version": "2.3.20",
+  "version": "2.3.21",
   "releasedAt": "2026-10-18",
   "notes": [
-    "System Control can pull a v1 database into a site that is already set up."
+    "An update restarts the site so it serves the build that was just installed."
   ],
   "added": [
     "Import data under System Control. Merge the old rows with this site, or replace this site’s rows with the old ones.",
     "Paste the old app key so encrypted values are saved again with this site’s key."
   ],
   "changed": [
-    "Players and users are one list. In-game players are stored on the user, including when a v1 database is imported."
+    "Players and users are one list. In-game players are stored on the user, including when a v1 database is imported.",
+    "Updating the site stops the old site process, builds, then starts again. A process left over from an older build is not treated as up to date."
   ],
   "removed": []
 }
