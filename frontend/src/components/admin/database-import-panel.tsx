@@ -20,6 +20,7 @@ type ImportSummary = {
     rowsMerged: number
     rowsSkipped: number
     playersMerged?: number
+    rolesRelinked?: number
     envValuesApplied?: number
     fieldsReencrypted: number
     fieldsLeftEncrypted: number
@@ -223,6 +224,7 @@ export function DatabaseImportPanel() {
                         <li>{summary.tables} shared tables read</li>
                         <li>{summary.rowsCopied} rows copied</li>
                         {(summary.playersMerged ?? 0) > 0 ? <li>{summary.playersMerged} players added to users</li> : null}
+                        {(summary.rolesRelinked ?? 0) > 0 ? <li>{summary.rolesRelinked} role assignments attached to the roles already on this site</li> : null}
                         {(summary.envValuesApplied ?? 0) > 0 ? <li>{summary.envValuesApplied} settings copied from the old .env</li> : null}
                         {summary.mode === "merge" ? <li>{summary.rowsMerged} rows filled from the old database</li> : null}
                         {summary.tablesCleared > 0 ? <li>{summary.tablesCleared} v2-only tables emptied</li> : null}

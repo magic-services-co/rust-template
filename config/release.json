@@ -1,12 +1,12 @@
 {
-  "version": "2.3.23",
+  "version": "2.3.24",
   "releasedAt": "2026-10-18",
   "notes": [
-    "Import data keeps running when the copy takes longer than the site’s request limit."
+    "A merge attaches old role members to the role of the same name that is already on this site."
   ],
   "added": [],
   "changed": [
-    "A database import runs on its own, and large tables are read straight through so the copy is not cut off."
+    "Import data matches roles by name. People who were assigned a role on the old site show on that role here, and blank role settings are filled from the old role."
   ],
   "removed": []
 }
