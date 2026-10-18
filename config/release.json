@@ -1,12 +1,12 @@
 {
-  "version": "2.3.26",
+  "version": "2.3.27",
   "releasedAt": "2026-10-18",
   "notes": [
-    "Admins can recheck PayNow ranks and Discord-linked roles for every user from the Users page."
+    "Adding or removing a linked Discord role updates that person's role on the site."
   ],
-  "added": [
-    "Users has a Recheck roles button. It grants or removes PayNow ranks and roles that are linked to a Discord role."
+  "added": [],
+  "changed": [
+    "The linking bot can grant or remove a site role when the matching Discord role changes."
   ],
-  "changed": [],
   "removed": []
 }
