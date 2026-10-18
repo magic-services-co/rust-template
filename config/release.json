@@ -1,14 +1,12 @@
 {
-  "version": "2.3.22",
+  "version": "2.3.23",
   "releasedAt": "2026-10-18",
   "notes": [
-    "Import data can take a v1 site across: paste the old .env so PayNow, Steam, RustMaps, Discord, and R2 keys land in empty settings."
+    "Import data keeps running when the copy takes longer than the site’s request limit."
   ],
-  "added": [
-    "Paste the old .env on Import data. PayNow, Steam, RustMaps, Discord, and R2 keys are copied into settings that are still empty."
-  ],
+  "added": [],
   "changed": [
-    "Encrypted columns are read with the old NEXTAUTH_SECRET. A player whose user already has a different Steam ID keeps their own user, and stat rows still get a user."
+    "A database import runs on its own, and large tables are read straight through so the copy is not cut off."
   ],
   "removed": []
 }

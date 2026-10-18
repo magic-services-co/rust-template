@@ -37,6 +37,33 @@ export function DatabaseImportPanel() {
     const [summary, setSummary] = useState<ImportSummary | null>(null)
     const confirmWord = mode === "replace" ? "REPLACE" : "MERGE"
 
+    async function waitForImport(jobId: string): Promise<{ message?: string; summary?: ImportSummary }> {
+        const started = Date.now()
+        for (;;) {
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+            const headers = await prepareSanctumMutationHeaders({ bearerToken: getAuthToken() })
+            const response = await fetch(backendApi(`admin/system-control/import-database/${jobId}`), {
+                credentials: "include",
+                headers,
+            })
+            const data = (await response.json().catch(() => null)) as {
+                success?: boolean
+                status?: string
+                message?: string
+                summary?: ImportSummary
+            } | null
+            if (data?.status === "done") {
+                return data
+            }
+            if (!response.ok || data?.status === "failed" || !data?.success) {
+                throw new Error(data?.message || "Import failed")
+            }
+            if (data.status === "queued" && Date.now() - started > 30_000) {
+                throw new Error("Import did not start.")
+            }
+        }
+    }
+
     async function onSubmit(event: FormEvent) {
         event.preventDefault()
         setSummary(null)
@@ -55,19 +82,26 @@ export function DatabaseImportPanel() {
                     confirm: confirm.trim(),
                 }),
             })
-            const data = (await response.json().catch(() => null)) as { success?: boolean; message?: string; summary?: ImportSummary } | null
-            if (!response.ok || !data?.success) {
-                toast.error(data?.message || "Import failed")
+            const started = (await response.json().catch(() => null)) as {
+                success?: boolean
+                pending?: boolean
+                jobId?: string
+                message?: string
+                summary?: ImportSummary
+            } | null
+            if (!response.ok || !started?.success) {
+                toast.error(started?.message || "Import failed")
                 return
             }
+            const data = started.pending && started.jobId ? await waitForImport(started.jobId) : started
             setSummary(data.summary ?? null)
             setDatabaseUrl("")
             setNextauthSecret("")
             setOldEnv("")
             setConfirm("")
             toast.success(data.message || "Import finished")
-        } catch {
-            toast.error("Import failed")
+        } catch (error) {
+            toast.error(error instanceof Error && error.message ? error.message : "Import failed")
         } finally {
             setBusy(false)
         }
@@ -179,7 +213,7 @@ export function DatabaseImportPanel() {
             </div>
 
             <Button type="submit" disabled={busy || confirm.trim() !== confirmWord || !databaseUrl.trim()}>
-                {busy ? "Importing..." : mode === "replace" ? "Replace with old data" : "Merge old data"}
+                {busy ? "Importing... this can take several minutes" : mode === "replace" ? "Replace with old data" : "Merge old data"}
             </Button>
 
             {summary ? (
