@@ -285,7 +285,7 @@ export default function SetupPage() {
                   This will <span className="text-foreground font-medium">replace</span> data in this install’s
                   database with rows from the old server (same template). Your{" "}
                   <span className="text-foreground font-medium">license key you just entered is kept</span>.
-                  Encrypted fields only work if <code className="text-xs">APP_KEY</code> matches the old server.
+                  Encrypted fields from the old site were saved with its <code className="text-xs">NEXTAUTH_SECRET</code>. After setup, Import data can read them with that secret.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button

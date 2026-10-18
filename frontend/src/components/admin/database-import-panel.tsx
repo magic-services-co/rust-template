@@ -20,6 +20,7 @@ type ImportSummary = {
     rowsMerged: number
     rowsSkipped: number
     playersMerged?: number
+    envValuesApplied?: number
     fieldsReencrypted: number
     fieldsLeftEncrypted: number
     reencrypted: boolean
@@ -29,7 +30,8 @@ type ImportSummary = {
 export function DatabaseImportPanel() {
     const [mode, setMode] = useState<ImportMode>("merge")
     const [databaseUrl, setDatabaseUrl] = useState("")
-    const [previousAppKey, setPreviousAppKey] = useState("")
+    const [nextauthSecret, setNextauthSecret] = useState("")
+    const [oldEnv, setOldEnv] = useState("")
     const [confirm, setConfirm] = useState("")
     const [busy, setBusy] = useState(false)
     const [summary, setSummary] = useState<ImportSummary | null>(null)
@@ -48,7 +50,8 @@ export function DatabaseImportPanel() {
                 body: JSON.stringify({
                     databaseUrl: databaseUrl.trim(),
                     mode,
-                    previousAppKey: previousAppKey.trim(),
+                    nextauthSecret: nextauthSecret.trim(),
+                    oldEnv,
                     confirm: confirm.trim(),
                 }),
             })
@@ -59,7 +62,8 @@ export function DatabaseImportPanel() {
             }
             setSummary(data.summary ?? null)
             setDatabaseUrl("")
-            setPreviousAppKey("")
+            setNextauthSecret("")
+            setOldEnv("")
             setConfirm("")
             toast.success(data.message || "Import finished")
         } catch {
@@ -131,18 +135,34 @@ export function DatabaseImportPanel() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="import-app-key">Old app key</Label>
+                <Label htmlFor="import-nextauth-secret">Old NextAuth secret</Label>
                 <Input
-                    id="import-app-key"
+                    id="import-nextauth-secret"
                     type="password"
-                    value={previousAppKey}
-                    onChange={(event) => setPreviousAppKey(event.target.value)}
-                    placeholder="base64:..."
+                    value={nextauthSecret}
+                    onChange={(event) => setNextauthSecret(event.target.value)}
+                    placeholder="NEXTAUTH_SECRET"
                     className="font-mono text-xs"
                     autoComplete="off"
                 />
                 <p className="text-muted-foreground text-xs">
-                    Optional. Paste APP_KEY from the old site’s .env. Encrypted values, such as Steam, PayNow, RustMaps, and panel keys, are read with that key and saved again with this site’s key. Leave this blank if both sites use the same app key.
+                    Optional. The old template does not encrypt its database with this. Paste it only when a column was saved with NEXTAUTH_SECRET. If you paste the whole .env below, this can stay empty.
+                </p>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="import-old-env">Old .env</Label>
+                <textarea
+                    id="import-old-env"
+                    value={oldEnv}
+                    onChange={(event) => setOldEnv(event.target.value)}
+                    placeholder={"PAYNOW_KEY=\nSTEAM_SECRET=\nRUSTMAPS_API_KEY=\nDISCORD_CLIENT_ID=\nDISCORD_CLIENT_SECRET=\nDISCORD_BOT_TOKEN=\nR2_ACCESS_KEY_ID=\nR2_SECRET_ACCESS_KEY="}
+                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-28 w-full rounded-md border px-3 py-2 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    autoComplete="off"
+                    spellCheck={false}
+                />
+                <p className="text-muted-foreground text-xs">
+                    PayNow, Steam, RustMaps, Discord, and R2 keys live in the old .env, not in the database. Empty settings on this site are filled from those lines. NEXTAUTH_SECRET in that file is used for the field above.
                 </p>
             </div>
 
@@ -169,6 +189,7 @@ export function DatabaseImportPanel() {
                         <li>{summary.tables} shared tables read</li>
                         <li>{summary.rowsCopied} rows copied</li>
                         {(summary.playersMerged ?? 0) > 0 ? <li>{summary.playersMerged} players added to users</li> : null}
+                        {(summary.envValuesApplied ?? 0) > 0 ? <li>{summary.envValuesApplied} settings copied from the old .env</li> : null}
                         {summary.mode === "merge" ? <li>{summary.rowsMerged} rows filled from the old database</li> : null}
                         {summary.tablesCleared > 0 ? <li>{summary.tablesCleared} v2-only tables emptied</li> : null}
                         {summary.rowsSkipped > 0 ? <li>{summary.rowsSkipped} rows skipped</li> : null}
