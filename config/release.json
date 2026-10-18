@@ -1,12 +1,12 @@
 {
-  "version": "2.3.24",
+  "version": "2.3.25",
   "releasedAt": "2026-10-18",
   "notes": [
-    "A merge attaches old role members to the role of the same name that is already on this site."
+    "The API Keys page loads when a key was created by a user that is not on this site."
   ],
   "added": [],
   "changed": [
-    "Import data matches roles by name. People who were assigned a role on the old site show on that role here, and blank role settings are filled from the old role."
+    "API Keys shows a dash for the creator when that account is missing, instead of failing the page."
   ],
   "removed": []
 }

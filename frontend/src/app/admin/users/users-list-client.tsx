@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Check, MoreHorizontal, Trash2 } from "lucide-react";
+import { Check, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -173,6 +173,85 @@ function SteamProspectRow({ prospect }: { prospect: SteamProspect }) {
   );
 }
 
+function RecheckAllRolesButton() {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function waitForRecheck(jobId: string): Promise<{ granted?: number; revoked?: number; users?: number }> {
+    const started = Date.now();
+    for (;;) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const token = getAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(backendApi(`admin/users/recheck-roles/${jobId}`), { credentials: "include", headers });
+      const data = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        status?: string;
+        message?: string;
+        result?: { granted?: number; revoked?: number; users?: number };
+      } | null;
+      if (data?.status === "done") return data.result ?? {};
+      if (!response.ok || data?.status === "failed" || !data?.success) {
+        throw new Error(data?.message || "Role check failed");
+      }
+      if (data.status === "queued" && Date.now() - started > 30_000) {
+        throw new Error("Role check did not start.");
+      }
+    }
+  }
+
+  async function run() {
+    setBusy(true);
+    setOpen(false);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(backendApi("admin/users/recheck-roles"), {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      const started = (await response.json().catch(() => null)) as { success?: boolean; jobId?: string; message?: string } | null;
+      if (!response.ok || !started?.success || !started.jobId) {
+        throw new Error(started?.message || "Role check failed");
+      }
+      const result = await waitForRecheck(started.jobId);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(`Roles rechecked — ${result.users ?? 0} users, granted ${result.granted ?? 0}, revoked ${result.revoked ?? 0}`);
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : "Role check failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Button type="button" variant="secondary" className="ml-auto" disabled={busy} onClick={() => setOpen(true)}>
+        <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
+        {busy ? "Rechecking roles..." : "Recheck roles"}
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Recheck roles for every user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              PayNow ranks and roles linked to a Discord role are checked for every user. Roles can be granted or removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={run}>Recheck roles</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 function UsersListClientInner() {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [pageSize, setPageSize] = useQueryState("pageSize", parseAsInteger.withDefault(10));
@@ -210,6 +289,7 @@ function UsersListClientInner() {
             ))}
           </SelectContent>
         </Select>
+        <RecheckAllRolesButton />
       </div>
       <Table>
         <TableHeader>

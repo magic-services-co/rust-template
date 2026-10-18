@@ -3262,7 +3262,7 @@ export default function ApiKeysPage() {
                             <TableRow key={key.id}>
                                 <TableCell>{key.name}</TableCell>
                                 <TableCell className="font-mono">{key.key}</TableCell>
-                                <TableCell>{key.creator.name || key.creator.email}</TableCell>
+                                <TableCell>{key.creator?.name || key.creator?.email || "—"}</TableCell>
                                 <TableCell>{new Date(key.createdAt).toLocaleString()}</TableCell>
                                 <TableCell>
                                     <Switch
