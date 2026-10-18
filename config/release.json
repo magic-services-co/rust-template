@@ -1,12 +1,12 @@
 {
-  "version": "2.3.25",
+  "version": "2.3.26",
   "releasedAt": "2026-10-18",
   "notes": [
-    "The API Keys page loads when a key was created by a user that is not on this site."
+    "Admins can recheck PayNow ranks and Discord-linked roles for every user from the Users page."
   ],
-  "added": [],
-  "changed": [
-    "API Keys shows a dash for the creator when that account is missing, instead of failing the page."
+  "added": [
+    "Users has a Recheck roles button. It grants or removes PayNow ranks and roles that are linked to a Discord role."
   ],
+  "changed": [],
   "removed": []
 }
