@@ -1,18 +1,15 @@
 {
-  "version": "2.3.19",
-  "releasedAt": "2026-10-17",
+  "version": "2.3.20",
+  "releasedAt": "2026-10-18",
   "notes": [
-    "Linked kits can be built in Site settings as a Rust inventory, with item images and durability from Looty."
+    "System Control can pull a v1 database into a site that is already set up."
   ],
   "added": [
-    "Place kit items in clothing, the main inventory, and the hotbar. Drag them between slots.",
-    "Click an empty slot to search for an item. Click an item to set the amount, and durability when the item has it."
+    "Import data under System Control. Merge the old rows with this site, or replace this site’s rows with the old ones.",
+    "Paste the old app key so encrypted values are saved again with this site’s key."
   ],
   "changed": [
-    "The Link page shows that inventory, with the server picker beside the kit title.",
-    "Kit dropdowns match the other admin selectors, and opening one no longer hides the page scrollbar.",
-    "Steam profile pictures load from the picture host Steam uses.",
-    "A custom favicon URL can be saved in the Site Editor."
+    "Players and users are one list. In-game players are stored on the user, including when a v1 database is imported."
   ],
   "removed": []
 }

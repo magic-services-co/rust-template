@@ -196,6 +196,10 @@ const data = {
           title: "Harmony mod",
           url: "system-control/harmony",
         },
+        {
+          title: "Import data",
+          url: "system-control/import",
+        },
       ],
     },
   ],

@@ -27,6 +27,17 @@ export default function SystemControlDashboardPage() {
             </div>
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
                 <div>
+                    <p className="font-medium">Import data</p>
+                    <p className="text-muted-foreground text-sm">
+                        Pull a v1 database into this site. Merge it with what is here, or replace this site’s rows with the old ones.
+                    </p>
+                </div>
+                <Button variant="secondary" asChild>
+                    <Link href="/admin/system-control/import">Import data</Link>
+                </Button>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
+                <div>
                     <p className="font-medium">Harmony mod</p>
                     <p className="text-muted-foreground text-sm">
                         Download MagicCore, or open the page to read the version and what changed. Servers update on their own, or with rusttemplate.update.
