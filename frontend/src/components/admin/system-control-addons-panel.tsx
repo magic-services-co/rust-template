@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { Loader2, Puzzle, Settings2 } from "lucide-react"
+import { Loader2, Puzzle, Settings2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,8 +15,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
 import {
+  useInstallAddonMutation,
+  useRemoveAddonMutation,
   useSetAddonEnabledMutation,
   useSystemControlAddons,
 } from "@/hooks/use-system-control-addons"
@@ -24,6 +45,7 @@ function AddonCard({
   addon,
   busy,
   onToggle,
+  onRemove,
 }: {
   addon: {
     alias: string
@@ -35,6 +57,7 @@ function AddonCard({
   }
   busy: boolean
   onToggle: (enabled: boolean) => void
+  onRemove: () => void
 }) {
   const configureHref =
     addon.admin_configure_path != null && addon.admin_configure_path !== ""
@@ -103,6 +126,10 @@ function AddonCard({
             No configure URL
           </Button>
         )}
+        <Button variant="outline" size="sm" disabled={busy} onClick={onRemove}>
+          <Trash2 className="mr-1.5 size-4" />
+          Remove
+        </Button>
       </CardFooter>
     </Card>
   )
@@ -111,6 +138,12 @@ function AddonCard({
 export function SystemControlAddonsPanel() {
   const { data, isLoading, isError, error, refetch } = useSystemControlAddons()
   const mutation = useSetAddonEnabledMutation()
+  const install = useInstallAddonMutation()
+  const remove = useRemoveAddonMutation()
+  const [addOpen, setAddOpen] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [replace, setReplace] = useState(false)
+  const [pendingRemove, setPendingRemove] = useState<{ alias: string; name: string } | null>(null)
 
   const handleToggle = (alias: string, enabled: boolean) => {
     const prev = data?.addons.find((a) => a.alias === alias)?.enabled
@@ -130,11 +163,92 @@ export function SystemControlAddonsPanel() {
     )
   }
 
+  function handleInstall() {
+    if (!file) {
+      toast.error("Choose a zip file first.")
+      return
+    }
+    install.mutate(
+      { file, replace },
+      {
+        onSuccess: () => {
+          toast.success("Addon installed")
+          setAddOpen(false)
+          setFile(null)
+          setReplace(false)
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Could not install the addon"),
+      },
+    )
+  }
+
+  function handleRemove() {
+    if (!pendingRemove) return
+    remove.mutate(pendingRemove.alias, {
+      onSuccess: () => {
+        toast.success("Addon removed")
+        setPendingRemove(null)
+      },
+      onError: (e) => toast.error(e instanceof Error ? e.message : "Could not remove the addon"),
+    })
+  }
+
   return (
     <section className="space-y-4">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight">Installed modules</h2>
+        <Button type="button" onClick={() => setAddOpen(true)}>
+          <Upload className="mr-1.5 size-4" />
+          Add addon
+        </Button>
       </div>
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add addon</DialogTitle>
+            <DialogDescription>
+              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex flex-col gap-2 text-sm">
+            Zip file
+            <input
+              type="file"
+              accept=".zip,application/zip"
+              className="text-sm"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={replace} onChange={(event) => setReplace(event.target.checked)} />
+            Replace an addon that is already installed
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAddOpen(false)} disabled={install.isPending}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleInstall} disabled={install.isPending || !file}>
+              {install.isPending ? "Installing..." : "Install"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={pendingRemove !== null} onOpenChange={(open) => { if (!open && !remove.isPending) setPendingRemove(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {pendingRemove?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deletes the addon from the server, including its admin page and public front files.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={remove.isPending} onClick={(event) => { event.preventDefault(); handleRemove() }}>
+              {remove.isPending ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isLoading && (
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
@@ -160,9 +274,11 @@ export function SystemControlAddonsPanel() {
               key={addon.alias}
               addon={addon}
               busy={
-                mutation.isPending && mutation.variables?.alias === addon.alias
+                (mutation.isPending && mutation.variables?.alias === addon.alias) ||
+                (remove.isPending && remove.variables === addon.alias)
               }
               onToggle={(enabled) => handleToggle(addon.alias, enabled)}
+              onRemove={() => setPendingRemove({ alias: addon.alias, name: addon.name })}
             />
           ))}
         </div>

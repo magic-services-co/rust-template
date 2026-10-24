@@ -1,12 +1,12 @@
 {
-  "version": "2.3.27",
-  "releasedAt": "2026-10-18",
+  "version": "2.3.28",
+  "releasedAt": "2026-10-24",
   "notes": [
-    "Adding or removing a linked Discord role updates that person's role on the site."
+    "Addons can be installed or removed from System control."
   ],
-  "added": [],
-  "changed": [
-    "The linking bot can grant or remove a site role when the matching Discord role changes."
+  "added": [
+    "Add addon and Remove on the addons page."
   ],
+  "changed": [],
   "removed": []
 }
