@@ -42,6 +42,9 @@ const nextConfig = {
     experimental: {
         agentUpgrade: 'security',
     },
+    typescript: {
+        ignoreBuildErrors: process.env.TEMPLATE_UPDATE_SKIP_TYPECHECK === '1',
+    },
     allowedDevOrigins: devOriginHostnames(),
     serverExternalPackages: ['sharp'],
     async rewrites() {

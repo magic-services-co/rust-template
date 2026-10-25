@@ -1,15 +1,13 @@
 {
-  "version": "2.3.32",
+  "version": "2.3.33",
   "releasedAt": "2026-10-25",
   "notes": [
-    "Wipe automations now run their steps against the linked panel and record whether the run succeeded.",
-    "If nobody voted, the map is left unchanged and the server still stops and starts.",
-    "Next.js is updated from 16.4.0 to 16.4.3 for a published security fix."
+    "Schedules open on their own page. The list shows each schedule without listing every task.",
+    "If a frontend rebuild is killed, the previous site starts again instead of staying on a 502."
   ],
   "added": [],
   "changed": [
-    "The same map can be used on more than one vote, and admins can see vote totals while a vote is still open.",
-    "The vote time picker keeps a typed hour, and a missed vote-end automation runs on the next scheduler check."
+    "Updates on the server skip the TypeScript check that was running the machine out of memory."
   ],
   "removed": []
 }

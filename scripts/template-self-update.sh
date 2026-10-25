@@ -277,16 +277,44 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
     echo "npm is not installed." >&2
     exit 1
   fi
+  frontend_dir="$ROOT/frontend"
+  previous_build="$frontend_dir/.next-previous"
+
   echo "Stopping Next.js before the build replaces its files…"
-  bash "$ROOT/frontend/scripts/restart-next.sh" stop
+  bash "$frontend_dir/scripts/restart-next.sh" stop
+
+  if [[ -f "$frontend_dir/.next/BUILD_ID" ]]; then
+    echo "Saving the current frontend build…"
+    rm -rf "$previous_build"
+    mv "$frontend_dir/.next" "$previous_build"
+  fi
+
+  restore_previous_frontend() {
+    if [[ ! -f "$previous_build/BUILD_ID" ]]; then
+      echo "No previous frontend build to restore." >&2
+      return 0
+    fi
+    echo "Restoring the previous frontend build…" >&2
+    rm -rf "$frontend_dir/.next"
+    mv "$previous_build" "$frontend_dir/.next"
+  }
+
   echo "npm ci && npm run build (frontend)…"
-  if ! (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build) < /dev/null; then
-    echo "Frontend build failed. Starting the previous Next.js process if a build is still on disk." >&2
-    bash "$ROOT/frontend/scripts/restart-next.sh" || true
+  echo "Skipping the TypeScript check so a small server is not killed during the build."
+  if ! (
+    cd "$frontend_dir" &&
+    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" ci &&
+    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" run build
+  ) < /dev/null; then
+    echo "Frontend build failed." >&2
+    restore_previous_frontend
+    bash "$frontend_dir/scripts/restart-next.sh" || true
     exit 1
   fi
+
+  rm -rf "$previous_build"
   echo "Restarting the site so the new pages are served…"
-  bash "$ROOT/frontend/scripts/restart-next.sh"
+  bash "$frontend_dir/scripts/restart-next.sh"
 fi
 
 start_backend_if_down() {
