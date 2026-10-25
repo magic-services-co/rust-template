@@ -1,12 +1,12 @@
 {
-  "version": "2.3.28",
+  "version": "2.3.29",
   "releasedAt": "2026-10-24",
   "notes": [
-    "Addons can be installed or removed from System control."
+    "Installing an addon no longer takes the site down when Composer cannot refresh its class map."
   ],
-  "added": [
-    "Add addon and Remove on the addons page."
+  "added": [],
+  "changed": [
+    "Addon classes still load when Composer cannot update the class map."
   ],
-  "changed": [],
   "removed": []
 }
