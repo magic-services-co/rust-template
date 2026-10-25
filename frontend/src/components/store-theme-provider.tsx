@@ -19,7 +19,7 @@ export function StoreThemeProvider({ children, serverTheme }: StoreThemeProvider
 
   return (
     <div
-      className="flex flex-1 flex-col"
+      className="store-theme-surface flex flex-1 flex-col"
       style={{
         backgroundColor: surface,
         backdropFilter: theme.blurIntensity ? `blur(${theme.blurIntensity * 10}px)` : undefined,

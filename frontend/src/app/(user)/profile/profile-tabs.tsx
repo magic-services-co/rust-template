@@ -80,7 +80,7 @@ export function ProfileTabs({ user, serverTheme }: ProfileTabsProps) {
                             prefetch
                             className={cn(
                                 "ghost shrink-0 whitespace-nowrap px-4 py-2 text-center text-[10px] font-bold tracking-[1.4px]",
-                                isActive ? "store-tab-active" : "store-tab"
+                                isActive ? "store-tab-active" : "store-tab",
                             )}
                         >
                             {tab.label}

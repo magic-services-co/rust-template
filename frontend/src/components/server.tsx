@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ServerData, ServerTag } from "@/hooks/use-server-data";
 import { getServerConnectAddress } from "@/lib/server-card-helpers";
+import { copyText } from "@/lib/copy-text";
 import { CheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
@@ -53,7 +54,7 @@ export default function Server({
 
   const handleConnect = () => {
     if (copyServerAddress && connectAddress) {
-      void navigator.clipboard.writeText(connectAddress);
+      void copyText(connectAddress).catch(() => undefined);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
       return;

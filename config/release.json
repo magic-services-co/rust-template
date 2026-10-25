@@ -1,12 +1,15 @@
 {
-  "version": "2.3.30",
+  "version": "2.3.31",
   "releasedAt": "2026-10-24",
   "notes": [
-    "An installed theme addon can replace the public pages after the frontend is rebuilt."
+    "Saving a PayNow API key checks access again instead of keeping the last result.",
+    "Names that are only a miHash placeholder are no longer treated as a player's name.",
+    "Copying a server address still works when the browser blocks the clipboard API."
   ],
-  "added": [
-    "Public pages can hand off to an installed theme addon."
+  "added": [],
+  "changed": [
+    "A failed PayNow website check is not cached, and the message includes PayNow's own error.",
+    "The site theme is stored in the browser instead of next-themes."
   ],
-  "changed": [],
   "removed": []
 }

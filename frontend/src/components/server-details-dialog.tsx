@@ -5,8 +5,8 @@ import Link from "next/link";
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import { Box, CheckIcon, CirclePlayIcon, CopyIcon } from "lucide-react";
 import type { ServerData } from "@/hooks/use-server-data";
+import { copyText } from "@/lib/copy-text";
 
-/** Overrides BattleMetrics `rust_maps` for this dialog (preview, 3D, external link). */
 const HARDCODED_RUSTMAPS_MAP_PAGE =
   "https://rustmaps.com/map/4ac7a25f40904c83a6bd162a9ef1f46b";
 import { ServerRgtMapDialog } from "@/components/server-rgt-map-dialog";
@@ -409,7 +409,7 @@ function ModalCopyIp({ address, serverTheme }: { address: string; serverTheme?: 
         e.currentTarget.style.backgroundColor = bg;
       }}
       onClick={() => {
-        void navigator.clipboard.writeText(address);
+        void copyText(address).catch(() => undefined);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }}
