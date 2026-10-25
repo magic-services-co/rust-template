@@ -43,16 +43,20 @@ export function AutomationList() {
     const [formOpen, setFormOpen] = useState(false)
     const [editing, setEditing] = useState<ServerAutomation | null>(null)
 
-    const { data: automations = [], isLoading, error } = useQuery({
+    const { data, isLoading, error } = useQuery({
         queryKey: ['automations'],
         queryFn: fetchAutomations,
     })
+    const automations = data?.automations ?? []
+    const scheduler = data?.scheduler
+    const schedulerStale = !scheduler?.lastTickAt
+        || Date.now() - new Date(scheduler.lastTickAt).getTime() > (scheduler.intervalSeconds + 90) * 1000
 
     const runMutation = useMutation({
         mutationFn: runAutomationNow,
-        onSuccess: () => {
+        onSuccess: (automation) => {
             queryClient.invalidateQueries({ queryKey: ['automations'] })
-            toast.success('Automation ran successfully')
+            toast.success(automation.lastRunNote || 'Automation ran successfully')
         },
         onError: (e: Error) => toast.error(e.message),
     })
@@ -82,6 +86,11 @@ export function AutomationList() {
 
     return (
         <>
+            {!isLoading && schedulerStale && (
+                <p className="mb-4 text-sm text-amber-600 dark:text-amber-400">
+                    Scheduled automations have not been checked recently. Vote-end and timed triggers run once a minute from the server scheduler. Run now still runs immediately.
+                </p>
+            )}
             <div className="flex items-center justify-between gap-4 mb-6">
                 <div>
                     <p className="text-sm text-muted-foreground">
@@ -176,8 +185,11 @@ export function AutomationList() {
                                         Last run: {format(new Date(automation.lastRunAt), 'PPp')}
                                     </p>
                                 )}
+                                {automation.lastRunNote && (
+                                    <p className="text-xs text-muted-foreground line-clamp-3">{automation.lastRunNote}</p>
+                                )}
                                 {automation.lastRunError && (
-                                    <p className="text-xs text-destructive line-clamp-2">{automation.lastRunError}</p>
+                                    <p className="text-xs text-destructive line-clamp-3">{automation.lastRunError}</p>
                                 )}
                             </CardContent>
                         </Card>

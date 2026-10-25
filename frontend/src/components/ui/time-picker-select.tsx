@@ -39,7 +39,7 @@ export const TimePeriodSelect = React.forwardRef<
                     tempDate,
                     hours.toString(),
                     "12hours",
-                    period === "AM" ? "PM" : "AM"
+                    value
                 )
             );
         }
@@ -48,7 +48,7 @@ export const TimePeriodSelect = React.forwardRef<
     return (
         <div className="flex h-10 items-center">
             <Select
-                defaultValue={period}
+                value={period}
                 onValueChange={(value) => handleValueChange(value as Period)}
             >
                 <SelectTrigger
@@ -58,7 +58,7 @@ export const TimePeriodSelect = React.forwardRef<
                 >
                     <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[250]">
                     <SelectItem value="AM">AM</SelectItem>
                     <SelectItem value="PM">PM</SelectItem>
                 </SelectContent>

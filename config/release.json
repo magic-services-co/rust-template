@@ -1,15 +1,15 @@
 {
-  "version": "2.3.31",
-  "releasedAt": "2026-10-24",
+  "version": "2.3.32",
+  "releasedAt": "2026-10-25",
   "notes": [
-    "Saving a PayNow API key checks access again instead of keeping the last result.",
-    "Names that are only a miHash placeholder are no longer treated as a player's name.",
-    "Copying a server address still works when the browser blocks the clipboard API."
+    "Wipe automations now run their steps against the linked panel and record whether the run succeeded.",
+    "If nobody voted, the map is left unchanged and the server still stops and starts.",
+    "Next.js is updated from 16.4.0 to 16.4.3 for a published security fix."
   ],
   "added": [],
   "changed": [
-    "A failed PayNow website check is not cached, and the message includes PayNow's own error.",
-    "The site theme is stored in the browser instead of next-themes."
+    "The same map can be used on more than one vote, and admins can see vote totals while a vote is still open.",
+    "The vote time picker keeps a typed hour, and a missed vote-end automation runs on the next scheduler check."
   ],
   "removed": []
 }

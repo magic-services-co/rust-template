@@ -6,6 +6,13 @@ import { TimePickerInput } from "./ui/time-picker-input";
 import { TimePeriodSelect } from "./ui/time-picker-select";
 import { Period } from "./ui/time-picker-utils";
 
+export function keepTimeOnDaySelect(current: Date | undefined, day: Date | undefined): Date | undefined {
+    if (!day) return current
+    const next = new Date(current ?? day)
+    next.setFullYear(day.getFullYear(), day.getMonth(), day.getDate())
+    return next
+}
+
 interface TimePickerDemoProps {
     date: Date | undefined;
     setDate: (date: Date | undefined) => void;
@@ -14,7 +21,7 @@ interface TimePickerDemoProps {
 export function TimePicker({ date, setDate }: TimePickerDemoProps) {
     const [period, setPeriod] = React.useState<Period>(() => {
         if (!date) return "AM";
-        return date.getHours() >= 12 ? "AM" : "PM";
+        return date.getHours() >= 12 ? "PM" : "AM";
     });
 
     const minuteRef = React.useRef<HTMLInputElement>(null);

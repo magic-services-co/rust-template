@@ -159,6 +159,18 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
                     ref={inputRef}
                     value={inputValue}
                     onChange={handleChange}
+                    onBlur={() => {
+                        if (inputValue === "") return
+                        const numValue = parseInt(inputValue, 10)
+                        if (Number.isNaN(numValue)) return
+                        if (picker === "hours" || picker === "12hours") {
+                            const min = picker === "12hours" ? 1 : 0
+                            const max = picker === "12hours" ? 12 : 23
+                            if (numValue >= min && numValue <= max) updateTime(numValue)
+                        } else if (numValue >= 0 && numValue <= 59) {
+                            updateTime(numValue)
+                        }
+                    }}
                     onKeyDown={handleKeyDown}
                     className={cn(
                         "w-8 rounded-md border border-input bg-background px-1 py-1 text-center text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

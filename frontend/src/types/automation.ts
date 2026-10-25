@@ -25,6 +25,7 @@ export type ServerAutomation = {
     lastRunAt?: string | null
     lastRunStatus?: string | null
     lastRunError?: string | null
+    lastRunNote?: string | null
     server?: { server_id: string; server_name: string } | null
     mapVote?: { id: string; vote_end?: string; map_start?: string } | null
 }

@@ -3,7 +3,7 @@
 import { backendApi } from "@/lib/api";
 import { getAuthToken } from "@/lib/laravel-auth";
 import { ServerCombobox } from "@/components/server-combobox";
-import { TimePicker } from "@/components/time-picker";
+import { keepTimeOnDaySelect, TimePicker } from "@/components/time-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -228,7 +228,7 @@ export function AddMapVoteForm() {
                                 render={({ field }) => (
                                     <FormItem className="flex justify-end flex-col">
                                         <FormLabel className="text-left">Wipe Time</FormLabel>
-                                        <Popover modal={true}>
+                                        <Popover>
                                             <FormControl>
                                                 <PopoverTrigger asChild>
                                                     <Button
@@ -251,7 +251,7 @@ export function AddMapVoteForm() {
                                                 <Calendar
                                                     mode="single"
                                                     selected={field.value}
-                                                    onSelect={field.onChange}
+                                                    onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
                                                 />
                                                 <div className="flex justify-center p-3 border-t border-border/15">
                                                     <TimePicker
@@ -273,7 +273,7 @@ export function AddMapVoteForm() {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel className="text-left">Vote Start</FormLabel>
-                                            <Popover modal={true}>
+                                            <Popover>
                                                 <FormControl>
                                                     <PopoverTrigger asChild>
                                                         <Button
@@ -296,7 +296,7 @@ export function AddMapVoteForm() {
                                                     <Calendar
                                                         mode="single"
                                                         selected={field.value}
-                                                        onSelect={field.onChange}
+                                                        onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
                                                     />
                                                     <div className="flex justify-center p-3 border-t border-border/15">
                                                         <TimePicker
@@ -317,7 +317,7 @@ export function AddMapVoteForm() {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel className="text-left">Vote End</FormLabel>
-                                            <Popover modal={true}>
+                                            <Popover>
                                                 <FormControl>
                                                     <PopoverTrigger asChild>
                                                         <Button
@@ -340,7 +340,7 @@ export function AddMapVoteForm() {
                                                     <Calendar
                                                         mode="single"
                                                         selected={field.value}
-                                                        onSelect={field.onChange}
+                                                        onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
                                                     />
                                                     <div className="flex justify-center p-3 border-t border-border/15">
                                                         <TimePicker
@@ -364,6 +364,16 @@ export function AddMapVoteForm() {
                                 enabled={rustmapsCustomGenerationEnabled}
                                 canAddMore={fields.length < 20}
                                 onAppendRustmapsOption={(mapId) => {
+                                    const opts = methods.getValues("map_options")
+                                    const emptyIndex = opts.findIndex((option: { optionStyle?: string; value?: string }) =>
+                                        (option.optionStyle ?? "rustmaps") === "rustmaps" && !String(option.value ?? "").trim()
+                                    )
+                                    if (emptyIndex >= 0) {
+                                        const next = [...opts]
+                                        next[emptyIndex] = { optionStyle: "rustmaps", value: mapId }
+                                        methods.setValue("map_options", next)
+                                        return
+                                    }
                                     if (fields.length >= 20) {
                                         toast.error("Maximum 20 map options allowed.")
                                         return

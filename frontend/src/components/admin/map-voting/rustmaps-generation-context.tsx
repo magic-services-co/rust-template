@@ -121,6 +121,7 @@ const RustmapsGenerationContext = createContext<RustmapsGenerationContextValue |
 export function RustmapsGenerationProvider({ children }: { children: ReactNode }) {
     const [generationHud, setGenerationHud] = useState<GenerationHud>(null)
     const appendRef = useRef<((id: string) => void) | null>(null)
+    const pendingMapIds = useRef<string[]>([])
     const inFlightRef = useRef(false)
     const mountedRef = useRef(true)
 
@@ -137,8 +138,21 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
         }
     }, [])
 
+    const deliverMap = useCallback((mapId: string) => {
+        if (appendRef.current) {
+            appendRef.current(mapId)
+            return true
+        }
+        pendingMapIds.current.push(mapId)
+        return false
+    }, [])
+
     const registerAppendHandler = useCallback((fn: ((id: string) => void) | null) => {
         appendRef.current = fn
+        if (!fn || pendingMapIds.current.length === 0) return
+        const queued = pendingMapIds.current.splice(0)
+        queued.forEach((mapId) => fn(mapId))
+        toast.success(queued.length === 1 ? "Map added to the poll." : `${queued.length} maps added to the poll.`)
     }, [])
 
     useEffect(() => {
@@ -154,13 +168,11 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
                 await pollUntilMapHasPreview(persisted.mapId)
                 if (cancelled) return
                 clearPersistedQueuedMap()
-                const append = appendRef.current
-                if (append) {
-                    append(persisted.mapId)
+                if (deliverMap(persisted.mapId)) {
                     toast.success("Map added to the poll. Save the vote when you are done.")
                 } else {
-                    toast.success(
-                        `Map ready (id: ${persisted.mapId}). Open Create or Edit vote and paste this id in a RustMaps option, or generate again from the dialog.`,
+                    toast.message(
+                        `Map ready (id: ${persisted.mapId}). It will be added when you open Create or Edit vote.`,
                         { duration: 12_000 }
                     )
                 }
@@ -178,7 +190,7 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
         return () => {
             cancelled = true
         }
-    }, [safeSetHud])
+    }, [safeSetHud, deliverMap])
 
     const startSavedConfigGeneration = useCallback(async (args: SavedConfigGenerationArgs) => {
         if (inFlightRef.current) {
@@ -220,13 +232,11 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
                     extractMapIdFromGenerate(json)
                 if (id) {
                     clearPersistedQueuedMap()
-                    const append = appendRef.current
-                    if (append) {
-                        append(String(id))
+                    if (deliverMap(String(id))) {
                         toast.success("Map is ready and was added to the poll.")
                     } else {
-                        toast.success(
-                            `Map is ready (id: ${String(id)}). Open Create or Edit vote to add it as a RustMaps option.`,
+                        toast.message(
+                            `Map is ready (id: ${String(id)}). It will be added when you open Create or Edit vote.`,
                             { duration: 10_000 }
                         )
                     }
@@ -250,13 +260,11 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
             clearPersistedQueuedMap()
             wroteQueuePersistence = false
 
-            const append = appendRef.current
-            if (append) {
-                append(mapId)
+            if (deliverMap(mapId)) {
                 toast.success("Map added to the poll. Save the vote when you are done.")
             } else {
-                toast.success(
-                    `Map ready (id: ${mapId}). Open Create or Edit vote and paste this id in a RustMaps option, or generate again from the dialog.`,
+                toast.message(
+                    `Map ready (id: ${mapId}). It will be added when you open Create or Edit vote.`,
                     { duration: 12_000 }
                 )
             }
@@ -269,7 +277,7 @@ export function RustmapsGenerationProvider({ children }: { children: ReactNode }
             safeSetHud(null)
             inFlightRef.current = false
         }
-    }, [safeSetHud])
+    }, [safeSetHud, deliverMap])
 
     const value = useMemo(
         () => ({

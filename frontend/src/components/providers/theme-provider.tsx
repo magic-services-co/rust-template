@@ -6,6 +6,10 @@ const THEME_STORAGE_KEY = "theme"
 
 type ThemeName = "light" | "dark" | "system"
 
+function isThemeName(value: string): value is ThemeName {
+    return value === "light" || value === "dark" || value === "system"
+}
+
 type ThemeContextValue = {
     theme: string
     setTheme: (theme: string) => void
@@ -60,18 +64,19 @@ export function ThemeProvider({
     const [system, setSystem] = React.useState<"light" | "dark">("dark")
 
     const setTheme = React.useCallback((next: string) => {
+        const themeName: ThemeName = isThemeName(next) ? next : defaultTheme
         const apply = () => {
-            setThemeState(next)
+            setThemeState(themeName)
             try {
-                localStorage.setItem(THEME_STORAGE_KEY, next)
+                localStorage.setItem(THEME_STORAGE_KEY, themeName)
             } catch {
                 /* storage can be blocked */
             }
-            applyTheme(next)
+            applyTheme(themeName)
         }
         if (disableTransitionOnChange) withoutTransitions(apply)
         else apply()
-    }, [disableTransitionOnChange])
+    }, [defaultTheme, disableTransitionOnChange])
 
     React.useEffect(() => {
         let stored = defaultTheme
@@ -93,7 +98,7 @@ export function ThemeProvider({
         }
         const onStorage = (event: StorageEvent) => {
             if (event.key !== THEME_STORAGE_KEY) return
-            const next = event.newValue || defaultTheme
+            const next = event.newValue && isThemeName(event.newValue) ? event.newValue : defaultTheme
             setThemeState(next)
             applyTheme(next)
         }

@@ -45,13 +45,28 @@ export function RustmapsCustomGeneratePanel({
     const baseId = useId()
     const { isGenerating, startSavedConfigGeneration, registerAppendHandler } = useRustmapsGeneration()
 
-    const [configName, setConfigName] = useState("")
+    const [configName, setConfigName] = useState(() => {
+        try {
+            return sessionStorage.getItem("rust-template.rustmaps-last-saved-config") ?? ""
+        } catch {
+            return ""
+        }
+    })
     const [size, setSize] = useState("3500")
     const [seed, setSeed] = useState(() => String(Math.floor(Math.random() * 2_000_000_000)))
     const [staging, setStaging] = useState(false)
 
     const appendRef = useRef(onAppendRustmapsOption)
     appendRef.current = onAppendRustmapsOption
+
+    useEffect(() => {
+        if (!configName.trim()) return
+        try {
+            sessionStorage.setItem("rust-template.rustmaps-last-saved-config", configName)
+        } catch {
+            /* ignore */
+        }
+    }, [configName])
 
     useEffect(() => {
         if (!enabled) {
@@ -141,7 +156,7 @@ export function RustmapsCustomGeneratePanel({
                             <SelectTrigger id={`${baseId}-saved-config`}>
                                 <SelectValue placeholder="Select a saved config" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[250]" position="popper">
                                 {savedConfigRows.map((r) => {
                                     const n = r.name!.trim()
                                     return (

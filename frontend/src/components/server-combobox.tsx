@@ -39,6 +39,7 @@ type ServerComboboxProps = {
     popoverContentStyle?: React.CSSProperties;
     fitMinWidth?: number;
     fitMaxWidth?: number;
+    fallbackLabel?: string;
 }
 
 export function ServerCombobox({
@@ -55,6 +56,7 @@ export function ServerCombobox({
     popoverContentStyle,
     fitMinWidth,
     fitMaxWidth,
+    fallbackLabel,
 }: ServerComboboxProps) {
     const { data: serverCategories, ...serversQuery } = useServers();
     const [open, setOpen] = React.useState(false)
@@ -100,8 +102,10 @@ export function ServerCombobox({
         if (allowGlobal && value === "global") return "Global";
         if (allowNone && value === null) return "None Selected";
         if (selectedServer) return selectedServer.server_name;
+        if (fallbackLabel && value) return fallbackLabel;
+        if (value && serversQuery.isLoading) return "Loading server...";
         return "Select server...";
-    }, [value, selectedServer, allowGlobal, allowNone])
+    }, [value, selectedServer, allowGlobal, allowNone, fallbackLabel, serversQuery.isLoading])
 
     React.useLayoutEffect(() => {
         if (!sized || fitMinWidth == null || fitMaxWidth == null) return

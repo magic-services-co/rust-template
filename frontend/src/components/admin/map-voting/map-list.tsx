@@ -67,6 +67,11 @@ function MapVoteCard({ vote }: { vote: MapVote }) {
                     <p className={`text-sm font-semibold ${isEnded ? "text-red-500" : isActive ? "text-green-500" : "text-amber-500"}`}>
                         {statusText} {formatDistanceToNow(relevantDate, { addSuffix: true })}
                     </p>
+                    {now >= startDate && (
+                        <p className="text-sm text-muted-foreground">
+                            {(vote.map_options ?? []).reduce((sum, option) => sum + (option.vote_count ?? 0), 0)} votes
+                        </p>
+                    )}
                 </div>
                 <div className="flex flex-row gap-2">
                     <EditMapVoteForm vote={vote} />

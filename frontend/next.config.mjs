@@ -39,6 +39,9 @@ function devOriginHostnames() {
 }
 
 const nextConfig = {
+    experimental: {
+        agentUpgrade: 'security',
+    },
     allowedDevOrigins: devOriginHostnames(),
     serverExternalPackages: ['sharp'],
     async rewrites() {

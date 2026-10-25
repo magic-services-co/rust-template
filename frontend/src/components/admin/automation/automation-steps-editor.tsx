@@ -207,7 +207,7 @@ export function AutomationStepsEditor({
                             {step.type === 'apply_map_winner' && (
                                 <div className="space-y-3">
                                     <p className="text-xs text-muted-foreground">
-                                        Sets panel startup variables from the winning map vote option using the variable names configured on the linked panel (Server Management → panel settings).
+                                        Sets the panel startup variables from the winning map. A custom map sets MAP_URL and clears seed and size. A procedural map sets seed and size and clears MAP_URL. If nobody voted, the map is left unchanged and the other steps still run. A tie uses the earliest option in the vote.
                                     </p>
                                     <div className="flex items-center gap-2">
                                         <Switch

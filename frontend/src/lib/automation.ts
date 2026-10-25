@@ -2,6 +2,11 @@ import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
 import type { MapVoteSummary, PterodactylStartupVariable, ServerAutomation } from '@/types/automation'
 
+export type AutomationSchedulerStatus = {
+    lastTickAt: string | null
+    intervalSeconds: number
+}
+
 function authHeaders(json = false): Record<string, string> {
     const token = getAuthToken()
     const h: Record<string, string> = { Accept: 'application/json' }
@@ -10,7 +15,7 @@ function authHeaders(json = false): Record<string, string> {
     return h
 }
 
-export async function fetchAutomations(): Promise<ServerAutomation[]> {
+export async function fetchAutomations(): Promise<{ automations: ServerAutomation[]; scheduler: AutomationSchedulerStatus }> {
     const res = await fetch(backendApi('admin/automations'), {
         credentials: 'include',
         headers: authHeaders(),
@@ -20,7 +25,14 @@ export async function fetchAutomations(): Promise<ServerAutomation[]> {
         throw new Error((json as { error?: string }).error || 'Failed to load automations')
     }
     const data = await res.json()
-    return (data.automations ?? []) as ServerAutomation[]
+    const scheduler = (data.scheduler ?? {}) as Partial<AutomationSchedulerStatus>
+    return {
+        automations: (data.automations ?? []) as ServerAutomation[],
+        scheduler: {
+            lastTickAt: scheduler.lastTickAt ?? null,
+            intervalSeconds: scheduler.intervalSeconds ?? 60,
+        },
+    }
 }
 
 export async function createAutomation(payload: Record<string, unknown>): Promise<ServerAutomation> {
