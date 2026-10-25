@@ -207,8 +207,14 @@ else
 fi
 
 ADDONS_BACKUP="$(mktemp -d)"
-cleanup_addons_backup() { rm -rf "$ADDONS_BACKUP"; }
-trap cleanup_addons_backup EXIT
+FRONTEND_STAGE=""
+cleanup_update_temps() {
+  rm -rf "$ADDONS_BACKUP"
+  if [[ -n "$FRONTEND_STAGE" ]]; then
+    rm -rf "$FRONTEND_STAGE"
+  fi
+}
+trap cleanup_update_temps EXIT
 
 echo "Saving installed addons…"
 save_installed_addons "$ADDONS_BACKUP"
@@ -279,42 +285,73 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   fi
   frontend_dir="$ROOT/frontend"
   previous_build="$frontend_dir/.next-previous"
-
-  echo "Stopping Next.js before the build replaces its files…"
-  bash "$frontend_dir/scripts/restart-next.sh" stop
-
-  if [[ -f "$frontend_dir/.next/BUILD_ID" ]]; then
-    echo "Saving the current frontend build…"
-    rm -rf "$previous_build"
-    mv "$frontend_dir/.next" "$previous_build"
-  fi
+  previous_modules="$frontend_dir/node_modules-previous"
+  FRONTEND_STAGE="$(mktemp -d /tmp/template-frontend-build.XXXXXX)"
 
   restore_previous_frontend() {
-    if [[ ! -f "$previous_build/BUILD_ID" ]]; then
-      echo "No previous frontend build to restore." >&2
-      return 0
+    echo "Putting the previous frontend back…" >&2
+    rm -rf "$frontend_dir/.next" "$frontend_dir/node_modules"
+    if [[ -d "$previous_build" ]]; then
+      mv "$previous_build" "$frontend_dir/.next"
     fi
-    echo "Restoring the previous frontend build…" >&2
-    rm -rf "$frontend_dir/.next"
-    mv "$previous_build" "$frontend_dir/.next"
+    if [[ -d "$previous_modules" ]]; then
+      mv "$previous_modules" "$frontend_dir/node_modules"
+    fi
+    bash "$frontend_dir/scripts/restart-next.sh" || true
   }
 
-  echo "npm ci && npm run build (frontend)…"
+  echo "Building the new frontend beside the live site. The current site stays up."
   echo "Skipping the TypeScript check so a small server is not killed during the build."
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a \
+      --exclude node_modules \
+      --exclude .next \
+      --exclude .next-previous \
+      --exclude node_modules-previous \
+      --exclude install-next-start.log \
+      "$frontend_dir/" "$FRONTEND_STAGE/"
+  else
+    cp -a "$frontend_dir/." "$FRONTEND_STAGE/"
+    rm -rf "$FRONTEND_STAGE/node_modules" "$FRONTEND_STAGE/.next" "$FRONTEND_STAGE/.next-previous" "$FRONTEND_STAGE/node_modules-previous"
+  fi
+  # next build directly, not npm run build: postbuild would restart the live server.
   if ! (
-    cd "$frontend_dir" &&
+    cd "$FRONTEND_STAGE" &&
     TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" ci &&
-    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" run build
+    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" exec -- next build
   ) < /dev/null; then
-    echo "Frontend build failed." >&2
-    restore_previous_frontend
-    bash "$frontend_dir/scripts/restart-next.sh" || true
+    echo "Frontend build failed. The current site was left running." >&2
+    exit 1
+  fi
+  if [[ ! -f "$FRONTEND_STAGE/.next/BUILD_ID" ]]; then
+    echo "Frontend build did not produce a build. The current site was left running." >&2
     exit 1
   fi
 
-  rm -rf "$previous_build"
-  echo "Restarting the site so the new pages are served…"
-  bash "$frontend_dir/scripts/restart-next.sh"
+  echo "New frontend is built. Switching the live site over to it…"
+  bash "$frontend_dir/scripts/restart-next.sh" stop
+  if ss -H -ltn "sport = :${FRONTEND_PORT:-3000}" 2>/dev/null | grep -q .; then
+    echo "Next.js is still listening, so the new build was not swapped in." >&2
+    exit 1
+  fi
+
+  rm -rf "$previous_build" "$previous_modules"
+  if [[ -d "$frontend_dir/.next" ]]; then
+    mv "$frontend_dir/.next" "$previous_build"
+  fi
+  if [[ -d "$frontend_dir/node_modules" ]]; then
+    mv "$frontend_dir/node_modules" "$previous_modules"
+  fi
+  if ! mv "$FRONTEND_STAGE/.next" "$frontend_dir/.next" || ! mv "$FRONTEND_STAGE/node_modules" "$frontend_dir/node_modules"; then
+    restore_previous_frontend
+    exit 1
+  fi
+  if ! bash "$frontend_dir/scripts/restart-next.sh"; then
+    restore_previous_frontend
+    exit 1
+  fi
+
+  rm -rf "$previous_build" "$previous_modules"
 fi
 
 start_backend_if_down() {

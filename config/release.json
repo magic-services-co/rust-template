@@ -1,13 +1,12 @@
 {
-  "version": "2.3.33",
+  "version": "2.3.34",
   "releasedAt": "2026-10-25",
   "notes": [
-    "Schedules open on their own page. The list shows each schedule without listing every task.",
-    "If a frontend rebuild is killed, the previous site starts again instead of staying on a 502."
+    "Updates build the new frontend beside the live site and only restart once that build is ready."
   ],
   "added": [],
   "changed": [
-    "Updates on the server skip the TypeScript check that was running the machine out of memory."
+    "A stats API key can post to the Teddy's Theme game routes after that addon is installed."
   ],
   "removed": []
 }

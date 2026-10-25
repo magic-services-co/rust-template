@@ -3,8 +3,8 @@
 # If nothing is listening, start it. `next dev` is left running.
 #
 # Usage: restart-next.sh [restart|stop]
-# `stop` only stops a production server. The self-update script does that
-# before `next build`, which deletes `.next` out from under a running server.
+# `stop` only stops a production server. The self-update script builds beside
+# the live site, then stops Next only long enough to swap in the finished build.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
