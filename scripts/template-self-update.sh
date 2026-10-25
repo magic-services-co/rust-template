@@ -99,12 +99,42 @@ save_installed_addons() {
     for file in "$ROOT/frontend/src/addons"/*; do
       [[ -e "$file" ]] || continue
       name="$(basename "$file")"
-      if [[ "$name" == "registry.ts" ]]; then
+      if [[ "$name" == "registry.ts" || "$name" == "public-front.tsx" ]]; then
         continue
       fi
       cp -a "$file" "$backup/frontend-addon-src/$name"
     done
   fi
+}
+
+sync_installed_fronts() {
+  local dir="$ROOT/frontend/src/addons"
+  local imports="" names="" ids="" folder base source const_name front_id
+  mkdir -p "$dir"
+  shopt -s nullglob
+  for folder in "$dir"/*; do
+    [[ -d "$folder" && -f "$folder/front.tsx" ]] || continue
+    base="$(basename "$folder")"
+    [[ "$base" =~ ^[a-z0-9][a-z0-9_-]{0,40}$ ]] || continue
+    source="$(cat "$folder/front.tsx")"
+    const_name="$(printf '%s\n' "$source" | sed -n 's/^export const \([A-Za-z0-9_]*\).*/\1/p' | head -1)"
+    front_id="$(printf '%s\n' "$source" | sed -n 's/.*id: *"\([a-z][a-z0-9_-]*\)".*/\1/p' | head -1)"
+    [[ -n "$const_name" && -n "$front_id" ]] || continue
+    imports="${imports}import { ${const_name} } from \"@/addons/${base}/front\"
+"
+    names="${names}${names:+, }${const_name}"
+    ids="${ids}${ids:+, }\"${front_id}\""
+  done
+  shopt -u nullglob
+  cat > "$dir/installed.ts" << EOF
+"use client"
+
+${imports}import type { PublicFrontDefinition } from "@/lib/public-front-types"
+
+/** Site-owned public fronts. Template updates keep this file and the addon folders it imports. */
+export const installedFronts: PublicFrontDefinition[] = [${names}]
+EOF
+  printf 'export const installedFrontIds = [%s] as const\n' "$ids" > "$dir/installed-ids.ts"
 }
 
 restore_installed_addons() {
@@ -189,6 +219,7 @@ git reset --hard "origin/${BRANCH}"
 
 echo "Restoring installed addons…"
 restore_installed_addons "$ADDONS_BACKUP"
+sync_installed_fronts
 
 resolve_bin() {
   local name="$1"
@@ -249,7 +280,7 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   echo "Stopping Next.js before the build replaces its files…"
   bash "$ROOT/frontend/scripts/restart-next.sh" stop
   echo "npm ci && npm run build (frontend)…"
-  if ! (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build); then
+  if ! (cd "$ROOT/frontend" && "$NPM_BIN" ci && "$NPM_BIN" run build) < /dev/null; then
     echo "Frontend build failed. Starting the previous Next.js process if a build is still on disk." >&2
     bash "$ROOT/frontend/scripts/restart-next.sh" || true
     exit 1

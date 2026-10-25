@@ -4,6 +4,7 @@ import Content from "./content";
 import { getMetadata } from "@/lib/metadata";
 import { backendApi } from "@/lib/api";
 import { parsePageTheme } from "@/lib/parse-page-theme";
+import { PublicFrontSwitch } from "@/lib/public-front";
 
 export async function generateMetadata() {
   return await getMetadata("terms-of-service");
@@ -37,7 +38,9 @@ export default async function TermsPage() {
 
   return (
     <Suspense>
-      <Content legalTheme={legalTheme} />
+      <PublicFrontSwitch name="legalPage" slotProps={{ kind: "terms" }}>
+        <Content legalTheme={legalTheme} />
+      </PublicFrontSwitch>
     </Suspense>
   );
 }

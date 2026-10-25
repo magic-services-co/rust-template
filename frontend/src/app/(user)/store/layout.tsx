@@ -1,7 +1,6 @@
-import StoreHero from "@/components/store/store-hero";
 import { CartProvider } from "@/components/context/store-context";
 import { StoreThemeProvider } from "@/components/store-theme-provider";
-import { StorePageShell } from "@/components/store/store-page-shell";
+import { StoreFront } from "@/components/store/store-front";
 import { backendApi } from "@/lib/api";
 import { parsePageTheme } from "@/lib/parse-page-theme";
 import { withStoreDefaults } from "@/lib/layout-theme-defaults";
@@ -37,11 +36,9 @@ export default async function Layout({
     <CartProvider>
       <Script src="https://cdn.paynow.gg/paynow-js/bundle.js" strategy="afterInteractive" defer />
       <StoreThemeProvider serverTheme={theme}>
-        <StorePageShell theme={theme}>
-          <StoreHero theme={theme} showSidebar={showSidebar}>
-            {children}
-          </StoreHero>
-        </StorePageShell>
+        <StoreFront theme={theme} showSidebar={showSidebar}>
+          {children}
+        </StoreFront>
       </StoreThemeProvider>
     </CartProvider>
   );

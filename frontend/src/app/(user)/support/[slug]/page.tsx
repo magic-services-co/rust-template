@@ -1,3 +1,4 @@
+import { PublicFrontSwitch } from "@/lib/public-front";
 import { DynamicTicketForm } from "@/components/support/dynamic-ticket-form";
 import { getMetadata } from "@/lib/metadata";
 import { getServerSession } from "@/lib/get-server-session";
@@ -55,6 +56,10 @@ export default async function SupportCategoryPage({ params }: { params: Promise<
       : undefined;
 
   return (
+    <PublicFrontSwitch
+      name="supportCategory"
+      slotProps={{ slug, categoryName, categorySubtitle, theme }}
+    >
     <SupportThemeProvider serverTheme={theme}>
       <SupportPageShell theme={theme}>
         <SupportTitles
@@ -74,5 +79,6 @@ export default async function SupportCategoryPage({ params }: { params: Promise<
         <DynamicTicketForm categorySlug={slug} serverTheme={theme} />
       </SupportPageShell>
     </SupportThemeProvider>
+    </PublicFrontSwitch>
   );
 }

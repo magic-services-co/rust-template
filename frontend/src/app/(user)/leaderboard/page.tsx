@@ -1,3 +1,4 @@
+import { PublicFrontSwitch } from "@/lib/public-front";
 import { StatsTableContainer } from "@/components/stats/table-container";
 import { LeaderboardThemeProvider } from "@/components/leaderboard-theme-provider";
 import { SupportPageShell } from "@/components/support/support-page-shell";
@@ -27,12 +28,14 @@ export default async function Page() {
   const theme = withLeaderboardDefaults(raw);
 
   return (
-    <LeaderboardThemeProvider>
-      <SupportPageShell>
-        <Suspense>
-          <StatsTableContainer leaderboardTheme={theme} />
-        </Suspense>
-      </SupportPageShell>
-    </LeaderboardThemeProvider>
+    <PublicFrontSwitch name="leaderboard" slotProps={{ section: "casual" }}>
+      <LeaderboardThemeProvider>
+        <SupportPageShell>
+          <Suspense>
+            <StatsTableContainer leaderboardTheme={theme} />
+          </Suspense>
+        </SupportPageShell>
+      </LeaderboardThemeProvider>
+    </PublicFrontSwitch>
   );
 }

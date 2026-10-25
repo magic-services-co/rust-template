@@ -6,10 +6,18 @@ import { CookieCta, CookiePreferencesDialog } from "@/components/cookie-preferen
 import { HomeCardCorners } from "@/components/home/home-card-corners";
 import { useCookieConsent, type CookieConsent } from "@/hooks/use-cookie-consent";
 import { useSiteSettings } from "@/hooks/use-site-settings";
+import { usePublicFrontSlot } from "@/lib/public-front";
 
 const GOLD = "#ba9142";
 
 export function CookieConsentBanner() {
+  const { slot: Slot, ready } = usePublicFrontSlot("cookieBanner");
+  if (!ready) return null;
+  if (Slot) return <Slot />;
+  return <TemplateCookieConsentBanner />;
+}
+
+function TemplateCookieConsentBanner() {
   const { isLoaded, needsConsent, acceptAll, denyAll, acceptCustom, copy } = useCookieConsent();
   const { data: settings } = useSiteSettings();
   const [showDetails, setShowDetails] = useState(false);

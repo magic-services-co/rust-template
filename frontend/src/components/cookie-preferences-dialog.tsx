@@ -11,6 +11,7 @@ import {
 import { HomeCardCorners } from "@/components/home/home-card-corners";
 import { cn } from "@/lib/utils";
 import { useCookieConsent, type CookieBannerCopy, type CookieConsent } from "@/hooks/use-cookie-consent";
+import { usePublicFrontSlot } from "@/lib/public-front";
 
 const CATEGORY_KEYS = ["necessary", "analytics", "marketing", "preferences"] as const;
 
@@ -107,6 +108,39 @@ export function CookieCategoryList({
 }
 
 export function CookiePreferencesDialog({
+  open,
+  onOpenChange,
+  initialConsent,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialConsent: CookieConsent;
+  onSave: (consent: CookieConsent) => void;
+}) {
+  const { slot: Slot, ready } = usePublicFrontSlot("cookieDialog");
+  if (!ready) return null;
+  if (Slot) {
+    return (
+      <Slot
+        open={open}
+        onOpenChange={onOpenChange}
+        initialConsent={initialConsent}
+        onSave={onSave}
+      />
+    );
+  }
+  return (
+    <TemplateCookiePreferencesDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      initialConsent={initialConsent}
+      onSave={onSave}
+    />
+  );
+}
+
+function TemplateCookiePreferencesDialog({
   open,
   onOpenChange,
   initialConsent,

@@ -2,6 +2,7 @@ import { getMetadata } from "@/lib/metadata";
 import { getServerSession } from "@/lib/get-server-session";
 import AccountLinkStepper from "./link";
 import { cookies } from "next/headers";
+import { PublicFrontSwitch } from "@/lib/public-front";
 import { SupportPageShell } from "@/components/support/support-page-shell";
 import { LinkTitles } from "@/components/link-titles";
 import { backendApi } from "@/lib/api";
@@ -31,11 +32,16 @@ export default async function LinkPage() {
     const initialKits = await loadLinkedKits();
 
     return (
-        <SupportPageShell wide>
-            <LinkTitles />
-            <div className="pt-10">
-                <AccountLinkStepper user={session?.user} linkStatus={linkStatus ?? null} initialKits={initialKits} />
-            </div>
-        </SupportPageShell>
+        <PublicFrontSwitch
+            name="linkPage"
+            slotProps={{ user: session?.user, linkStatus: linkStatus ?? null, initialKits }}
+        >
+            <SupportPageShell wide>
+                <LinkTitles />
+                <div className="pt-10">
+                    <AccountLinkStepper user={session?.user} linkStatus={linkStatus ?? null} initialKits={initialKits} />
+                </div>
+            </SupportPageShell>
+        </PublicFrontSwitch>
     );
 }

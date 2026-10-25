@@ -20,6 +20,7 @@ import {
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { getAuthToken } from "@/lib/laravel-auth";
 import { useMemo, useEffect, useState, type ReactNode } from "react";
+import { usePublicFront } from "@/lib/public-front";
 import Link from "next/link";
 import { refreshSteamGroup } from "@/app/actions/steam";
 import { useRouter } from "next/navigation";
@@ -243,6 +244,27 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
         },
     });
 
+    const LinkStepper = usePublicFront().slots.linkStepper
+    if (LinkStepper) {
+        return (
+            <LinkStepper
+                step={step}
+                user={user}
+                kits={kits}
+                kitItems={kitItems}
+                activeIndex={activeIndex}
+                setSelectedKit={setSelectedKit}
+                isGroupEnabled={isGroupEnabled}
+                steamGroupUrl={settings?.steamGroupUrl}
+                isLinkingDiscord={isLinkingDiscord}
+                setIsLinkingDiscord={setIsLinkingDiscord}
+                unlinkPending={unlinkMutation.isPending}
+                onUnlink={() => unlinkMutation.mutate()}
+                catalog={rustItemsQuery.data}
+            />
+        )
+    }
+
     return (
         <article
             className="link-card support-ticket-card relative overflow-visible border"
@@ -329,7 +351,7 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
 
                     {kits.length > 0 ? (
                         <div className="mt-4">
-                            <KitInventory items={kitItems} catalog={rustItemsQuery.data} />
+                            <KitInventory items={kitItems} catalog={rustItemsQuery.data} showCredit={false} />
                         </div>
                     ) : (
                         <p className="pt-4 text-[11px] leading-4" style={{ color: "rgba(142,156,175,0.72)" }}>

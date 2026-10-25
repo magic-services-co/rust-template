@@ -1,3 +1,4 @@
+import { PublicFrontSwitch } from "@/lib/public-front";
 import TicketCategories from "@/components/support/ticket-categories";
 import { getMetadata } from "@/lib/metadata";
 import { getServerSession } from "@/lib/get-server-session";
@@ -43,39 +44,39 @@ export default async function SupportPage() {
   const isBanned = isSignedIn && user?.isBanned === true;
   const banReason = isSignedIn ? (user?.banReason ?? null) : null;
 
-  if (isSignedIn && isBanned) {
-    return (
-      <SupportThemeProvider serverTheme={theme}>
-        <SupportPageShell theme={theme}>
-          <SupportTitles serverTheme={theme} isSignedIn={isSignedIn} />
-          <div
-            className="relative mx-auto mt-10 max-w-[555px] overflow-visible border p-5 text-center"
-            style={{
-              backgroundColor: (theme.banMessageBackground as string) || "rgba(141, 37, 42, 0.16)",
-              borderColor: (theme.banMessageBorder as string) || "#8d252a",
-              color: (theme.banMessageTextColor as string) || "#eef4fb",
-            }}
-          >
-            <p className="text-[18px] tracking-[-0.6px]">Account banned</p>
-            <p className="pt-3 text-[13px] leading-6 text-[rgba(225,231,237,0.74)]">
-              Your account has been banned from creating tickets.
-              {banReason && (
-                <span className="mt-2 block font-medium">Reason: {banReason}</span>
-              )}
-            </p>
-            <HomeCardCorners color="#ba9142" show />
-          </div>
-        </SupportPageShell>
-      </SupportThemeProvider>
-    );
-  }
-
   return (
-    <SupportThemeProvider serverTheme={theme}>
-      <SupportPageShell theme={theme}>
-        <SupportTitles serverTheme={theme} isSignedIn={isSignedIn} />
-        <TicketCategories isSignedIn={isSignedIn} serverTheme={theme} />
-      </SupportPageShell>
-    </SupportThemeProvider>
+    <PublicFrontSwitch name="supportPage" slotProps={{ isSignedIn, isBanned, banReason }}>
+      {isSignedIn && isBanned ? (
+        <SupportThemeProvider serverTheme={theme}>
+          <SupportPageShell theme={theme}>
+            <SupportTitles serverTheme={theme} isSignedIn={isSignedIn} />
+            <div
+              className="relative mx-auto mt-10 max-w-[555px] overflow-visible border p-5 text-center"
+              style={{
+                backgroundColor: (theme.banMessageBackground as string) || "rgba(141, 37, 42, 0.16)",
+                borderColor: (theme.banMessageBorder as string) || "#8d252a",
+                color: (theme.banMessageTextColor as string) || "#eef4fb",
+              }}
+            >
+              <p className="text-[18px] tracking-[-0.6px]">Account banned</p>
+              <p className="pt-3 text-[13px] leading-6 text-[rgba(225,231,237,0.74)]">
+                Your account has been banned from creating tickets.
+                {banReason && (
+                  <span className="mt-2 block font-medium">Reason: {banReason}</span>
+                )}
+              </p>
+              <HomeCardCorners color="#ba9142" show />
+            </div>
+          </SupportPageShell>
+        </SupportThemeProvider>
+      ) : (
+        <SupportThemeProvider serverTheme={theme}>
+          <SupportPageShell theme={theme}>
+            <SupportTitles serverTheme={theme} isSignedIn={isSignedIn} />
+            <TicketCategories isSignedIn={isSignedIn} serverTheme={theme} />
+          </SupportPageShell>
+        </SupportThemeProvider>
+      )}
+    </PublicFrontSwitch>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicFront } from "@/lib/public-front";
 import { JoinCommunity } from "@/components/home/join-community";
 import Rules, { type Rule } from "@/components/home/rules";
 import Team, { type TeamMember } from "@/components/home/team";
@@ -145,6 +146,7 @@ function HomeCta({
 }
 
 export function HomePageClient({ siteSettings, settings, teamMembersWithRoles }: HomePageClientProps) {
+  const front = usePublicFront();
   const liveSettings = useSiteSettings();
   const serverHome = {
     ...(settings?.home ?? {}),
@@ -158,6 +160,11 @@ export function HomePageClient({ siteSettings, settings, teamMembersWithRoles }:
     : (t.pageTitleAccent || siteName).toUpperCase();
   const heroSecondaryHref = t.heroSecondaryHref || discordInvite;
   const communityHref = t.communityCtaHref || discordInvite;
+
+  const Home = front.slots.home;
+  if (front.ready && Home) {
+    return <Home />;
+  }
 
   return (
     <SupportPageShell>

@@ -5,6 +5,7 @@ import { backendApi } from "@/lib/api";
 import { LicenseRequiredBlock } from "@/components/license-required-block";
 import { UserLayoutClient } from "./user-layout-client";
 import type { LayoutTheme } from "@/lib/layout-theme-defaults";
+import { installedFrontIds } from "@/addons/installed-ids";
 import { PublicStructuredData } from "@/components/seo/public-structured-data";
 
 export const metadata = {};
@@ -55,14 +56,21 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
     );
   }
 
-  const res = await fetch(backendApi("data?include=navigationItems,themeSettings,siteSettings"), {
-    headers: {
-      Accept: "application/json",
-      ...(host && { Host: host }),
-      ...(host && { "X-Forwarded-Host": host }),
-    },
-    next: { revalidate: 60, tags: ["public-pages"] },
-  });
+  const pageHeaders = {
+    Accept: "application/json",
+    ...(host && { Host: host }),
+    ...(host && { "X-Forwarded-Host": host }),
+  };
+  const [res, addonsRes] = await Promise.all([
+    fetch(backendApi("data?include=navigationItems,themeSettings,siteSettings"), {
+      headers: pageHeaders,
+      next: { revalidate: 60, tags: ["public-pages"] },
+    }),
+    fetch(backendApi("addons"), {
+      headers: pageHeaders,
+      cache: "no-store",
+    }),
+  ]);
 
   if (res.status === 403) {
     let body: { error?: string; message?: string } = {};
@@ -82,11 +90,18 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
   const navItems = Array.isArray(data.navigationItems) ? data.navigationItems : [];
   const theme = data.themeSettings as LayoutTheme | undefined;
   const siteName = typeof data.siteSettings?.name === "string" ? data.siteSettings.name : undefined;
+  const addonsJson = addonsRes.ok ? await addonsRes.json() : { addons: [] };
+  const enabledIds = new Set(
+    (Array.isArray(addonsJson.addons) ? addonsJson.addons : [])
+      .map((addon: { id?: string }) => addon.id)
+      .filter((id: string | undefined): id is string => typeof id === "string"),
+  );
+  const initialFrontId = installedFrontIds.find((id) => enabledIds.has(id)) ?? null;
 
   const safeChildren = children ?? null;
 
   return (
-    <UserLayoutClient navItems={navItems} theme={theme} siteName={siteName}>
+    <UserLayoutClient navItems={navItems} theme={theme} siteName={siteName} initialFrontId={initialFrontId}>
       <PublicStructuredData />
       {safeChildren}
     </UserLayoutClient>

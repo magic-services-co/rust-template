@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicFront } from "@/lib/public-front";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession, signIn, signOut } from "@/lib/laravel-auth-react";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export default function MobileNav({
     };
 }) {
     const path = usePathname();
+    const AimMobile = usePublicFront().slots.mobileNav;
     const { data: session, status } = useSession();
     const [isOpen, setIsOpen] = useState(false);
     const [signInHover, setSignInHover] = useState(false);
@@ -72,6 +74,10 @@ export default function MobileNav({
         ? theme?.primaryButtonHover || LAYOUT_THEME_DEFAULTS.primaryButtonHover
         : theme?.primaryButtonBg || LAYOUT_THEME_DEFAULTS.primaryButtonBg;
     const signInColor = theme?.primaryButtonText || LAYOUT_THEME_DEFAULTS.primaryButtonText;
+
+    if (AimMobile) {
+        return <AimMobile items={items} logoImage={logoImage} wordmarkColor={wordmarkColor} siteName={siteName} />;
+    }
 
     return (
         <>

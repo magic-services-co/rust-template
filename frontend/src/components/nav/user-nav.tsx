@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicFront } from "@/lib/public-front";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, ShieldIcon, LogOutIcon, UserIcon } from "lucide-react";
 import { useSession, signIn, signOut } from "@/lib/laravel-auth-react"
@@ -13,7 +14,6 @@ import {
     DropdownMenuTrigger
 } from "../ui/dropdown-menu";
 import { LAYOUT_THEME_DEFAULTS } from "@/lib/layout-theme-defaults";
-
 function getHighestRole(roles: Array<{ role?: { name?: string; color?: string | null; order?: number } }> | undefined) {
     if (!roles?.length) return null;
     const withOrder = roles
@@ -37,6 +37,7 @@ export function UserNav({
     };
 } = {}) {
     const [isOpen, setIsOpen] = useState(false)
+    const AimUserNav = usePublicFront().slots.userNav
     const { data: session, status } = useSession()
     const [signInHover, setSignInHover] = useState(false)
 
@@ -59,6 +60,8 @@ export function UserNav({
     const displayImage = typeof session?.user?.image === "string" ? session.user.image : ""
     const roleLabel = highestRole?.name || "View profile"
     const roleColor = highestRole?.color || mutedColor
+
+    if (AimUserNav) return <AimUserNav />
 
     if (status === "loading") {
         return (

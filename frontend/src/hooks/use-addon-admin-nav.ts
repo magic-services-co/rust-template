@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 
+import { installedFronts } from '@/addons/installed'
 import { addonRegistry } from '@/addons/registry'
 import type { AdminNavMainItem } from '@/components/admin/navigation/nav-main'
 
@@ -13,8 +14,17 @@ export function useAddonAdminNavItems(): AdminNavMainItem[] {
   return useMemo(() => {
     if (!data?.addons) return []
     const enabled = new Set(data.addons.map((a) => a.id))
-    return addonRegistry
+    const fromRegistry = addonRegistry
       .filter((addon) => enabled.has(addon.id))
       .flatMap((addon) => addon.adminNav)
+    const fromInstalled = installedFronts
+      .filter((addon) => enabled.has(addon.id))
+      .flatMap((addon) => addon.adminNav ?? [])
+    const seen = new Set<string>()
+    return [...fromRegistry, ...fromInstalled].filter((item) => {
+      if (seen.has(item.url)) return false
+      seen.add(item.url)
+      return true
+    })
   }, [data?.addons])
 }

@@ -1,12 +1,10 @@
-import { TicketView } from "@/components/tickets/view-ticket"
+import { TicketPageClient } from "./ticket-page-client"
 import { backendApi } from "@/lib/api"
 import { getMetadata } from "@/lib/metadata"
 import { getServerSession } from "@/lib/get-server-session"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import type { User } from "next-auth"
-import { SupportThemeProvider } from "@/components/support-theme-provider"
-import { SupportPageShell } from "@/components/support/support-page-shell"
 import { parsePageTheme } from "@/lib/parse-page-theme"
 
 export async function generateMetadata() {
@@ -49,14 +47,10 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     const theme = parsePageTheme(settings, "support");
 
     return (
-        <SupportThemeProvider serverTheme={theme}>
-            <SupportPageShell theme={theme}>
-                <TicketView
-                    ticketId={parseInt(id)}
-                    currentUser={session.user as unknown as User}
-                    serverTheme={theme}
-                />
-            </SupportPageShell>
-        </SupportThemeProvider>
+        <TicketPageClient
+            ticketId={parseInt(id)}
+            currentUser={session.user as unknown as User}
+            theme={theme}
+        />
     )
 }

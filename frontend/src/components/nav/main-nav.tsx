@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicFront } from "@/lib/public-front";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,11 +20,18 @@ export function MainNav({
   };
 }) {
   const path = usePathname();
+  const AimNav = usePublicFront().slots.mainNav;
   const [hoveredItems, setHoveredItems] = React.useState<Record<number, boolean>>({});
   const visible = items.filter((item) => !item.hidden);
 
+  if (AimNav) return <AimNav items={items} />;
+
   return (
-    <nav className="flex items-center gap-8" data-theme-field="navLinkColor" data-theme-label="Nav links">
+    <nav
+      className="flex items-center gap-8"
+      data-theme-field="navLinkColor"
+      data-theme-label="Nav links"
+    >
       {visible.map((item, index) => {
         const isActive = item.url === path || (item.url !== "/" && path.startsWith(item.url));
         return (

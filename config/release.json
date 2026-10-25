@@ -1,12 +1,12 @@
 {
-  "version": "2.3.29",
+  "version": "2.3.30",
   "releasedAt": "2026-10-24",
   "notes": [
-    "Installing an addon no longer takes the site down when Composer cannot refresh its class map."
+    "An installed theme addon can replace the public pages after the frontend is rebuilt."
   ],
-  "added": [],
-  "changed": [
-    "Addon classes still load when Composer cannot update the class map."
+  "added": [
+    "Public pages can hand off to an installed theme addon."
   ],
+  "changed": [],
   "removed": []
 }

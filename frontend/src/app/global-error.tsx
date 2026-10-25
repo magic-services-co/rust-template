@@ -1,7 +1,7 @@
 "use client";
 
 import "./globals.css";
-import { ErrorCta, ErrorHint, ErrorPage } from "@/components/error-page";
+import { ErrorCta, ErrorHint, TemplateErrorPage } from "@/components/error-page";
 
 export default function GlobalError({
   error,
@@ -13,7 +13,7 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body className="bg-[#05070a] text-[#f2f7ff]">
-        <ErrorPage
+        <TemplateErrorPage
           kicker="SERVER ERROR"
           title="500"
           titleAccent="FAILED"
@@ -38,7 +38,7 @@ export default function GlobalError({
               ) : null}
             </ErrorHint>
           ) : null}
-        </ErrorPage>
+        </TemplateErrorPage>
       </body>
     </html>
   );

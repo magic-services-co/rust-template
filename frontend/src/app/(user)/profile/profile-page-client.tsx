@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicFront } from "@/lib/public-front";
 import ProfileHeader from "./profile-header";
 import { Suspense } from "react";
 import { ProfileTabs } from "./profile-tabs";
@@ -14,6 +15,9 @@ type ProfilePageClientProps = {
 };
 
 export function ProfilePageClient({ user, theme }: ProfilePageClientProps) {
+    const Profile = usePublicFront().slots.profile
+    if (Profile) return <Profile user={user} theme={theme} />
+
     return (
         <ProfileThemeProvider serverTheme={theme}>
             <SupportPageShell>

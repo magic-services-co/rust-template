@@ -4,6 +4,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SupportPageShell } from "@/components/support/support-page-shell";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { installedFronts } from "@/addons/installed";
+import { useAddonsManifest } from "@/hooks/use-addons-manifest";
+import { usePublicFront } from "@/lib/public-front";
 import type { ReactNode } from "react";
 
 const ctaStyle = {
@@ -100,7 +103,7 @@ export function ErrorPageContent({
 export function ErrorHint({ children }: { children: ReactNode }) {
   return (
     <div
-      className="relative overflow-visible border px-5 py-4 text-left text-[13px] leading-6"
+      className="error-hint relative overflow-visible border px-5 py-4 text-left text-[13px] leading-6"
       style={{
         backgroundColor: "rgba(8, 12, 17, 0.94)",
         borderColor: "rgba(255,255,255,0.1)",
@@ -113,7 +116,7 @@ export function ErrorHint({ children }: { children: ReactNode }) {
   );
 }
 
-export function ErrorPage({
+export function TemplateErrorPage({
   kicker,
   title,
   titleAccent,
@@ -144,5 +147,56 @@ export function ErrorPage({
         </ErrorPageContent>
       </div>
     </SupportPageShell>
+  );
+}
+
+export function ErrorPage({
+  kicker,
+  title,
+  titleAccent,
+  subtitle,
+  children,
+  actions,
+  fillViewport = false,
+}: {
+  kicker: string;
+  title: string;
+  titleAccent?: string;
+  subtitle?: string;
+  children?: ReactNode;
+  actions?: ReactNode;
+  fillViewport?: boolean;
+}) {
+  const front = usePublicFront();
+  const manifest = useAddonsManifest();
+  const installed = installedFronts.find((item) => manifest.data?.addons.some((addon) => addon.id === item.id))?.slots.errorPage;
+  const Slot = front.slots.errorPage ?? installed;
+  const ready = front.ready || manifest.isFetched || manifest.isError;
+  if (!ready) return null;
+  if (Slot) {
+    return (
+      <Slot
+        kicker={kicker}
+        title={title}
+        titleAccent={titleAccent}
+        subtitle={subtitle}
+        actions={actions}
+        fillViewport={fillViewport}
+      >
+        {children}
+      </Slot>
+    );
+  }
+  return (
+    <TemplateErrorPage
+      kicker={kicker}
+      title={title}
+      titleAccent={titleAccent}
+      subtitle={subtitle}
+      actions={actions}
+      fillViewport={fillViewport}
+    >
+      {children}
+    </TemplateErrorPage>
   );
 }

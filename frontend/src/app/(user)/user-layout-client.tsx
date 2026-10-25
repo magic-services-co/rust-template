@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { PublicFrontProvider, usePublicFront } from "@/lib/public-front";
 import Footer from "@/components/footer";
 import Navigation from "@/components/nav/nav";
 import { NavigationItem } from "@/types/navigation";
@@ -12,11 +13,13 @@ export function UserLayoutClient({
   navItems,
   theme,
   siteName,
+  initialFrontId = null,
 }: {
   children: ReactNode;
   navItems: NavigationItem[];
   theme: LayoutTheme | undefined;
   siteName?: string;
+  initialFrontId?: string | null;
 }) {
   const chrome = useLayoutChromeTheme(theme);
   const navTheme: LayoutTheme = {
@@ -32,7 +35,49 @@ export function UserLayoutClient({
   };
 
   return (
-    <>
+    <PublicFrontProvider initialId={initialFrontId}>
+      <UserChrome
+        navItems={navItems}
+        navTheme={navTheme}
+        chrome={chrome}
+        siteName={siteName}
+        backgroundImage={theme?.backgroundImage}
+        backgroundOpacity={theme?.backgroundOpacity}
+      >
+        {children}
+      </UserChrome>
+    </PublicFrontProvider>
+  );
+}
+
+function UserChrome({
+  children,
+  navItems,
+  navTheme,
+  chrome,
+  siteName,
+  backgroundImage,
+  backgroundOpacity,
+}: {
+  children: ReactNode;
+  navItems: NavigationItem[];
+  navTheme: LayoutTheme;
+  chrome: ReturnType<typeof useLayoutChromeTheme>;
+  siteName?: string;
+  backgroundImage?: string;
+  backgroundOpacity?: number;
+}) {
+  const Chrome = usePublicFront().slots.chrome;
+  if (Chrome) {
+    return (
+      <Chrome navItems={navItems} navTheme={navTheme} siteName={siteName} logoImage={chrome.logoImage}>
+        {children ?? null}
+      </Chrome>
+    );
+  }
+
+  return (
+    <div className="relative z-0">
       <Navigation navigationItems={navItems} theme={navTheme} siteName={siteName} />
       <div className="relative z-0 flex min-h-screen flex-col">
         <main className="relative z-0 isolate flex flex-1 flex-col text-foreground">
@@ -42,14 +87,14 @@ export function UserLayoutClient({
         <div
           className="pointer-events-none fixed inset-0 -z-10 h-screen max-h-screen w-screen max-w-screen bg-cover"
           style={{
-            backgroundImage: `url('${theme?.backgroundImage || "/images/legal-hero.png"}')`,
+            backgroundImage: `url('${backgroundImage || "/images/legal-hero.png"}')`,
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
-            opacity: (theme?.backgroundOpacity ?? 10) / 100,
+            opacity: (backgroundOpacity ?? 10) / 100,
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
