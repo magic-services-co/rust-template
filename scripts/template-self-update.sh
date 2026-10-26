@@ -286,6 +286,8 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   frontend_dir="$ROOT/frontend"
   previous_build="$frontend_dir/.next-previous"
   previous_modules="$frontend_dir/node_modules-previous"
+  # Build beside the install. /tmp is often a small tmpfs, and copying the live
+  # .next there fills the disk before the new build starts.
   find /tmp -maxdepth 1 -type d -name 'template-frontend-build.*' -exec rm -rf {} + 2>/dev/null || true
   find "$ROOT" -maxdepth 1 -type d -name '.template-frontend-build.*' -exec rm -rf {} + 2>/dev/null || true
   avail_kb="$(df -Pk "$ROOT" | awk 'NR==2 {print $4}')"
@@ -326,6 +328,7 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
       --exclude=install-next-start.log \
       -cf - . | tar -C "$FRONTEND_STAGE" -xf -
   fi
+  # next build directly, not npm run build: postbuild would restart the live server.
   if ! (
     cd "$FRONTEND_STAGE" &&
     TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" ci &&

@@ -1,13 +1,12 @@
 {
-  "version": "2.1.5",
-  "releasedAt": "2026-10-12",
+  "version": "2.1.6",
+  "releasedAt": "2026-10-25",
   "notes": [
-    "A player is reported to the site as soon as they connect.",
-    "MagicCore.json is created in HarmonyMods_Data/MagicCore."
+    "A server can turn leaderboard stats off so they are not sent to the website."
   ],
-  "added": [],
-  "changed": [
-    "The mod config is no longer written next to MagicCore.dll."
+  "added": [
+    "LEADERBOARD_ENABLED in MagicCore.json, and /leaderboard enable, disable, or status."
   ],
+  "changed": [],
   "removed": []
 }

@@ -39,7 +39,8 @@ Carbon also uses Harmony. This mod only patches game methods plus, after Carbon 
   "STATS_FLUSH_SECONDS": 300,
   "MAX_CONCURRENT_HTTP": 4,
   "HTTP_TIMEOUT_SECONDS": 8,
-  "BAN_SYSTEM_ENABLED": true
+  "BAN_SYSTEM_ENABLED": true,
+  "LEADERBOARD_ENABLED": true
 }
 ```
 
@@ -62,7 +63,7 @@ Nothing in this mod blocks a server tick waiting on HTTP. Requests run on the th
 | Groups on connect | `GET /api/oxide/player?steamId=&serverId=` | connect |
 | Tracked groups | `GET /api/admin/roles` | every 10 minutes |
 | Bans | `GET /api/bans/check-batch-fast` | connect + batched queue |
-| Stats | `POST /api/leaderboard/stats/batch` | 5 minutes, disconnect, save |
+| Stats | `POST /api/leaderboard/stats/batch` | 5 minutes, disconnect, save. Skipped when `LEADERBOARD_ENABLED` is false |
 | Wipes | `GET/POST /api/wipes` | boot + map wipe |
 | Linked kit | `GET/POST /api/oxide/linked-kit` | boot, then every 5 minutes |
 
@@ -88,8 +89,9 @@ In chat or F1:
 - `/link` — refresh this player’s website roles
 - `/checkban <steamid>` — admin
 - `/bansystem <enable\|disable\|status>` — admin
+- `/leaderboard <enable\|disable\|status>` — admin. Disable stops this server from sending stats to the website.
 
-Console: `magiccore.link`, `magiccore.checkban`, `magiccore.bansystem`, `rusttemplate.update`.
+Console: `magiccore.link`, `magiccore.checkban`, `magiccore.bansystem`, `magiccore.leaderboard`, `rusttemplate.update`.
 
 ## Updates
 

@@ -25,6 +25,9 @@ namespace MagicCore
         [JsonProperty("STATS_FLUSH_SECONDS")]
         public float StatsFlushSeconds { get; set; } = 300f;
 
+        [JsonProperty("LEADERBOARD_ENABLED")]
+        public bool LeaderboardEnabled { get; set; } = true;
+
         [JsonProperty("TRACKED_ROLES_REFRESH_MINUTES")]
         public int TrackedRolesRefreshMinutes { get; set; } = 10;
 

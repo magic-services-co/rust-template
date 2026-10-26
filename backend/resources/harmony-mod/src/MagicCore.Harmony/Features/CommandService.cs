@@ -45,6 +45,9 @@ namespace MagicCore
                 case "bansystem":
                     HandleBanSystem(player, parts);
                     return true;
+                case "leaderboard":
+                    HandleLeaderboard(player, parts);
+                    return true;
                 case "rusttemplate.update":
                     if (player != null && !player.IsAdmin)
                     {
@@ -114,6 +117,46 @@ namespace MagicCore
                     break;
                 default:
                     player?.ChatMessage("Usage: /bansystem <enable|disable|status>");
+                    break;
+            }
+        }
+
+        private static void HandleLeaderboard(BasePlayer player, string[] parts)
+        {
+            if (player != null && !player.IsAdmin)
+            {
+                player.ChatMessage("You don't have permission to use this command.");
+                return;
+            }
+
+            if (parts.Length < 2)
+            {
+                var status = ModConfig.Current.LeaderboardEnabled ? "ENABLED" : "DISABLED";
+                player?.ChatMessage("Leaderboard stats are currently " + status + "\nUsage: /leaderboard <enable|disable|status>");
+                return;
+            }
+
+            switch (parts[1].ToLowerInvariant())
+            {
+                case "enable":
+                    ModConfig.Current.LeaderboardEnabled = true;
+                    ConfigStore.Save();
+                    Log.Info("Leaderboard stats ENABLED");
+                    player?.ChatMessage("Leaderboard stats ENABLED");
+                    break;
+                case "disable":
+                    ModConfig.Current.LeaderboardEnabled = false;
+                    ConfigStore.Save();
+                    StatsService.Clear();
+                    Log.Info("Leaderboard stats DISABLED");
+                    player?.ChatMessage("Leaderboard stats DISABLED. This server will not send stats to the website.");
+                    break;
+                case "status":
+                    player?.ChatMessage(
+                        "Leaderboard stats are currently " + (ModConfig.Current.LeaderboardEnabled ? "ENABLED" : "DISABLED"));
+                    break;
+                default:
+                    player?.ChatMessage("Usage: /leaderboard <enable|disable|status>");
                     break;
             }
         }

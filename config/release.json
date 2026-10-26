@@ -1,12 +1,12 @@
 {
-  "version": "2.3.36",
+  "version": "2.3.37",
   "releasedAt": "2026-10-25",
   "notes": [
-    "A site update no longer copies the existing frontend build into /tmp, which was filling the disk."
+    "A game server can turn off leaderboard stats in the Harmony mod so they are not sent to the website."
   ],
-  "added": [],
-  "changed": [
-    "The frontend rebuild during an update runs next to the site and leaves the live build in place until the new one is ready."
+  "added": [
+    "MagicCore 2.1.6 adds LEADERBOARD_ENABLED and /leaderboard disable."
   ],
+  "changed": [],
   "removed": []
 }

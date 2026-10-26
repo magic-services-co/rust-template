@@ -61,7 +61,8 @@ namespace MagicCore.Patches
                     && !trimmed.StartsWith("rusttemplate", StringComparison.OrdinalIgnoreCase)
                     && !trimmed.StartsWith("link", StringComparison.OrdinalIgnoreCase)
                     && !trimmed.StartsWith("checkban", StringComparison.OrdinalIgnoreCase)
-                    && !trimmed.StartsWith("bansystem", StringComparison.OrdinalIgnoreCase))
+                    && !trimmed.StartsWith("bansystem", StringComparison.OrdinalIgnoreCase)
+                    && !trimmed.StartsWith("leaderboard", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

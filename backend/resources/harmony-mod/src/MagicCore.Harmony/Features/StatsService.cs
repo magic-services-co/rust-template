@@ -7,10 +7,17 @@ namespace MagicCore
     internal static class StatsService
     {
         private static readonly Dictionary<ulong, PlayerStat> Stats = new Dictionary<ulong, PlayerStat>();
+        private static readonly PlayerStat Discarded = new PlayerStat();
         private static bool _flushing;
+
+        public static bool Enabled => ModConfig.Current == null || ModConfig.Current.LeaderboardEnabled;
 
         public static PlayerStat For(BasePlayer player)
         {
+            if (!Enabled)
+            {
+                return Discarded;
+            }
             if (player == null)
             {
                 return null;
@@ -33,7 +40,7 @@ namespace MagicCore
 
         public static void Announce(BasePlayer player)
         {
-            if (player == null || ModConfig.Current == null || !ModConfig.Current.HasApi())
+            if (!Enabled || player == null || ModConfig.Current == null || !ModConfig.Current.HasApi())
             {
                 return;
             }
@@ -63,9 +70,9 @@ namespace MagicCore
 
         public static PlayerStat For(ulong steamId)
         {
-            if (steamId == 0)
+            if (!Enabled || steamId == 0)
             {
-                return null;
+                return !Enabled ? Discarded : null;
             }
 
             if (!Stats.TryGetValue(steamId, out var stat))
@@ -75,6 +82,12 @@ namespace MagicCore
             }
 
             return stat;
+        }
+
+        public static void Clear()
+        {
+            Stats.Clear();
+            _flushing = false;
         }
 
         public static void Forget(BasePlayer player, bool flush)
@@ -92,7 +105,7 @@ namespace MagicCore
 
             stat.LogoffTime = DateTime.Now;
             stat.UserName = Players.SafeName(player);
-            if (flush)
+            if (flush && Enabled)
             {
                 Send(new List<PlayerStat> { stat }, false);
             }
@@ -102,7 +115,7 @@ namespace MagicCore
 
         public static void Flush()
         {
-            if (_flushing || Stats.Count == 0)
+            if (!Enabled || _flushing || Stats.Count == 0)
             {
                 return;
             }
@@ -112,7 +125,7 @@ namespace MagicCore
 
         private static void Send(List<PlayerStat> stats, bool reset)
         {
-            if (stats == null || stats.Count == 0 || ModConfig.Current == null || !ModConfig.Current.HasApi())
+            if (!Enabled || stats == null || stats.Count == 0 || ModConfig.Current == null || !ModConfig.Current.HasApi())
             {
                 return;
             }

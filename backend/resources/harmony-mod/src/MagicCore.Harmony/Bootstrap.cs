@@ -114,7 +114,7 @@ namespace MagicCore
                 BanService.CheckOnline();
             }
 
-            if (cfg.StatsFlushSeconds > 0 && _statsElapsed >= cfg.StatsFlushSeconds)
+            if (cfg.LeaderboardEnabled && cfg.StatsFlushSeconds > 0 && _statsElapsed >= cfg.StatsFlushSeconds)
             {
                 _statsElapsed = 0f;
                 StatsService.Flush();
