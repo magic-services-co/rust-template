@@ -1,12 +1,18 @@
 {
-  "version": "2.3.44",
+  "version": "2.3.45",
   "releasedAt": "2026-10-26",
   "notes": [
-    "Reloading MagicCore no longer strips Harmony patches that belong to other plugins."
+    "The admin sidebar starts with the pages you use every day. Each person can choose what else stays visible."
   ],
-  "added": [],
+  "added": [
+    "Customize sidebar in the admin account menu. The choice is saved for that account in the browser."
+  ],
   "changed": [
-    "MagicCore 2.1.9 removes only its own patches when it unloads."
+    "CDN image previews on Manage Images show the picture.",
+    "The store server picker uses a styled dropdown.",
+    "Leaderboard stats load after a board is selected."
   ],
-  "removed": []
+  "removed": [
+    "The unused GitHub Actions workflow that published a beta branch."
+  ]
 }

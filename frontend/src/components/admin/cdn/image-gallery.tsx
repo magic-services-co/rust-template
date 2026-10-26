@@ -159,7 +159,7 @@ export function ImageGallery({ images, onDelete, onRename }: ImageGalleryProps) 
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
                   <Dialog>
                     <DialogTrigger asChild>

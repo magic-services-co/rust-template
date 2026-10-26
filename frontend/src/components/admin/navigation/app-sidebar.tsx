@@ -40,6 +40,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { AdminSidebarPrefsProvider } from "@/components/admin/navigation/admin-sidebar-prefs"
 import { useAddonAdminNavItems } from "@/hooks/use-addon-admin-nav"
 import { useSiteSettings } from "@/hooks/use-site-settings"
 import { backendApi } from "@/lib/api"
@@ -229,6 +230,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [logoSrc]);
   const addonNavItems = useAddonAdminNavItems();
   return (
+    <AdminSidebarPrefsProvider sections={[{ label: "Platform", items: data.navMain }, { label: "Addons", items: addonNavItems }]}>
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
@@ -267,5 +269,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+    </AdminSidebarPrefsProvider>
   )
 }

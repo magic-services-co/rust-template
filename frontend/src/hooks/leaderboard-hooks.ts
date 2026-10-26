@@ -66,6 +66,7 @@ export function useStatsQuery(params: StatsQueryParams) {
   const query = useQuery({
     queryKey: ['leaderboard', 'stats', params],
     queryFn: () => fetchStats(params),
+    enabled: params.tab !== '',
     staleTime: 30 * 1000,
   });
   return {

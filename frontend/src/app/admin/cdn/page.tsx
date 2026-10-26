@@ -423,7 +423,7 @@ export default function CDNPage() {
                               {file.name}
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
                             <Button
                               size="sm"
                               variant="destructive"

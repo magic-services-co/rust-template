@@ -11,6 +11,7 @@ import { useStoreSettings } from "@/hooks/use-store-settings";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { ThemeSelect } from "@/components/theme-select";
 
 export default function StoreOrderPanel({ theme }: { theme?: Record<string, unknown> }) {
   const t = withStoreDefaults(theme);
@@ -172,24 +173,15 @@ export default function StoreOrderPanel({ theme }: { theme?: Record<string, unkn
               {needsServer ? (
                 <div className="mt-4">
                   <p className="store-order-meta pb-2 text-[10px] tracking-[1.2px]">SERVER</p>
-                  <select
+                  <ThemeSelect
                     value={serverId}
-                    onChange={(event) => setServerId(event.target.value)}
-                    className="h-[37px] w-full border bg-[#070a0e] px-3 text-[11px] outline-none"
-                    style={{
-                      borderColor: "rgba(255,255,255,0.1)",
-                      color: serverId ? "#edf5ff" : "#708195",
-                    }}
-                  >
-                    <option value="">Select a server…</option>
-                    {[...(selectedPackage.gameservers ?? [])]
+                    onValueChange={setServerId}
+                    placeholder="Select a server…"
+                    className="h-[37px] text-[11px]"
+                    options={[...(selectedPackage.gameservers ?? [])]
                       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
-                      .map((server) => (
-                        <option key={server.id} value={server.id}>
-                          {server.name}
-                        </option>
-                      ))}
-                  </select>
+                      .map((server) => ({ value: server.id, label: server.name }))}
+                  />
                 </div>
               ) : null}
 

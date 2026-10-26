@@ -20,6 +20,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import { adminNavKey, useAdminSidebarPrefs } from "@/components/admin/navigation/admin-sidebar-prefs"
 
 export type AdminNavMainItem = {
   title: string
@@ -116,6 +117,27 @@ function NavCollapsibleItem({
   )
 }
 
+function visibleNavItems(items: AdminNavMainItem[], hidden: Set<string>, activeHref: string | null) {
+  const visible: AdminNavMainItem[] = []
+  for (const item of items) {
+    const key = adminNavKey(item.title, item.url)
+    const groupHidden = hidden.has(key)
+    if (!item.items) {
+      const href = toAdminHref(item.url)
+      if (!groupHidden || href === activeHref) visible.push(item)
+      continue
+    }
+    const subs = item.items.filter((sub) => {
+      const href = toAdminHref(sub.url)
+      if (href === activeHref) return true
+      if (groupHidden) return false
+      return !hidden.has(adminNavKey(`${item.title}/${sub.title}`, sub.url))
+    })
+    if (subs.length > 0) visible.push({ ...item, items: subs })
+  }
+  return visible
+}
+
 function NavMenuBlock({
   label,
   items,
@@ -163,13 +185,18 @@ export function NavMain({
   addonItems?: AdminNavMainItem[]
 }) {
   const pathname = usePathname()
+  const { hidden } = useAdminSidebarPrefs()
   const activeHref = resolveActiveHref(pathname, [...items, ...addonItems])
+  const platform = visibleNavItems(items, hidden, activeHref)
+  const addons = visibleNavItems(addonItems, hidden, activeHref)
 
   return (
     <>
-      <NavMenuBlock label="Platform" items={items} activeHref={activeHref} />
-      {addonItems.length > 0 ? (
-        <NavMenuBlock label="Addons" items={addonItems} activeHref={activeHref} />
+      {platform.length > 0 ? (
+        <NavMenuBlock label="Platform" items={platform} activeHref={activeHref} />
+      ) : null}
+      {addons.length > 0 ? (
+        <NavMenuBlock label="Addons" items={addons} activeHref={activeHref} />
       ) : null}
     </>
   )

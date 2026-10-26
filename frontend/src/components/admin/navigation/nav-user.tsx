@@ -1,13 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   Home,
   LogOut,
-  Sparkles,
+  SlidersHorizontal,
 } from "lucide-react"
 
 import {
@@ -32,11 +30,13 @@ import {
 } from "@/components/ui/sidebar"
 import { signOut, useSession } from "@/lib/laravel-auth-react"
 import { useRouter } from "next/navigation"
+import { SidebarCustomizeDialog } from "@/components/admin/navigation/admin-sidebar-prefs"
 
 export function NavUser() {
   const router = useRouter();
   const { data: session } = useSession()
   const { isMobile } = useSidebar()
+  const [customizeOpen, setCustomizeOpen] = useState(false)
 
   return (
     <SidebarMenu>
@@ -80,6 +80,10 @@ export function NavUser() {
                 <Home className="mr-2 w-4 h-4" />
                 Go Home
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setCustomizeOpen(true)}>
+                <SlidersHorizontal className="mr-2 w-4 h-4" />
+                Customize sidebar
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -92,6 +96,7 @@ export function NavUser() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <SidebarCustomizeDialog open={customizeOpen} onOpenChange={setCustomizeOpen} />
       </SidebarMenuItem>
     </SidebarMenu>
   )
