@@ -1,12 +1,12 @@
 {
-  "version": "2.3.35",
+  "version": "2.3.36",
   "releasedAt": "2026-10-25",
   "notes": [
-    "Leaderboard tabs and sources can be edited and removed from the admin builder."
+    "A site update no longer copies the existing frontend build into /tmp, which was filling the disk."
   ],
   "added": [],
   "changed": [
-    "Saving a leaderboard layout removes deleted tabs, and a renamed tab replaces the previous key."
+    "The frontend rebuild during an update runs next to the site and leaves the live build in place until the new one is ready."
   ],
   "removed": []
 }

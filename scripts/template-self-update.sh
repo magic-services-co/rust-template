@@ -286,7 +286,14 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   frontend_dir="$ROOT/frontend"
   previous_build="$frontend_dir/.next-previous"
   previous_modules="$frontend_dir/node_modules-previous"
-  FRONTEND_STAGE="$(mktemp -d /tmp/template-frontend-build.XXXXXX)"
+  find /tmp -maxdepth 1 -type d -name 'template-frontend-build.*' -exec rm -rf {} + 2>/dev/null || true
+  find "$ROOT" -maxdepth 1 -type d -name '.template-frontend-build.*' -exec rm -rf {} + 2>/dev/null || true
+  avail_kb="$(df -Pk "$ROOT" | awk 'NR==2 {print $4}')"
+  if [[ "${avail_kb:-0}" -lt 2621440 ]]; then
+    echo "Not enough free disk to build the frontend. About 2.5 GB free is required next to the site; $(df -h "$ROOT" | awk 'NR==2 {print $4 " is free on " $6}')." >&2
+    exit 1
+  fi
+  FRONTEND_STAGE="$(mktemp -d "$ROOT/.template-frontend-build.XXXXXX")"
 
   restore_previous_frontend() {
     echo "Putting the previous frontend back…" >&2
@@ -311,10 +318,14 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
       --exclude install-next-start.log \
       "$frontend_dir/" "$FRONTEND_STAGE/"
   else
-    cp -a "$frontend_dir/." "$FRONTEND_STAGE/"
-    rm -rf "$FRONTEND_STAGE/node_modules" "$FRONTEND_STAGE/.next" "$FRONTEND_STAGE/.next-previous" "$FRONTEND_STAGE/node_modules-previous"
+    tar -C "$frontend_dir" \
+      --exclude=node_modules \
+      --exclude=.next \
+      --exclude=.next-previous \
+      --exclude=node_modules-previous \
+      --exclude=install-next-start.log \
+      -cf - . | tar -C "$FRONTEND_STAGE" -xf -
   fi
-  # next build directly, not npm run build: postbuild would restart the live server.
   if ! (
     cd "$FRONTEND_STAGE" &&
     TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" ci &&
