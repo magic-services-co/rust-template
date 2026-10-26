@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { backendApi } from "@/lib/api";
 import { getAuthToken } from "@/lib/laravel-auth";
@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Plus, Trash2, GripVertical } from "lucide-react";
+import { Loader2, Plus, Trash2, GripVertical, Pencil } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +65,7 @@ type BuilderTab = {
   icon?: string | null;
   sourceId?: number | null;
   columns: BuilderColumn[];
+  originalTabKey?: string;
 };
 
 type BuilderPayload = {
@@ -89,14 +91,24 @@ async function fetchBuilder(): Promise<BuilderPayload> {
   return res.json();
 }
 
-async function saveTabs(tabs: BuilderTab[]): Promise<void> {
+async function saveTabs(tabs: BuilderTab[], deletedTabKeys: string[]): Promise<void> {
   const res = await fetch(backendApi("admin/leaderboard-settings"), {
     method: "POST",
     credentials: "include",
     headers: await authHeaders(true),
-    body: JSON.stringify({ tabs, deletedTabKeys: [], deletedColumnKeys: [] }),
+    body: JSON.stringify({ tabs, deletedTabKeys, deletedColumnKeys: [] }),
   });
-  if (!res.ok) throw new Error("Failed to save tabs");
+  if (!res.ok) throw new Error(await readError(res, "Failed to save tabs"));
+}
+
+async function readError(res: Response, fallback: string): Promise<string> {
+  try {
+    const data = await res.json();
+    if (typeof data?.message === "string" && data.message !== "") return data.message;
+  } catch {
+    /* response had no JSON body */
+  }
+  return fallback;
 }
 
 async function createSource(data: {
@@ -110,7 +122,29 @@ async function createSource(data: {
     headers: await authHeaders(true),
     body: JSON.stringify({ ...data, enabled: true }),
   });
-  if (!res.ok) throw new Error("Failed to create source");
+  if (!res.ok) throw new Error(await readError(res, "Failed to create source"));
+}
+
+async function updateSource(
+  id: number,
+  data: { slug: string; name: string; description: string | null; enabled: boolean },
+): Promise<void> {
+  const res = await fetch(backendApi(`admin/leaderboard/sources/${id}`), {
+    method: "PUT",
+    credentials: "include",
+    headers: await authHeaders(true),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await readError(res, "Failed to update source"));
+}
+
+async function deleteSource(id: number): Promise<void> {
+  const res = await fetch(backendApi(`admin/leaderboard/sources/${id}`), {
+    method: "DELETE",
+    credentials: "include",
+    headers: await authHeaders(),
+  });
+  if (!res.ok) throw new Error(await readError(res, "Failed to delete source"));
 }
 
 async function createMetric(data: Record<string, unknown>): Promise<void> {
@@ -140,20 +174,39 @@ export function LeaderboardBuilder() {
   });
 
   const [localTabs, setLocalTabs] = useState<BuilderTab[]>([]);
+  const [deletedTabKeys, setDeletedTabKeys] = useState<string[]>([]);
   const [selectedTabKey, setSelectedTabKey] = useState<string>("");
+  const tabsDirty = useRef(false);
 
   useEffect(() => {
-    if (data?.tabs) {
-      setLocalTabs(data.tabs);
-      if (!selectedTabKey && data.tabs.length > 0) {
-        setSelectedTabKey(data.tabs[0].tabKey);
-      }
-    }
-  }, [data, selectedTabKey]);
+    if (!data?.tabs || tabsDirty.current) return;
+    setLocalTabs(data.tabs.map((tab) => ({ ...tab, originalTabKey: tab.tabKey })));
+    setDeletedTabKeys([]);
+    setSelectedTabKey((current) => {
+      if (current && data.tabs.some((tab) => tab.tabKey === current)) return current;
+      return data.tabs[0]?.tabKey ?? "";
+    });
+  }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: () => saveTabs(localTabs),
+    mutationFn: () => {
+      const keys = localTabs.map((tab) => tab.tabKey.trim());
+      if (keys.some((key) => key === "")) {
+        throw new Error("Every tab needs a key.");
+      }
+      if (new Set(keys).size !== keys.length) {
+        throw new Error("Tab keys have to be unique.");
+      }
+      const renamed = localTabs
+        .filter((tab) => tab.originalTabKey && tab.originalTabKey !== tab.tabKey)
+        .map((tab) => tab.originalTabKey as string);
+      return saveTabs(
+        localTabs.map((tab, index) => ({ ...tab, tabKey: tab.tabKey.trim(), order: index })),
+        [...new Set([...deletedTabKeys, ...renamed])],
+      );
+    },
     onSuccess: () => {
+      tabsDirty.current = false;
       toast.success("Leaderboard layout saved");
       queryClient.invalidateQueries({ queryKey: ["leaderboard-builder"] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard-tabs"] });
@@ -191,8 +244,34 @@ export function LeaderboardBuilder() {
       order: localTabs.length,
       columns: [],
     };
+    tabsDirty.current = true;
     setLocalTabs([...localTabs, tab]);
     setSelectedTabKey(key);
+  };
+
+  const removeTab = (tabKey: string) => {
+    const tab = localTabs.find((item) => item.tabKey === tabKey);
+    if (!tab) return;
+    tabsDirty.current = true;
+    const savedKey = tab.originalTabKey;
+    if (savedKey) {
+      setDeletedTabKeys((current) => (current.includes(savedKey) ? current : [...current, savedKey]));
+    }
+    const remaining = localTabs.filter((item) => item.tabKey !== tabKey);
+    setLocalTabs(remaining);
+    if (selectedTabKey === tabKey) {
+      setSelectedTabKey(remaining[0]?.tabKey ?? "");
+    }
+  };
+
+  const updateSelectedTab = (patch: Partial<BuilderTab>) => {
+    tabsDirty.current = true;
+    setLocalTabs(
+      localTabs.map((tab) => (tab.tabKey === selectedTabKey ? { ...tab, ...patch } : tab)),
+    );
+    if (patch.tabKey !== undefined) {
+      setSelectedTabKey(patch.tabKey);
+    }
   };
 
   const addColumnFromMetric = (metric: Metric) => {
@@ -204,6 +283,7 @@ export function LeaderboardBuilder() {
       metricId: metric.id,
       format: metric.format,
     };
+    tabsDirty.current = true;
     setLocalTabs(
       localTabs.map((t) =>
         t.tabKey === selectedTabKey
@@ -269,17 +349,31 @@ export function LeaderboardBuilder() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {localTabs.map((tab) => (
-                  <button
-                    key={tab.tabKey}
-                    type="button"
-                    onClick={() => setSelectedTabKey(tab.tabKey)}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm ${
+                  <div
+                    key={tab.originalTabKey ?? tab.tabKey}
+                    className={`flex w-full items-center gap-1 rounded-md pr-1 text-sm ${
                       selectedTabKey === tab.tabKey ? "bg-primary/15" : "hover:bg-muted"
                     }`}
                   >
-                    <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {tab.tabLabel}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTabKey(tab.tabKey)}
+                      className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
+                    >
+                      <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{tab.tabLabel}</span>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => removeTab(tab.tabKey)}
+                      aria-label={`Remove ${tab.tabLabel}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
                 <Button variant="outline" size="sm" className="w-full" onClick={addTab}>
                   <Plus className="mr-1 h-4 w-4" /> Add tab
@@ -289,8 +383,11 @@ export function LeaderboardBuilder() {
 
             {selectedTab && (
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
                   <CardTitle className="text-base">Edit tab</CardTitle>
+                  <Button variant="destructive" size="sm" onClick={() => removeTab(selectedTab.tabKey)}>
+                    <Trash2 className="mr-1 h-4 w-4" /> Remove tab
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -298,31 +395,36 @@ export function LeaderboardBuilder() {
                       <Label>Tab label</Label>
                       <Input
                         value={selectedTab.tabLabel}
-                        onChange={(e) =>
-                          setLocalTabs(
-                            localTabs.map((t) =>
-                              t.tabKey === selectedTabKey
-                                ? { ...t, tabLabel: e.target.value }
-                                : t,
-                            ),
-                          )
-                        }
+                        onChange={(e) => updateSelectedTab({ tabLabel: e.target.value })}
                       />
                     </div>
                     <div>
                       <Label>Tab key (URL)</Label>
                       <Input
                         value={selectedTab.tabKey}
-                        onChange={(e) =>
-                          setLocalTabs(
-                            localTabs.map((t) =>
-                              t.tabKey === selectedTabKey
-                                ? { ...t, tabKey: e.target.value }
-                                : t,
-                            ),
-                          )
-                        }
+                        onChange={(e) => updateSelectedTab({ tabKey: e.target.value })}
                       />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Source</Label>
+                      <Select
+                        value={selectedTab.sourceId ? String(selectedTab.sourceId) : "none"}
+                        onValueChange={(value) =>
+                          updateSelectedTab({ sourceId: value === "none" ? null : Number(value) })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="No source" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No source</SelectItem>
+                          {(data?.sources ?? []).map((source) => (
+                            <SelectItem key={source.id} value={String(source.id)}>
+                              {source.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -343,7 +445,8 @@ export function LeaderboardBuilder() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() =>
+                            onClick={() => {
+                              tabsDirty.current = true;
                               setLocalTabs(
                                 localTabs.map((t) =>
                                   t.tabKey === selectedTabKey
@@ -353,8 +456,8 @@ export function LeaderboardBuilder() {
                                       }
                                     : t,
                                 ),
-                              )
-                            }
+                              );
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -417,6 +520,11 @@ function SourcesPanel({
   const [slug, setSlug] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [editing, setEditing] = useState<Source | null>(null);
+  const [editSlug, setEditSlug] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editEnabled, setEditEnabled] = useState(true);
 
   const createSourceMutation = useMutation({
     mutationFn: () => createSource({ slug, name, description }),
@@ -429,6 +537,41 @@ function SourcesPanel({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const updateSourceMutation = useMutation({
+    mutationFn: () => {
+      if (!editing) throw new Error("No source selected");
+      return updateSource(editing.id, {
+        slug: editSlug.trim(),
+        name: editName.trim(),
+        description: editDescription.trim() === "" ? null : editDescription.trim(),
+        enabled: editEnabled,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Source updated");
+      setEditing(null);
+      onRefresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteSourceMutation = useMutation({
+    mutationFn: deleteSource,
+    onSuccess: () => {
+      toast.success("Source removed");
+      onRefresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const openEdit = (source: Source) => {
+    setEditing(source);
+    setEditSlug(source.slug);
+    setEditName(source.name);
+    setEditDescription(source.description ?? "");
+    setEditEnabled(source.enabled);
+  };
 
   return (
     <div className="space-y-4">
@@ -463,11 +606,36 @@ function SourcesPanel({
 
       {sources.map((source) => (
         <Card key={source.id}>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>{source.name}</span>
-              <code className="text-xs font-normal">{source.slug}</code>
-            </CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+            <div className="min-w-0">
+              <CardTitle className="text-base flex items-center gap-2">
+                <span className="truncate">{source.name}</span>
+                {!source.enabled ? (
+                  <span className="text-xs font-normal text-muted-foreground">Disabled</span>
+                ) : null}
+              </CardTitle>
+              <code className="text-xs text-muted-foreground">{source.slug}</code>
+              {source.description ? (
+                <p className="mt-1 text-sm text-muted-foreground">{source.description}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Button variant="outline" size="sm" onClick={() => openEdit(source)}>
+                <Pencil className="mr-1 h-4 w-4" /> Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={deleteSourceMutation.isPending}
+                onClick={() => {
+                  if (window.confirm(`Remove the source “${source.name}” and its metrics?`)) {
+                    deleteSourceMutation.mutate(source.id);
+                  }
+                }}
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Remove
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <AddMetricForm sourceId={source.id} onCreated={onRefresh} />
@@ -488,6 +656,38 @@ function SourcesPanel({
           </CardContent>
         </Card>
       ))}
+
+      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit source</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Name</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Slug</Label>
+              <Input value={editSlug} onChange={(e) => setEditSlug(e.target.value)} />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="source-enabled">Enabled</Label>
+              <Switch id="source-enabled" checked={editEnabled} onCheckedChange={setEditEnabled} />
+            </div>
+            <Button
+              onClick={() => updateSourceMutation.mutate()}
+              disabled={!editSlug.trim() || !editName.trim() || updateSourceMutation.isPending}
+            >
+              {updateSourceMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save source"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

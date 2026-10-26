@@ -1,12 +1,12 @@
 {
-  "version": "2.3.34",
+  "version": "2.3.35",
   "releasedAt": "2026-10-25",
   "notes": [
-    "Updates build the new frontend beside the live site and only restart once that build is ready."
+    "Leaderboard tabs and sources can be edited and removed from the admin builder."
   ],
   "added": [],
   "changed": [
-    "A stats API key can post to the Teddy's Theme game routes after that addon is installed."
+    "Saving a leaderboard layout removes deleted tabs, and a renamed tab replaces the previous key."
   ],
   "removed": []
 }
