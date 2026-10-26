@@ -1,16 +1,12 @@
 {
-  "version": "2.3.41",
+  "version": "2.3.42",
   "releasedAt": "2026-10-26",
   "notes": [
-    "MagicCore checks in with the site, so the server list shows whether the mod is connected and current."
+    "In-game Oxide and Carbon group changes are reported back to the site again."
   ],
-  "added": [
-    "Admin servers show Connected, Stale, or Not connected, and Out of date when MagicCore is behind the site."
-  ],
+  "added": [],
   "changed": [
-    "The server console update command is magiccore.update.",
-    "Turning the leaderboard off also stops counting those stats on the server.",
-    "Public pages list only enabled servers. Admin still shows disabled ones."
+    "MagicCore no longer fails to hook permission methods that name the Steam ID playerId."
   ],
   "removed": []
 }

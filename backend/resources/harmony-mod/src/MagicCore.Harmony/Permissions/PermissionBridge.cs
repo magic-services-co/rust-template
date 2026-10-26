@@ -372,14 +372,26 @@ namespace MagicCore
             return "\"" + value.Replace("\"", "\\\"") + "\"";
         }
 
-        private static void OnUserGroupAdded(string id, string groupName)
+        private static void OnUserGroupAdded(object[] __args)
         {
-            RoleSyncService.OnLocalGroupChange(id, groupName, true);
+            ReportGroupChange(__args, true);
         }
 
-        private static void OnUserGroupRemoved(string id, string groupName)
+        private static void OnUserGroupRemoved(object[] __args)
         {
-            RoleSyncService.OnLocalGroupChange(id, groupName, false);
+            ReportGroupChange(__args, false);
+        }
+
+        private static void ReportGroupChange(object[] args, bool added)
+        {
+            if (args == null || args.Length < 2)
+            {
+                return;
+            }
+
+            var steamId = args[0] as string;
+            var groupName = args[1] as string;
+            RoleSyncService.OnLocalGroupChange(steamId, groupName, added);
         }
     }
 }

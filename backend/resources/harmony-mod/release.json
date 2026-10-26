@@ -1,14 +1,12 @@
 {
-  "version": "2.1.7",
+  "version": "2.1.8",
   "releasedAt": "2026-10-26",
   "notes": [
-    "MagicCore checks in with the site so the server list can show whether the mod is connected and current."
+    "In-game Oxide and Carbon group changes are reported back to the site on builds that name the Steam ID playerId."
   ],
-  "added": [
-    "A heartbeat every 5 minutes reports the MagicCore version and whether the server is Oxide, Carbon, or vanilla."
-  ],
+  "added": [],
   "changed": [
-    "Turning the leaderboard off also stops counting those stats on the server."
+    "The group hook no longer requires the permission method to name its first argument id."
   ],
   "removed": []
 }
