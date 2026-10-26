@@ -18,12 +18,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Bot, ChevronDown, Loader2, Play, Square, RotateCw, Save, RefreshCw, Circle, Settings2, FolderOpen, FileCode } from "lucide-react"
+import { Bot, Loader2, Play, Square, RotateCw, Save, RefreshCw, Circle, Settings2, FolderOpen, FileCode, Plus, Trash2 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 function GitHubIcon({ className }: { className?: string }) {
     return (
@@ -35,6 +32,232 @@ function GitHubIcon({ className }: { className?: string }) {
 import Link from "next/link"
 
 const API_BASE = "/api"
+
+const ACTIVITY_TYPES = ["Custom", "Playing", "Listening", "Watching", "Competing", "Streaming"]
+
+type MapVoteRow = { guild: string; channel: string }
+type RoleMapRow = { slug: string; roles: string }
+type SupportCategoryOption = { slug: string; name: string }
+type DiscordRoleOption = { id: string; name: string; guildId: string }
+
+function textList(value: unknown): string[] {
+    if (Array.isArray(value)) return value.map((item) => String(item))
+    if (typeof value === "string") return value.split(",").map((item) => item.trim())
+    return []
+}
+
+function cleanTextList(value: unknown): string[] {
+    return textList(value).map((item) => item.trim()).filter(Boolean)
+}
+
+function mapVoteRows(value: unknown): MapVoteRow[] {
+    if (!Array.isArray(value)) return [{ guild: "", channel: "" }]
+    const rows = value.map((row) => {
+        const item = row && typeof row === "object" ? (row as Record<string, unknown>) : {}
+        return { guild: String(item.guild ?? ""), channel: String(item.channel ?? "") }
+    })
+    return rows.length > 0 ? rows : [{ guild: "", channel: "" }]
+}
+
+function roleMapRows(value: unknown): RoleMapRow[] {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return [{ slug: "", roles: "" }]
+    const rows = Object.entries(value as Record<string, unknown>).map(([slug, roles]) => ({
+        slug,
+        roles: Array.isArray(roles) ? roles.map(String).join(", ") : "",
+    }))
+    return rows.length > 0 ? rows : [{ slug: "", roles: "" }]
+}
+
+function roleMapFromRows(rows: RoleMapRow[]): Record<string, string[]> {
+    const map: Record<string, string[]> = {}
+    for (const row of rows) {
+        const slug = row.slug.trim()
+        if (!slug) continue
+        map[slug] = row.roles.split(",").map((item) => item.trim()).filter(Boolean)
+    }
+    return map
+}
+
+function withRoleId(value: unknown, roleId: string): string[] {
+    const ids = cleanTextList(value)
+    if (!ids.includes(roleId)) ids.push(roleId)
+    return ids
+}
+
+function withRoleIdText(value: string, roleId: string): string {
+    const ids = value.split(",").map((item) => item.trim()).filter(Boolean)
+    if (!ids.includes(roleId)) ids.push(roleId)
+    return ids.join(", ")
+}
+
+function DiscordRolePicker({
+    roles,
+    refreshing,
+    onRefresh,
+    onPick,
+}: {
+    roles: DiscordRoleOption[]
+    refreshing: boolean
+    onRefresh: () => void
+    onPick: (roleId: string) => void
+}) {
+    const duplicateNames = new Set(
+        roles.filter((role, index) => roles.some((other, otherIndex) => otherIndex !== index && other.name === role.name)).map((role) => role.name)
+    )
+    const [pickKey, setPickKey] = useState(0)
+    return (
+        <div className="flex gap-2">
+            <Select
+                key={pickKey}
+                disabled={roles.length === 0}
+                onValueChange={(roleId) => {
+                    onPick(roleId)
+                    setPickKey((key) => key + 1)
+                }}
+            >
+                <SelectTrigger>
+                    <SelectValue placeholder={roles.length > 0 ? "Add a Discord role" : "No Discord roles loaded"} />
+                </SelectTrigger>
+                <SelectContent>
+                    {roles.map((role) => (
+                        <SelectItem key={`${role.guildId}:${role.id}`} value={role.id}>
+                            {duplicateNames.has(role.name) ? `${role.name} (${role.guildId})` : role.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button type="button" variant="outline" size="icon" title="Refresh Discord roles" onClick={onRefresh} disabled={refreshing}>
+                <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+            </Button>
+        </div>
+    )
+}
+
+function RoleIdListField({
+    id,
+    label,
+    value,
+    onChange,
+    roles,
+    refreshing,
+    onRefresh,
+}: {
+    id: string
+    label: string
+    value: unknown
+    onChange: (ids: string[]) => void
+    roles: DiscordRoleOption[]
+    refreshing: boolean
+    onRefresh: () => void
+}) {
+    return (
+        <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor={id}>{label}</Label>
+            <DiscordRolePicker roles={roles} refreshing={refreshing} onRefresh={onRefresh} onPick={(roleId) => onChange(withRoleId(value, roleId))} />
+            <Input
+                id={id}
+                placeholder="Or type role IDs, separated by commas"
+                value={textList(value).join(", ")}
+                onChange={(e) => onChange(e.target.value.split(",").map((item) => item.trim()))}
+            />
+        </div>
+    )
+}
+
+function RoleMapFields({
+    label,
+    rows,
+    onChange,
+    categories,
+    roles,
+    refreshing,
+    onRefresh,
+}: {
+    label: string
+    rows: RoleMapRow[]
+    onChange: (rows: RoleMapRow[]) => void
+    categories: SupportCategoryOption[]
+    roles: DiscordRoleOption[]
+    refreshing: boolean
+    onRefresh: () => void
+}) {
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+                <Label>{label}</Label>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onChange([...rows, { slug: "", roles: "" }])}
+                >
+                    <Plus className="mr-1 size-3.5" />
+                    Add
+                </Button>
+            </div>
+            {rows.map((row, index) => {
+                const knownSlug = categories.some((category) => category.slug === row.slug)
+                return (
+                    <div key={index} className="space-y-2 rounded-md border border-border/15 p-3">
+                        <div className="flex justify-end">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                title="Remove"
+                                onClick={() =>
+                                    onChange(rows.length === 1 ? [{ slug: "", roles: "" }] : rows.filter((_, i) => i !== index))
+                                }
+                            >
+                                <Trash2 className="size-4" />
+                            </Button>
+                        </div>
+                        <Select
+                            value={knownSlug ? row.slug : undefined}
+                            onValueChange={(slug) =>
+                                onChange(rows.map((item, i) => (i === index ? { ...item, slug } : item)))
+                            }
+                            disabled={categories.length === 0}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={categories.length > 0 ? "Select a support category" : "No support categories found"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((category) => (
+                                    <SelectItem key={category.slug} value={category.slug}>
+                                        {category.name} ({category.slug})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            placeholder="Or type a category slug"
+                            value={row.slug}
+                            onChange={(e) =>
+                                onChange(rows.map((item, i) => (i === index ? { ...item, slug: e.target.value } : item)))
+                            }
+                        />
+                        <DiscordRolePicker
+                            roles={roles}
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            onPick={(roleId) =>
+                                onChange(rows.map((item, i) => (i === index ? { ...item, roles: withRoleIdText(item.roles, roleId) } : item)))
+                            }
+                        />
+                        <Input
+                            placeholder="Or type role IDs, separated by commas"
+                            value={row.roles}
+                            onChange={(e) =>
+                                onChange(rows.map((item, i) => (i === index ? { ...item, roles: e.target.value } : item)))
+                            }
+                        />
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
 
 interface DiscordBotState {
     config: Record<string, unknown>
@@ -64,6 +287,13 @@ export function DiscordBotControlPanel() {
     const logsEndRef = useRef<HTMLPreElement>(null)
     const [configOpen, setConfigOpen] = useState(false)
     const [configForm, setConfigForm] = useState<Record<string, unknown>>({})
+    const [mapVotes, setMapVotes] = useState<MapVoteRow[]>([{ guild: "", channel: "" }])
+    const [accessRoles, setAccessRoles] = useState<RoleMapRow[]>([{ slug: "", roles: "" }])
+    const [pingRoles, setPingRoles] = useState<RoleMapRow[]>([{ slug: "", roles: "" }])
+    const [supportCategories, setSupportCategories] = useState<SupportCategoryOption[]>([])
+    const [discordRoles, setDiscordRoles] = useState<DiscordRoleOption[]>([])
+    const [rolesRefreshing, setRolesRefreshing] = useState(false)
+    const [rolesMessage, setRolesMessage] = useState<string | null>(null)
     const [filesPath, setFilesPath] = useState("")
     const [filesList, setFilesList] = useState<{ name: string; dir: boolean; path: string }[]>([])
     const [filesLoading, setFilesLoading] = useState(false)
@@ -87,8 +317,12 @@ export function DiscordBotControlPanel() {
                 return
             }
             const json = await res.json()
+            const config = json.config_prefilled ?? json.config ?? {}
             setData(json)
-            setConfigForm(json.config_prefilled ?? json.config ?? {})
+            setConfigForm(config)
+            setMapVotes(mapVoteRows(config.MAP_VOTES_CHANNELS))
+            setAccessRoles(roleMapRows(config.TICKET_CATEGORY_ACCESS_ROLES))
+            setPingRoles(roleMapRows(config.TICKET_CATEGORY_PING_ROLES))
             setError(null)
         } catch {
             setError("Failed to load")
@@ -101,6 +335,78 @@ export function DiscordBotControlPanel() {
     useEffect(() => {
         fetchState()
     }, [fetchState])
+
+    const configuredGuildIds = cleanTextList(configForm.GUILD_IDS)
+    const guildKey = configuredGuildIds.join(",")
+
+    const loadDiscordRoles = useCallback(async (guildIds: string[], refresh: boolean) => {
+        if (guildIds.length === 0) {
+            setDiscordRoles([])
+            setRolesMessage("Add a server ID to load Discord roles. You can still type a role ID.")
+            return
+        }
+        setRolesRefreshing(true)
+        setRolesMessage(null)
+        try {
+            const lists = await Promise.all(guildIds.map(async (guildId) => {
+                const res = await fetch(`${API_BASE}/admin/discord/roles?guildId=${encodeURIComponent(guildId)}`, {
+                    method: refresh ? "POST" : "GET",
+                    credentials: "include",
+                    headers: { Accept: "application/json" },
+                })
+                const json = await res.json().catch(() => ({}))
+                if (!res.ok) {
+                    throw new Error(typeof json.error === "string" ? json.error : "Could not load Discord roles")
+                }
+                const roles = Array.isArray(json.roles) ? json.roles : []
+                return roles.map((role: { id?: string; name?: string }) => ({
+                    id: String(role.id ?? ""),
+                    name: role.name || String(role.id ?? ""),
+                    guildId,
+                })).filter((role: DiscordRoleOption) => role.id !== "")
+            }))
+            const loaded = lists.flat()
+            setDiscordRoles(loaded)
+            if (loaded.length === 0) {
+                setRolesMessage("No Discord roles are stored yet. Refresh to pull them from Discord.")
+            }
+        } catch (err) {
+            setRolesMessage(err instanceof Error ? err.message : "Could not load Discord roles")
+        } finally {
+            setRolesRefreshing(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!configOpen) return
+        let cancelled = false
+        ;(async () => {
+            const res = await fetch(`${API_BASE}/admin/ticket-settings`, {
+                credentials: "include",
+                headers: { Accept: "application/json" },
+            })
+            if (!res.ok || cancelled) return
+            const json = await res.json().catch(() => [])
+            if (!cancelled && Array.isArray(json)) {
+                setSupportCategories(
+                    json
+                        .map((category: { slug?: string; name?: string }) => ({
+                            slug: String(category.slug ?? ""),
+                            name: category.name || String(category.slug ?? ""),
+                        }))
+                        .filter((category: SupportCategoryOption) => category.slug !== "")
+                )
+            }
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [configOpen])
+
+    useEffect(() => {
+        if (!configOpen) return
+        void loadDiscordRoles(configuredGuildIds, false)
+    }, [configOpen, guildKey, loadDiscordRoles])
 
     const apiCall = async (
         method: string,
@@ -125,7 +431,22 @@ export function DiscordBotControlPanel() {
         setActionLoading("save")
         setSaveSuccess(false)
         const result = await apiCall("PUT", "/admin/system-control/discord-bot", {
-            config: configForm,
+            config: {
+                ...configForm,
+                GUILD_IDS: cleanTextList(configForm.GUILD_IDS),
+                VIEW_MEMBERS_ROLES: cleanTextList(configForm.VIEW_MEMBERS_ROLES),
+                SYNC_USERS_PERMS: cleanTextList(configForm.SYNC_USERS_PERMS),
+                TICKET_SUPPORT_ROLE_IDS: cleanTextList(configForm.TICKET_SUPPORT_ROLE_IDS),
+                MAP_VOTES_CHANNELS: mapVotes
+                    .map((row) => ({ guild: row.guild.trim(), channel: row.channel.trim() }))
+                    .filter((row) => row.guild !== "" || row.channel !== ""),
+                TICKET_CATEGORY_ACCESS_ROLES: roleMapFromRows(accessRoles),
+                TICKET_CATEGORY_PING_ROLES: roleMapFromRows(pingRoles),
+                ROLE_SYNC_ENABLED: Boolean(configForm.ROLE_SYNC_ENABLED),
+                SET_DISCORD_NAME_TO_STEAM_NAME: Boolean(configForm.SET_DISCORD_NAME_TO_STEAM_NAME),
+                "UPDATE_CHECK_FREQUENCY (MINUTES)":
+                    Number(configForm["UPDATE_CHECK_FREQUENCY (MINUTES)"]) || 1,
+            },
         })
         setActionLoading(null)
         if (result.error) {
@@ -301,12 +622,6 @@ export function DiscordBotControlPanel() {
     const updateConfig = (key: string, value: unknown) => {
         setConfigForm((prev) => ({ ...prev, [key]: value }))
     }
-
-    const guildIdsStr = Array.isArray(configForm.GUILD_IDS)
-        ? (configForm.GUILD_IDS as string[]).join(", ")
-        : typeof configForm.GUILD_IDS === "string"
-          ? configForm.GUILD_IDS
-          : ""
 
     if (loading) {
         return (
@@ -580,132 +895,310 @@ export function DiscordBotControlPanel() {
             </Dialog>
 
             <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Bot configuration</DialogTitle>
                         <DialogDescription>
-                            Config is written to the container when you Start or Restart.                             Get Discord
-                            values from{" "}
+                            These fields are written to the bot config when you Start or Restart. Get Discord values from{" "}
                             <Link href={urls.discord_settings} className="text-primary underline" onClick={() => setConfigOpen(false)}>
                                 Discord settings
                             </Link>
-                            ; create an API key in{" "}
+                            , and create an API key in{" "}
                             <Link href={urls.api_keys} className="text-primary underline" onClick={() => setConfigOpen(false)}>
                                 API Keys
                             </Link>
                             .
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="modal_api_key">API Key</Label>
-                                <Input
-                                    id="modal_api_key"
-                                    type="password"
-                                    placeholder="Linking Bot API key"
-                                    value={(configForm.API_KEY as string) ?? ""}
-                                    onChange={(e) => updateConfig("API_KEY", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="modal_bot_token">BOT_TOKEN</Label>
-                                <Input
-                                    id="modal_bot_token"
-                                    type="password"
-                                    placeholder="Discord bot token"
-                                    value={(configForm.BOT_TOKEN as string) ?? ""}
-                                    onChange={(e) => updateConfig("BOT_TOKEN", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="modal_client_id">CLIENT_ID</Label>
-                                <Input
-                                    id="modal_client_id"
-                                    placeholder="Discord application client ID"
-                                    value={(configForm.CLIENT_ID as string) ?? ""}
-                                    onChange={(e) => updateConfig("CLIENT_ID", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="modal_guild_ids">GUILD_IDS (comma-separated)</Label>
-                                <Input
-                                    id="modal_guild_ids"
-                                    placeholder="e.g. 123456789, 987654321"
-                                    value={guildIdsStr}
-                                    onChange={(e) =>
-                                        updateConfig(
-                                            "GUILD_IDS",
-                                            e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
-                                        )
-                                    }
-                                />
-                            </div>
-                            <div className="space-y-2 sm:col-span-2">
-                                <Label htmlFor="modal_api_endpoint">API_ENDPOINT</Label>
-                                <Input
-                                    id="modal_api_endpoint"
-                                    placeholder="https://yourdomain.com/api"
-                                    value={(configForm.API_ENDPOINT as string) ?? ""}
-                                    onChange={(e) => updateConfig("API_ENDPOINT", e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <Collapsible>
-                            <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                                <ChevronDown className="size-4" />
-                                Advanced options
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="mt-4 space-y-4">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="modal_update_freq">UPDATE_CHECK_FREQUENCY (minutes)</Label>
-                                        <Input
-                                            id="modal_update_freq"
-                                            type="number"
-                                            min={1}
-                                            value={
-                                                (configForm["UPDATE_CHECK_FREQUENCY (MINUTES)"] as number) ?? 1
-                                            }
-                                            onChange={(e) =>
-                                                updateConfig(
-                                                    "UPDATE_CHECK_FREQUENCY (MINUTES)",
-                                                    parseInt(e.target.value, 10) || 1
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="modal_embed_hex">EMBED_HEX (no #)</Label>
-                                        <Input
-                                            id="modal_embed_hex"
-                                            placeholder="0099FF"
-                                            value={(configForm.EMBED_HEX as string) ?? "0099FF"}
-                                            onChange={(e) => updateConfig("EMBED_HEX", e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="modal_activity_type">ACTIVITY_TYPE</Label>
-                                        <Input
-                                            id="modal_activity_type"
-                                            placeholder="Custom, Playing, etc."
-                                            value={(configForm.ACTIVITY_TYPE as string) ?? "Custom"}
-                                            onChange={(e) => updateConfig("ACTIVITY_TYPE", e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2 sm:col-span-2">
-                                        <Label htmlFor="modal_status_text">STATUS_TEXT ({`{USERS_AMOUNT}`} = linked count)</Label>
-                                        <Input
-                                            id="modal_status_text"
-                                            placeholder="{USERS_AMOUNT} users linked!"
-                                            value={(configForm.STATUS_TEXT as string) ?? ""}
-                                            onChange={(e) => updateConfig("STATUS_TEXT", e.target.value)}
-                                        />
-                                    </div>
+                    <div className="space-y-6 py-4">
+                        <section className="space-y-4">
+                            <h3 className="text-sm font-medium">Connection</h3>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_client_id">CLIENT_ID</Label>
+                                    <Input
+                                        id="modal_client_id"
+                                        placeholder="Discord application client ID"
+                                        value={(configForm.CLIENT_ID as string) ?? ""}
+                                        onChange={(e) => updateConfig("CLIENT_ID", e.target.value)}
+                                    />
                                 </div>
-                            </CollapsibleContent>
-                        </Collapsible>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_bot_token">BOT_TOKEN</Label>
+                                    <Input
+                                        id="modal_bot_token"
+                                        type="password"
+                                        placeholder="Discord bot token"
+                                        value={(configForm.BOT_TOKEN as string) ?? ""}
+                                        onChange={(e) => updateConfig("BOT_TOKEN", e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_link_bot_token">LINK_BOT_TOKEN</Label>
+                                    <Input
+                                        id="modal_link_bot_token"
+                                        type="password"
+                                        value={(configForm.LINK_BOT_TOKEN as string) ?? ""}
+                                        onChange={(e) => updateConfig("LINK_BOT_TOKEN", e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_support_bot_token">SUPPORT_BOT_TOKEN</Label>
+                                    <Input
+                                        id="modal_support_bot_token"
+                                        type="password"
+                                        value={(configForm.SUPPORT_BOT_TOKEN as string) ?? ""}
+                                        onChange={(e) => updateConfig("SUPPORT_BOT_TOKEN", e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2 sm:col-span-2">
+                                    <Label htmlFor="modal_guild_ids">GUILD_IDS</Label>
+                                    <Input
+                                        id="modal_guild_ids"
+                                        placeholder="Server IDs, separated by commas"
+                                        value={textList(configForm.GUILD_IDS).join(", ")}
+                                        onChange={(e) => updateConfig("GUILD_IDS", e.target.value.split(",").map((item) => item.trim()))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_api_key">API_KEY</Label>
+                                    <Input
+                                        id="modal_api_key"
+                                        type="password"
+                                        placeholder="Linking Bot API key"
+                                        value={(configForm.API_KEY as string) ?? ""}
+                                        onChange={(e) => updateConfig("API_KEY", e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_api_endpoint">API_ENDPOINT</Label>
+                                    <Input
+                                        id="modal_api_endpoint"
+                                        placeholder="https://yourdomain.com/api"
+                                        value={(configForm.API_ENDPOINT as string) ?? ""}
+                                        onChange={(e) => updateConfig("API_ENDPOINT", e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="space-y-4">
+                            <h3 className="text-sm font-medium">Roles</h3>
+                            {rolesMessage && (
+                                <p className="text-xs text-muted-foreground">{rolesMessage}</p>
+                            )}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <RoleIdListField
+                                    id="modal_view_members"
+                                    label="VIEW_MEMBERS_ROLES"
+                                    value={configForm.VIEW_MEMBERS_ROLES}
+                                    onChange={(ids) => updateConfig("VIEW_MEMBERS_ROLES", ids)}
+                                    roles={discordRoles}
+                                    refreshing={rolesRefreshing}
+                                    onRefresh={() => void loadDiscordRoles(configuredGuildIds, true)}
+                                />
+                                <div className="space-y-2 sm:col-span-2">
+                                    <Label htmlFor="modal_sync_perms">SYNC_USERS_PERMS</Label>
+                                    <Input
+                                        id="modal_sync_perms"
+                                        placeholder="ManageRoles"
+                                        value={textList(configForm.SYNC_USERS_PERMS).join(", ")}
+                                        onChange={(e) => updateConfig("SYNC_USERS_PERMS", e.target.value.split(",").map((item) => item.trim()))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 rounded-md border border-border/15 px-3 py-2">
+                                <Label htmlFor="modal_role_sync">ROLE_SYNC_ENABLED</Label>
+                                <Switch
+                                    id="modal_role_sync"
+                                    checked={Boolean(configForm.ROLE_SYNC_ENABLED)}
+                                    onCheckedChange={(checked) => updateConfig("ROLE_SYNC_ENABLED", checked)}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between gap-4 rounded-md border border-border/15 px-3 py-2">
+                                <Label htmlFor="modal_steam_name">SET_DISCORD_NAME_TO_STEAM_NAME</Label>
+                                <Switch
+                                    id="modal_steam_name"
+                                    checked={Boolean(configForm.SET_DISCORD_NAME_TO_STEAM_NAME)}
+                                    onCheckedChange={(checked) => updateConfig("SET_DISCORD_NAME_TO_STEAM_NAME", checked)}
+                                />
+                            </div>
+                        </section>
+
+                        <section className="space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <h3 className="text-sm font-medium">MAP_VOTES_CHANNELS</h3>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setMapVotes((rows) => [...rows, { guild: "", channel: "" }])}
+                                >
+                                    <Plus className="mr-1 size-3.5" />
+                                    Add
+                                </Button>
+                            </div>
+                            {mapVotes.map((row, index) => (
+                                <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                                    <Input
+                                        placeholder="Guild ID"
+                                        value={row.guild}
+                                        onChange={(e) =>
+                                            setMapVotes((rows) => rows.map((item, i) => (i === index ? { ...item, guild: e.target.value } : item)))
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Channel ID"
+                                        value={row.channel}
+                                        onChange={(e) =>
+                                            setMapVotes((rows) => rows.map((item, i) => (i === index ? { ...item, channel: e.target.value } : item)))
+                                        }
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        title="Remove"
+                                        onClick={() =>
+                                            setMapVotes((rows) => (rows.length === 1 ? [{ guild: "", channel: "" }] : rows.filter((_, i) => i !== index)))
+                                        }
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </section>
+
+                        <section className="space-y-4">
+                            <h3 className="text-sm font-medium">Presence</h3>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_update_freq">UPDATE_CHECK_FREQUENCY (MINUTES)</Label>
+                                    <Input
+                                        id="modal_update_freq"
+                                        type="number"
+                                        min={1}
+                                        value={(configForm["UPDATE_CHECK_FREQUENCY (MINUTES)"] as number) ?? 1}
+                                        onChange={(e) =>
+                                            updateConfig("UPDATE_CHECK_FREQUENCY (MINUTES)", parseInt(e.target.value, 10) || 1)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_embed_hex">EMBED_HEX</Label>
+                                    <Input
+                                        id="modal_embed_hex"
+                                        placeholder="0099FF"
+                                        value={(configForm.EMBED_HEX as string) ?? "0099FF"}
+                                        onChange={(e) => updateConfig("EMBED_HEX", e.target.value.replace(/^#/, ""))}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_activity_type">ACTIVITY_TYPE</Label>
+                                    <Select
+                                        value={ACTIVITY_TYPES.includes(String(configForm.ACTIVITY_TYPE ?? "Custom")) ? String(configForm.ACTIVITY_TYPE ?? "Custom") : "Custom"}
+                                        onValueChange={(value) => updateConfig("ACTIVITY_TYPE", value)}
+                                    >
+                                        <SelectTrigger id="modal_activity_type">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {ACTIVITY_TYPES.map((type) => (
+                                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_status_text">STATUS_TEXT</Label>
+                                    <Input
+                                        id="modal_status_text"
+                                        placeholder="{USERS_AMOUNT} users linked!"
+                                        value={(configForm.STATUS_TEXT as string) ?? ""}
+                                        onChange={(e) => updateConfig("STATUS_TEXT", e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="space-y-4">
+                            <h3 className="text-sm font-medium">Tickets</h3>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_ticket_panel">TICKET_PANEL_TYPE</Label>
+                                    <Select
+                                        value={(configForm.TICKET_PANEL_TYPE as string) === "buttons" ? "buttons" : "dropdown"}
+                                        onValueChange={(value) => updateConfig("TICKET_PANEL_TYPE", value)}
+                                    >
+                                        <SelectTrigger id="modal_ticket_panel">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="dropdown">dropdown</SelectItem>
+                                            <SelectItem value="buttons">buttons</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_ticket_mode">TICKET_MODE</Label>
+                                    <Select
+                                        value={(configForm.TICKET_MODE as string) === "dm" ? "dm" : "channel"}
+                                        onValueChange={(value) => updateConfig("TICKET_MODE", value)}
+                                    >
+                                        <SelectTrigger id="modal_ticket_mode">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="channel">channel</SelectItem>
+                                            <SelectItem value="dm">dm</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <RoleIdListField
+                                    id="modal_ticket_support"
+                                    label="TICKET_SUPPORT_ROLE_IDS"
+                                    value={configForm.TICKET_SUPPORT_ROLE_IDS}
+                                    onChange={(ids) => updateConfig("TICKET_SUPPORT_ROLE_IDS", ids)}
+                                    roles={discordRoles}
+                                    refreshing={rolesRefreshing}
+                                    onRefresh={() => void loadDiscordRoles(configuredGuildIds, true)}
+                                />
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_ticket_dm_guild">TICKET_DM_GUILD_ID</Label>
+                                    <Input
+                                        id="modal_ticket_dm_guild"
+                                        value={(configForm.TICKET_DM_GUILD_ID as string) ?? ""}
+                                        onChange={(e) => updateConfig("TICKET_DM_GUILD_ID", e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="modal_ticket_dm_category">TICKET_DM_CHANNEL_CATEGORY_ID</Label>
+                                    <Input
+                                        id="modal_ticket_dm_category"
+                                        value={(configForm.TICKET_DM_CHANNEL_CATEGORY_ID as string) ?? ""}
+                                        onChange={(e) => updateConfig("TICKET_DM_CHANNEL_CATEGORY_ID", e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <RoleMapFields
+                                label="TICKET_CATEGORY_ACCESS_ROLES"
+                                rows={accessRoles}
+                                onChange={setAccessRoles}
+                                categories={supportCategories}
+                                roles={discordRoles}
+                                refreshing={rolesRefreshing}
+                                onRefresh={() => void loadDiscordRoles(configuredGuildIds, true)}
+                            />
+                            <RoleMapFields
+                                label="TICKET_CATEGORY_PING_ROLES"
+                                rows={pingRoles}
+                                onChange={setPingRoles}
+                                categories={supportCategories}
+                                roles={discordRoles}
+                                refreshing={rolesRefreshing}
+                                onRefresh={() => void loadDiscordRoles(configuredGuildIds, true)}
+                            />
+                        </section>
 
                         <div className="flex items-center gap-2 pt-2">
                             <Button

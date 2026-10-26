@@ -1,12 +1,12 @@
 {
-  "version": "2.3.39",
+  "version": "2.3.40",
   "releasedAt": "2026-10-25",
   "notes": [
-    "The Discord bot starts on servers where Docker cannot mount the site folder, including snap Docker."
+    "The Discord bot configuration form edits the full bot config, including support categories and Discord roles."
   ],
   "added": [],
   "changed": [
-    "A missing bot image is built from the files already on the server, and local edits no longer block Build from GitHub."
+    "Category slugs and role IDs can be chosen from lists or typed in."
   ],
   "removed": []
 }
