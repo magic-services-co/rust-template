@@ -89,6 +89,8 @@ export function useInstallAddonMutation() {
       if (!res.ok) {
         throw new Error(await readError(res, 'Could not install the addon'))
       }
+      const body = await res.json().catch(() => ({}))
+      return typeof body?.message === 'string' ? body.message : 'Addon installed.'
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: systemControlAddonsQueryKey })
@@ -110,6 +112,8 @@ export function useRemoveAddonMutation() {
       if (!res.ok) {
         throw new Error(await readError(res, 'Could not remove the addon'))
       }
+      const body = await res.json().catch(() => ({}))
+      return typeof body?.message === 'string' ? body.message : 'Addon removed.'
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: systemControlAddonsQueryKey })

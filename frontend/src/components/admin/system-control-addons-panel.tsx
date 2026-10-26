@@ -171,8 +171,8 @@ export function SystemControlAddonsPanel() {
     install.mutate(
       { file, replace },
       {
-        onSuccess: () => {
-          toast.success("Addon installed")
+        onSuccess: (message) => {
+          toast.success(message)
           setAddOpen(false)
           setFile(null)
           setReplace(false)
@@ -185,8 +185,8 @@ export function SystemControlAddonsPanel() {
   function handleRemove() {
     if (!pendingRemove) return
     remove.mutate(pendingRemove.alias, {
-      onSuccess: () => {
-        toast.success("Addon removed")
+      onSuccess: (message) => {
+        toast.success(message)
         setPendingRemove(null)
       },
       onError: (e) => toast.error(e instanceof Error ? e.message : "Could not remove the addon"),
@@ -207,7 +207,7 @@ export function SystemControlAddonsPanel() {
           <DialogHeader>
             <DialogTitle>Add addon</DialogTitle>
             <DialogDescription>
-              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site.
+              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site, then the public site rebuilds and switches over when that build finishes.
             </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm">
@@ -238,7 +238,7 @@ export function SystemControlAddonsPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {pendingRemove?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This deletes the addon from the server, including its admin page and public front files.
+              This deletes the addon from the server, including its admin page and public front files. If it had a public front, the site rebuilds so those pages come down.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

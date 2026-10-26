@@ -1,12 +1,12 @@
 {
-  "version": "2.3.42",
+  "version": "2.3.43",
   "releasedAt": "2026-10-26",
   "notes": [
-    "In-game Oxide and Carbon group changes are reported back to the site again."
+    "Uploading an addon that includes frontend files rebuilds the public site and switches over when that build finishes."
   ],
   "added": [],
   "changed": [
-    "MagicCore no longer fails to hook permission methods that name the Steam ID playerId."
+    "Replacing or removing an addon with a public front no longer leaves the previous frontend build in place."
   ],
   "removed": []
 }
