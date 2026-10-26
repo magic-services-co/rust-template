@@ -60,7 +60,8 @@ THIS IS ALL FALSE INFORMATION NOW!!
 - Also copy the Client Secret and paste it into your `.env` file under `STEP DISC.3.` -> [see image](https://cdn.mrddd.xyz/img/2025/notepad%2B%2B_LSVi4Qr6j1)
 - If you can't find these on discord applications -> [see image](https://cdn.mrddd.xyz/img/2025/brave_jWNLMAPj46)
 - Go to Redirects, press "add redirect" and enter the following URL, **modify it** to use your domain: `https://yourDomain.com/api/auth/callback/discord`
-- Go to OAuth2 URL Generator, select `bot`, `application.commands` for scopes, and scroll down a little to permissions and select `Manage Roles`, `Manage Nicknames`, `View Channels`, `Send Messages` -> [see image](https://cdn.mrddd.xyz/img/2025/UImEOEgqGl)
+- Go to OAuth2 URL Generator, select `bot`, `application.commands`, `guilds.join` for scopes, and scroll down a little to permissions and select `Manage Roles`, `Manage Nicknames`, `Create Instant Invite`, `View Channels`, `Send Messages` -> [see image](https://cdn.mrddd.xyz/img/2025/UImEOEgqGl)
+- `guilds.join` is required so the website can add users to your Discord server when they link. The bot also needs `Create Instant Invite` for that to work.
 - Copy the link and put it into another tab to invite the bot to your Discord Server.
 - **Done with the discord bot.**
 

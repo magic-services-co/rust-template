@@ -28,18 +28,19 @@ async function loadLinkedKits() {
 export default async function LinkPage() {
     const session = await getServerSession();
     const cookieStore = await cookies();
-    const linkStatus = cookieStore.get("discord_link_status")?.value as ("success" | "error") | undefined;
+    const linkStatus = cookieStore.get("discord_link_status")?.value as ("success" | "error" | "join_required") | undefined;
+    const needsDiscordJoin = Boolean(session?.user && (session.user as { needsDiscordJoin?: boolean }).needsDiscordJoin);
     const initialKits = await loadLinkedKits();
 
     return (
         <PublicFrontSwitch
             name="linkPage"
-            slotProps={{ user: session?.user, linkStatus: linkStatus ?? null, initialKits }}
+            slotProps={{ user: session?.user, linkStatus: linkStatus ?? null, needsDiscordJoin, initialKits }}
         >
             <SupportPageShell wide>
                 <LinkTitles />
                 <div className="pt-10">
-                    <AccountLinkStepper user={session?.user} linkStatus={linkStatus ?? null} initialKits={initialKits} />
+                    <AccountLinkStepper user={session?.user} linkStatus={linkStatus ?? null} needsDiscordJoin={needsDiscordJoin} initialKits={initialKits} />
                 </div>
             </SupportPageShell>
         </PublicFrontSwitch>

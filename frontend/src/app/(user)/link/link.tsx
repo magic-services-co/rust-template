@@ -23,6 +23,7 @@ import { useMemo, useEffect, useState, type ReactNode } from "react";
 import { usePublicFront } from "@/lib/public-front";
 import Link from "next/link";
 import { refreshSteamGroup } from "@/app/actions/steam";
+import { refreshDiscordGuildMembership } from "@/app/actions/discord-membership";
 import { useRouter } from "next/navigation";
 import { LINKED_USERS_COUNT_QUERY_KEY, LinkedUsersCount } from "@/components/linked-users-count";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,8 @@ import { rustItemMap, type RustItemInfo } from "@/lib/rust-items";
 
 interface LinkProps {
     user?: UserSession | null;
-    linkStatus?: "success" | "error" | null;
+    linkStatus?: "success" | "error" | "join_required" | null;
+    needsDiscordJoin?: boolean;
     initialKits?: PublicLinkedKit[];
 }
 
@@ -145,8 +147,9 @@ function StepConnector({ filled }: { filled: boolean }) {
     );
 }
 
-export default function AccountLinkStepper({ user, linkStatus, initialKits }: LinkProps) {
+export default function AccountLinkStepper({ user, linkStatus, needsDiscordJoin = false, initialKits }: LinkProps) {
     const step = getStepStatus(user);
+    const fullyComplete = step === 2 && !needsDiscordJoin;
     const queryClient = useQueryClient();
     const { data: settings } = useSiteSettings();
     const router = useRouter();
@@ -190,11 +193,15 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
         return !!settings?.steamGroupId && !!settings?.steamGroupUrl;
     }, [settings?.steamGroupId, settings?.steamGroupUrl]);
 
-    const statusLabel = step === 0 ? "READY TO LINK" : step === 1 ? "LINK DISCORD" : "ACCOUNTS LINKED";
+    const statusLabel = needsDiscordJoin ? "JOIN DISCORD" : step === 0 ? "READY TO LINK" : step === 1 ? "LINK DISCORD" : "ACCOUNTS LINKED";
 
     useEffect(() => {
         if (linkStatus === "success") {
             toast.success("Successfully linked Discord and imported previous tickets");
+            document.cookie = "discord_link_status=; Max-Age=0; path=/";
+            queryClient.invalidateQueries({ queryKey: LINKED_USERS_COUNT_QUERY_KEY });
+        } else if (linkStatus === "join_required") {
+            toast.warning("Discord linked. Join the Discord server to finish verification.");
             document.cookie = "discord_link_status=; Max-Age=0; path=/";
             queryClient.invalidateQueries({ queryKey: LINKED_USERS_COUNT_QUERY_KEY });
         } else if (linkStatus === "error") {
@@ -224,6 +231,27 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
         },
         onError: (error) => {
             toast.error(error instanceof Error ? error.message : "Failed to unlink Discord account");
+        },
+    });
+
+    const discordRefreshMutation = useMutation({
+        mutationFn: async () => {
+            const result = await refreshDiscordGuildMembership();
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+            return result.data;
+        },
+        onSuccess: (data) => {
+            if (data?.status === "not_in_guild") {
+                toast.error("You're not in the Discord server yet. Join it, then refresh.");
+                return;
+            }
+            toast.success(data?.status === "verified" ? "Discord verification complete" : "Discord membership confirmed");
+            router.refresh();
+        },
+        onError: (error) => {
+            toast.error(error instanceof Error ? error.message : "Failed to refresh Discord membership");
         },
     });
 
@@ -260,6 +288,10 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
                 setIsLinkingDiscord={setIsLinkingDiscord}
                 unlinkPending={unlinkMutation.isPending}
                 onUnlink={() => unlinkMutation.mutate()}
+                needsDiscordJoin={needsDiscordJoin}
+                discordInvite={settings?.discordInvite}
+                discordRefreshPending={discordRefreshMutation.isPending}
+                onRefreshDiscord={() => discordRefreshMutation.mutate()}
                 catalog={rustItemsQuery.data}
             />
         )
@@ -402,11 +434,11 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
                             complete={step > 1}
                             icon={<DiscordIcon className="size-[22px] text-[#ecf3fc]" />}
                         />
-                        <StepConnector filled={step >= 2} />
+                        <StepConnector filled={fullyComplete} />
                         <StepNode
                             label="Done"
-                            active={step === 2}
-                            complete={step >= 2}
+                            active={needsDiscordJoin}
+                            complete={fullyComplete}
                             icon={<CheckIcon className="size-[22px] text-[#ecf3fc]" strokeWidth={2.2} />}
                         />
                     </div>
@@ -446,7 +478,7 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
                             </LinkCta>
                         )}
 
-                        {step === 2 && (
+                        {step === 2 && !needsDiscordJoin && (
                             <LinkCta href="/profile">
                                 <span className="text-[12px] font-semibold leading-3">Continue to profile</span>
                                 <span className="link-cta-chevron">›</span>
@@ -493,6 +525,49 @@ export default function AccountLinkStepper({ user, linkStatus, initialKits }: Li
 
                     {step === 2 ? (
                         <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
+                            {needsDiscordJoin ? (
+                                <div
+                                    className="border px-4 py-3 sm:col-span-2"
+                                    style={{
+                                        borderColor: "rgba(255,255,255,0.1)",
+                                        backgroundColor: "rgba(7,10,14,0.4)",
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <DiscordIcon className="size-4 text-[#ecf3fc]" />
+                                            <span className="text-[12px] font-semibold" style={{ color: "#ecf3fc" }}>
+                                                Join Discord
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => discordRefreshMutation.mutate()}
+                                            disabled={!user || discordRefreshMutation.isPending}
+                                            className="ghost flex size-7 items-center justify-center border"
+                                            style={{ borderColor: "rgba(255,255,255,0.1)", color: "#c5d0de" }}
+                                        >
+                                            {discordRefreshMutation.isPending ? (
+                                                <Loader2 className="size-3.5 animate-spin" />
+                                            ) : (
+                                                <RefreshCcwIcon className="size-3.5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    <p className="pt-2 text-[11px] leading-4" style={{ color: "#8292a6" }}>
+                                        Join the server, then refresh to receive your verification role.
+                                    </p>
+                                    <a
+                                        href={settings?.discordInvite ?? "#"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ghost mt-3 inline-flex h-8 items-center border px-3 text-[10px] font-bold tracking-[1.2px]"
+                                        style={{ borderColor: "rgba(186,145,66,0.6)", color: "#f0c970" }}
+                                    >
+                                        JOIN DISCORD
+                                    </a>
+                                </div>
+                            ) : null}
                             {isGroupEnabled ? (
                                 <div
                                     className="border px-4 py-3"

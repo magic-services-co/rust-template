@@ -7,6 +7,7 @@ export interface UserSession {
   discordId?: string | null;
   joinedSteamGroup?: boolean;
   isBoosting?: boolean;
+  needsDiscordJoin?: boolean;
   roles?: Array<{ roleId?: string; role?: { order?: number; name?: string; color?: string | null } }>;
   [key: string]: unknown;
 }

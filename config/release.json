@@ -1,12 +1,12 @@
 {
-  "version": "2.3.37",
+  "version": "2.3.38",
   "releasedAt": "2026-10-25",
   "notes": [
-    "A game server can turn off leaderboard stats in the Harmony mod so they are not sent to the website."
+    "Linking Discord adds the user to the server, and the verification role is given only after they are in it."
   ],
-  "added": [
-    "MagicCore 2.1.6 adds LEADERBOARD_ENABLED and /leaderboard disable."
+  "added": [],
+  "changed": [
+    "Leaving the Discord server unlinks the account and removes the verification and booster roles."
   ],
-  "changed": [],
   "removed": []
 }

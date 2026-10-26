@@ -35,7 +35,8 @@ export type PublicFrontSlots = {
   profile?: ComponentType<{ user: UserSession; theme?: Record<string, unknown> }>
   linkPage?: ComponentType<{
     user?: UserSession | null
-    linkStatus?: "success" | "error" | null
+    linkStatus?: "success" | "error" | "join_required" | null
+    needsDiscordJoin?: boolean
     initialKits?: PublicFrontLinkKit[]
   }>
   linkStepper?: ComponentType<{
@@ -51,6 +52,10 @@ export type PublicFrontSlots = {
     setIsLinkingDiscord: (value: boolean) => void
     unlinkPending: boolean
     onUnlink: () => void
+    needsDiscordJoin?: boolean
+    discordInvite?: string | null
+    discordRefreshPending?: boolean
+    onRefreshDiscord?: () => void
     catalog?: Map<string, RustItemInfo>
   }>
   supportPage?: ComponentType<{
