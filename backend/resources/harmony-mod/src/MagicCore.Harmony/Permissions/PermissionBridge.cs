@@ -58,7 +58,7 @@ namespace MagicCore
         {
             try
             {
-                _harmony?.UnpatchAll();
+                _harmony?.UnpatchAll(_harmony.Id);
             }
             catch
             {

@@ -6,7 +6,7 @@ namespace MagicCore
 {
     public sealed class MagicCoreMod : IHarmonyModHooks
     {
-        public const string Version = "2.1.8";
+        public const string Version = "2.1.9";
         public const string HarmonyId = "com.magicservices.magiccore";
 
         private static MagicCoreMod _instance;
@@ -61,7 +61,7 @@ namespace MagicCore
             Bootstrap.Shutdown();
             try
             {
-                _harmony?.UnpatchAll();
+                _harmony?.UnpatchAll(_harmony.Id);
             }
             catch
             {

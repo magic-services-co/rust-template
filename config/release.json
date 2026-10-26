@@ -1,12 +1,12 @@
 {
-  "version": "2.3.43",
+  "version": "2.3.44",
   "releasedAt": "2026-10-26",
   "notes": [
-    "Uploading an addon that includes frontend files rebuilds the public site and switches over when that build finishes."
+    "Reloading MagicCore no longer strips Harmony patches that belong to other plugins."
   ],
   "added": [],
   "changed": [
-    "Replacing or removing an addon with a public front no longer leaves the previous frontend build in place."
+    "MagicCore 2.1.9 removes only its own patches when it unloads."
   ],
   "removed": []
 }

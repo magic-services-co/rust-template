@@ -1,12 +1,12 @@
 {
-  "version": "2.1.8",
+  "version": "2.1.9",
   "releasedAt": "2026-10-26",
   "notes": [
-    "In-game Oxide and Carbon group changes are reported back to the site on builds that name the Steam ID playerId."
+    "Reloading MagicCore no longer strips Harmony patches that belong to other plugins."
   ],
   "added": [],
   "changed": [
-    "The group hook no longer requires the permission method to name its first argument id."
+    "Unload removes only the patches MagicCore applied."
   ],
   "removed": []
 }
