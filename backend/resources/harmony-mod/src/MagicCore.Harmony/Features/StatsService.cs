@@ -7,18 +7,13 @@ namespace MagicCore
     internal static class StatsService
     {
         private static readonly Dictionary<ulong, PlayerStat> Stats = new Dictionary<ulong, PlayerStat>();
-        private static readonly PlayerStat Discarded = new PlayerStat();
         private static bool _flushing;
 
         public static bool Enabled => ModConfig.Current == null || ModConfig.Current.LeaderboardEnabled;
 
         public static PlayerStat For(BasePlayer player)
         {
-            if (!Enabled)
-            {
-                return Discarded;
-            }
-            if (player == null)
+            if (!Enabled || player == null)
             {
                 return null;
             }
@@ -72,7 +67,7 @@ namespace MagicCore
         {
             if (!Enabled || steamId == 0)
             {
-                return !Enabled ? Discarded : null;
+                return null;
             }
 
             if (!Stats.TryGetValue(steamId, out var stat))

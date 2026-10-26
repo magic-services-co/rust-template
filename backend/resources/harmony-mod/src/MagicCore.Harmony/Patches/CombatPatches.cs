@@ -17,7 +17,7 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (__instance == null || info == null)
+                if (!StatsService.Enabled || __instance == null || info == null)
                 {
                     return;
                 }
@@ -65,6 +65,11 @@ namespace MagicCore.Patches
                 }
 
                 var victimStats = StatsService.For(victim);
+                if (victimStats == null)
+                {
+                    return;
+                }
+
                 if (victim.lastDamage == DamageType.Suicide)
                 {
                     victimStats.Suicides++;
@@ -97,12 +102,16 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (__instance is not BasePlayer || info?.Initiator is not BasePlayer attacker || !info.isHeadshot)
+                if (!StatsService.Enabled || __instance is not BasePlayer || info?.Initiator is not BasePlayer attacker || !info.isHeadshot)
                 {
                     return;
                 }
 
-                StatsService.For(attacker).HeadShots++;
+                var stats = StatsService.For(attacker);
+                if (stats != null)
+                {
+                    stats.HeadShots++;
+                }
             }
             catch (Exception ex)
             {
@@ -123,10 +132,16 @@ namespace MagicCore.Patches
         {
             try
             {
-                var owner = __instance?.GetOwnerPlayer();
-                if (owner != null)
+                if (!StatsService.Enabled)
                 {
-                    StatsService.For(owner).BulletsFired++;
+                    return;
+                }
+
+                var owner = __instance?.GetOwnerPlayer();
+                var stats = owner == null ? null : StatsService.For(owner);
+                if (stats != null)
+                {
+                    stats.BulletsFired++;
                 }
             }
             catch (Exception ex)
@@ -151,10 +166,15 @@ namespace MagicCore.Patches
         {
             try
             {
+                if (!StatsService.Enabled)
+                {
+                    return;
+                }
+
                 var entity = __instance as BaseEntity;
                 var owner = entity == null ? null : entity.ToPlayer() ?? (entity as HeldEntity)?.GetOwnerPlayer();
-
-                if (owner == null || entity == null)
+                var stats = owner == null || entity == null ? null : StatsService.For(owner);
+                if (stats == null)
                 {
                     return;
                 }
@@ -162,21 +182,21 @@ namespace MagicCore.Patches
                 switch (entity.ShortPrefabName)
                 {
                     case "rocket_hv":
-                        StatsService.For(owner).HvRocketsFired++;
+                        stats.HvRocketsFired++;
                         break;
                     case "rocket_fire":
-                        StatsService.For(owner).IncendiaryRocketsFired++;
+                        stats.IncendiaryRocketsFired++;
                         break;
                     case "rocket_smoke":
-                        StatsService.For(owner).SmokeRocketsFired++;
+                        stats.SmokeRocketsFired++;
                         break;
                     case "40mm_grenade_he":
-                        StatsService.For(owner).HeGrenadeFired++;
+                        stats.HeGrenadeFired++;
                         break;
                     default:
                         if ((entity.ShortPrefabName ?? string.Empty).IndexOf("rocket", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            StatsService.For(owner).RocketsFired++;
+                            stats.RocketsFired++;
                         }
 
                         break;
@@ -200,6 +220,11 @@ namespace MagicCore.Patches
         {
             try
             {
+                if (!StatsService.Enabled)
+                {
+                    return;
+                }
+
                 var owner = __instance?.GetOwnerPlayer();
                 if (owner == null || __instance == null)
                 {
@@ -208,6 +233,10 @@ namespace MagicCore.Patches
 
                 var name = (__instance.ShortPrefabName ?? __instance.name ?? string.Empty).ToLowerInvariant();
                 var stats = StatsService.For(owner);
+                if (stats == null)
+                {
+                    return;
+                }
                 if (name.Contains("timed") || name.Contains("explosive.timed") || name.Contains("c4"))
                 {
                     stats.TimedExplosivesThrown++;

@@ -144,7 +144,7 @@ export function HarmonyModRelease() {
                 </div>
             ) : null}
             <p className="text-sm text-muted-foreground">
-                Servers running an older copy download this version on their own. From the server console, <span className="text-foreground">rusttemplate.update</span> checks and applies it now.
+                Servers running an older copy download this version on their own. From the server console, <span className="text-foreground">magiccore.update</span> checks and applies it now.
                 {release && release.dllReady === false ? " This site is not serving MagicCore.dll yet, so servers will see the notes and wait until the built mod is published." : ""}
             </p>
         </div>

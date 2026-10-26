@@ -1,12 +1,16 @@
 {
-  "version": "2.3.40",
-  "releasedAt": "2026-10-25",
+  "version": "2.3.41",
+  "releasedAt": "2026-10-26",
   "notes": [
-    "The Discord bot configuration form edits the full bot config, including support categories and Discord roles."
+    "MagicCore checks in with the site, so the server list shows whether the mod is connected and current."
   ],
-  "added": [],
+  "added": [
+    "Admin servers show Connected, Stale, or Not connected, and Out of date when MagicCore is behind the site."
+  ],
   "changed": [
-    "Category slugs and role IDs can be chosen from lists or typed in."
+    "The server console update command is magiccore.update.",
+    "Turning the leaderboard off also stops counting those stats on the server.",
+    "Public pages list only enabled servers. Admin still shows disabled ones."
   ],
   "removed": []
 }

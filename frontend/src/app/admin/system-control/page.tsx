@@ -40,7 +40,7 @@ export default function SystemControlDashboardPage() {
                 <div>
                     <p className="font-medium">Harmony mod</p>
                     <p className="text-muted-foreground text-sm">
-                        Download MagicCore, or open the page to read the version and what changed. Servers update on their own, or with rusttemplate.update.
+                        Download MagicCore, or open the page to read the version and what changed. Servers update on their own, or with magiccore.update.
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">

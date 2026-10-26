@@ -1,12 +1,14 @@
 {
-  "version": "2.1.6",
-  "releasedAt": "2026-10-25",
+  "version": "2.1.7",
+  "releasedAt": "2026-10-26",
   "notes": [
-    "A server can turn leaderboard stats off so they are not sent to the website."
+    "MagicCore checks in with the site so the server list can show whether the mod is connected and current."
   ],
   "added": [
-    "LEADERBOARD_ENABLED in MagicCore.json, and /leaderboard enable, disable, or status."
+    "A heartbeat every 5 minutes reports the MagicCore version and whether the server is Oxide, Carbon, or vanilla."
   ],
-  "changed": [],
+  "changed": [
+    "Turning the leaderboard off also stops counting those stats on the server."
+  ],
   "removed": []
 }

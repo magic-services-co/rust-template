@@ -18,6 +18,7 @@ namespace MagicCore
         private float _updateBootElapsed;
         private bool _updateBootChecked;
         private float _banTickElapsed;
+        private float _heartbeatElapsed = 100000f;
         private float _bindRetry;
         private bool _bindTried;
         private bool _ready;
@@ -62,13 +63,23 @@ namespace MagicCore
         private void Update()
         {
             var cfg = ModConfig.Current;
+            var dt = Time.unscaledDeltaTime;
             MainThread.Pump(cfg?.HttpCallbacksPerFrame ?? 24);
+            if (cfg != null)
+            {
+                _heartbeatElapsed += dt;
+                var heartbeatEvery = Math.Max(1, cfg.HeartbeatMinutes) * 60f;
+                if (_heartbeatElapsed >= heartbeatEvery)
+                {
+                    _heartbeatElapsed = 0f;
+                    HeartbeatService.Send();
+                }
+            }
+
             if (!_ready || cfg == null)
             {
                 return;
             }
-
-            var dt = Time.unscaledDeltaTime;
             if (!_bindTried)
             {
                 _bindRetry += dt;

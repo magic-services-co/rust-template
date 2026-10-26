@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { LinkIcon, GripVertical } from 'lucide-react'
 import { ServerActions } from '@/components/admin/servers/server-actions'
+import { Badge } from '@/components/ui/badge'
 import { Server } from '@/types/category'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -55,11 +56,7 @@ export function ServerCard({ server, isDragging }: ServerCardProps) {
                         <p className="text-sm text-gray-500">
                             ID: {server.server_id}
                         </p>
-                        {server.mod_runtime === "oxide" || server.mod_runtime === "carbon" ? (
-                            <p className="text-sm text-gray-500">
-                                {server.mod_runtime === "carbon" ? "Carbon" : "Oxide"}
-                            </p>
-                        ) : null}
+                        <HarmonyLink server={server} />
                     </div>
                     <ServerActions
                         serverId={server.server_id}
@@ -75,6 +72,64 @@ export function ServerCard({ server, isDragging }: ServerCardProps) {
                     />
                 </CardContent>
             </Card>
+        </div>
+    )
+}
+
+function frameworkLabel(runtime?: Server["mod_runtime"]): string | null {
+    if (runtime === "carbon") return "Carbon"
+    if (runtime === "oxide") return "Oxide"
+    if (runtime === "vanilla") return "Vanilla"
+    return null
+}
+
+function HarmonyLink({ server }: { server: Server }) {
+    if (!server.harmony_status) return null
+
+    const seen = server.harmony_seen_at ? new Date(server.harmony_seen_at) : null
+    const seenLabel = seen && !Number.isNaN(seen.getTime()) ? seen.toLocaleString() : null
+    const framework = frameworkLabel(server.mod_runtime)
+    const version = server.harmony_version
+        ? `MagicCore ${server.harmony_version}${framework ? ` · ${framework}` : ""}`
+        : framework
+
+    const statusClass =
+        server.harmony_status === "connected"
+            ? undefined
+            : server.harmony_status === "stale"
+                ? "border-amber-500 bg-amber-500/10 text-amber-500"
+                : "border-zinc-500 bg-zinc-500/10 text-zinc-400"
+    const statusText =
+        server.harmony_status === "connected"
+            ? "Connected"
+            : server.harmony_status === "stale"
+                ? "Stale"
+                : "Not connected"
+    const title =
+        server.harmony_status === "offline"
+            ? "MagicCore has not checked in"
+            : seenLabel
+                ? `Last check-in ${seenLabel}`
+                : undefined
+
+    return (
+        <div className="flex flex-wrap items-center gap-1.5">
+            <Badge
+                variant={server.harmony_status === "connected" ? "active" : "outline"}
+                className={statusClass}
+                title={title}
+            >
+                {statusText}
+            </Badge>
+            {server.harmony_update_available ? (
+                <Badge
+                    variant="destructive"
+                    title={server.harmony_latest ? `This site has MagicCore ${server.harmony_latest}` : "A newer MagicCore is on this site"}
+                >
+                    Out of date
+                </Badge>
+            ) : null}
+            {version ? <span className="text-xs text-muted-foreground">{version}</span> : null}
         </div>
     )
 }

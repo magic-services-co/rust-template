@@ -61,6 +61,9 @@ namespace MagicCore
         [JsonProperty("UPDATE_CHECK_MINUTES")]
         public int UpdateCheckMinutes { get; set; } = 30;
 
+        [JsonProperty("HEARTBEAT_MINUTES")]
+        public int HeartbeatMinutes { get; set; } = 5;
+
         [JsonProperty("DEFAULT_GROUP")]
         public string DefaultGroup { get; set; } = "default";
 

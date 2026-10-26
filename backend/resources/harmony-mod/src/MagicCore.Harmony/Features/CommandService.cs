@@ -24,6 +24,7 @@ namespace MagicCore
             }
 
             var command = parts[0].ToLowerInvariant();
+            var fullCommand = command;
             if (command.StartsWith("magiccore.", StringComparison.Ordinal))
             {
                 command = command.Substring("magiccore.".Length);
@@ -48,7 +49,12 @@ namespace MagicCore
                 case "leaderboard":
                     HandleLeaderboard(player, parts);
                     return true;
-                case "rusttemplate.update":
+                case "update":
+                    if (fullCommand != "magiccore.update")
+                    {
+                        return false;
+                    }
+
                     if (player != null && !player.IsAdmin)
                     {
                         player.ChatMessage("You don't have permission to use this command.");
@@ -149,7 +155,7 @@ namespace MagicCore
                     ConfigStore.Save();
                     StatsService.Clear();
                     Log.Info("Leaderboard stats DISABLED");
-                    player?.ChatMessage("Leaderboard stats DISABLED. This server will not send stats to the website.");
+                    player?.ChatMessage("Leaderboard stats DISABLED. This server will not track stats or send them to the website.");
                     break;
                 case "status":
                     player?.ChatMessage(

@@ -63,7 +63,8 @@ Nothing in this mod blocks a server tick waiting on HTTP. Requests run on the th
 | Groups on connect | `GET /api/oxide/player?steamId=&serverId=` | connect |
 | Tracked groups | `GET /api/admin/roles` | every 10 minutes |
 | Bans | `GET /api/bans/check-batch-fast` | connect + batched queue |
-| Stats | `POST /api/leaderboard/stats/batch` | 5 minutes, disconnect, save. Skipped when `LEADERBOARD_ENABLED` is false |
+| Stats | `POST /api/leaderboard/stats/batch` | 5 minutes, disconnect, save. When `LEADERBOARD_ENABLED` is false the mod does not count stats and does not send them |
+| Check-in | `POST /api/oxide/heartbeat` | On load, then every 5 minutes (`HEARTBEAT_MINUTES`, minimum 1). Sends the MagicCore version and Oxide, Carbon, or vanilla |
 | Wipes | `GET/POST /api/wipes` | boot + map wipe |
 | Linked kit | `GET/POST /api/oxide/linked-kit` | boot, then every 5 minutes |
 
@@ -91,7 +92,7 @@ In chat or F1:
 - `/bansystem <enable\|disable\|status>` — admin
 - `/leaderboard <enable\|disable\|status>` — admin. Disable stops this server from sending stats to the website.
 
-Console: `magiccore.link`, `magiccore.checkban`, `magiccore.bansystem`, `magiccore.leaderboard`, `rusttemplate.update`.
+Console: `magiccore.link`, `magiccore.checkban`, `magiccore.bansystem`, `magiccore.leaderboard`, `magiccore.update`.
 
 ## Updates
 
@@ -100,7 +101,7 @@ The mod asks the site for a newer MagicCore about a minute after boot, then ever
 Server console:
 
 ```
-rusttemplate.update
+magiccore.update
 ```
 
 The admin Harmony mod page shows the version and the notes for that release.

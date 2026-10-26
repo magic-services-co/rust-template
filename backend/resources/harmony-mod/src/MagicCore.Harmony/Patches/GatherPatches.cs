@@ -16,7 +16,7 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (__instance == null || reciever == null)
+                if (!StatsService.Enabled || __instance == null || reciever == null)
                 {
                     return;
                 }
@@ -29,6 +29,11 @@ namespace MagicCore.Patches
                 }
 
                 var stats = StatsService.For(reciever);
+                if (stats == null)
+                {
+                    return;
+                }
+
                 switch (collectibleName)
                 {
                     case "wood":
@@ -79,7 +84,7 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (player == null || item?.info == null)
+                if (!StatsService.Enabled || player == null || item?.info == null)
                 {
                     return;
                 }
@@ -94,7 +99,17 @@ namespace MagicCore.Patches
 
         internal static void ApplyGather(BasePlayer player, string shortname, int amount)
         {
+            if (!StatsService.Enabled)
+            {
+                return;
+            }
+
             var stats = StatsService.For(player);
+            if (stats == null)
+            {
+                return;
+            }
+
             switch (shortname)
             {
                 case "leather":
@@ -134,14 +149,18 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (player == null || action != "Gut" || __instance?.info == null)
+                if (!StatsService.Enabled || player == null || action != "Gut" || __instance?.info == null)
                 {
                     return;
                 }
 
                 if ((__instance.info.shortname ?? string.Empty).IndexOf("fish", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    StatsService.For(player).FishGutted++;
+                    var stats = StatsService.For(player);
+                    if (stats != null)
+                    {
+                        stats.FishGutted++;
+                    }
                 }
             }
             catch (Exception ex)

@@ -16,6 +16,11 @@ namespace MagicCore.Patches
         {
             try
             {
+                if (!StatsService.Enabled)
+                {
+                    return;
+                }
+
                 BasePlayer hacker = null;
                 if (__instance != null)
                 {
@@ -26,9 +31,10 @@ namespace MagicCore.Patches
                     }
                 }
 
-                if (hacker != null)
+                var stats = hacker == null ? null : StatsService.For(hacker);
+                if (stats != null)
                 {
-                    StatsService.For(hacker).HackedCratesLooted++;
+                    stats.HackedCratesLooted++;
                 }
             }
             catch (Exception ex)
@@ -53,9 +59,10 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (assignee != null)
+                var stats = !StatsService.Enabled || assignee == null ? null : StatsService.For(assignee);
+                if (stats != null)
                 {
-                    StatsService.For(assignee).MissionsStarted++;
+                    stats.MissionsStarted++;
                 }
             }
             catch (Exception ex)
@@ -80,9 +87,10 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (assignee != null)
+                var stats = !StatsService.Enabled || assignee == null ? null : StatsService.For(assignee);
+                if (stats != null)
                 {
-                    StatsService.For(assignee).MissionsCompleted++;
+                    stats.MissionsCompleted++;
                 }
             }
             catch (Exception ex)
@@ -104,12 +112,16 @@ namespace MagicCore.Patches
         {
             try
             {
-                if (string.IsNullOrEmpty(prefabToSpawn) || newOwner == null || !Players.IsSteamId(newOwner.UserIDString))
+                if (!StatsService.Enabled || string.IsNullOrEmpty(prefabToSpawn) || newOwner == null || !Players.IsSteamId(newOwner.UserIDString))
                 {
                     return;
                 }
 
                 var stats = StatsService.For(newOwner);
+                if (stats == null)
+                {
+                    return;
+                }
                 if (prefabToSpawn.IndexOf("boat", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     stats.BoatsPurchased++;

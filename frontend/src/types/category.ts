@@ -11,7 +11,12 @@ export interface Server {
   current_map_thumbnail_url?: string | null;
   pterodactyl_panel_id?: number | null;
   pterodactyl_server_identifier?: string | null;
-  mod_runtime?: "oxide" | "carbon" | null;
+  mod_runtime?: "oxide" | "carbon" | "vanilla" | null;
+  harmony_version?: string | null;
+  harmony_seen_at?: string | null;
+  harmony_status?: "connected" | "stale" | "offline";
+  harmony_update_available?: boolean;
+  harmony_latest?: string | null;
   tags?: Array<{ id: number; name: string; image?: string | null }>;
   [key: string]: unknown;
 }

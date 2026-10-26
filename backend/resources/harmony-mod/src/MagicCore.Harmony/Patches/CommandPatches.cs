@@ -58,7 +58,6 @@ namespace MagicCore.Patches
 
                 var trimmed = command.Trim();
                 if (!trimmed.StartsWith("magiccore", StringComparison.OrdinalIgnoreCase)
-                    && !trimmed.StartsWith("rusttemplate", StringComparison.OrdinalIgnoreCase)
                     && !trimmed.StartsWith("link", StringComparison.OrdinalIgnoreCase)
                     && !trimmed.StartsWith("checkban", StringComparison.OrdinalIgnoreCase)
                     && !trimmed.StartsWith("bansystem", StringComparison.OrdinalIgnoreCase)
