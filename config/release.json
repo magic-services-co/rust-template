@@ -1,12 +1,12 @@
 {
-  "version": "2.3.38",
+  "version": "2.3.39",
   "releasedAt": "2026-10-25",
   "notes": [
-    "Linking Discord adds the user to the server, and the verification role is given only after they are in it."
+    "The Discord bot starts on servers where Docker cannot mount the site folder, including snap Docker."
   ],
   "added": [],
   "changed": [
-    "Leaving the Discord server unlinks the account and removes the verification and booster roles."
+    "A missing bot image is built from the files already on the server, and local edits no longer block Build from GitHub."
   ],
   "removed": []
 }

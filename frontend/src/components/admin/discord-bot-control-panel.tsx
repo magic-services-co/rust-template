@@ -56,6 +56,7 @@ export function DiscordBotControlPanel() {
     const [data, setData] = useState<DiscordBotState | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [notice, setNotice] = useState<string | null>(null)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
     const [saveSuccess, setSaveSuccess] = useState(false)
     const [logs, setLogs] = useState<string>("")
@@ -141,32 +142,54 @@ export function DiscordBotControlPanel() {
         setActionLoading("start")
         const result = await apiCall("POST", "/admin/system-control/discord-bot/start")
         setActionLoading(null)
-        if (result.error) setError(result.error)
-        else fetchState()
+        if (result.error) {
+            setNotice(null)
+            setError(result.error)
+        } else {
+            setError(null)
+            setNotice(result.message ?? null)
+            fetchState()
+        }
     }
 
     const handleStop = async () => {
         setActionLoading("stop")
         const result = await apiCall("POST", "/admin/system-control/discord-bot/stop")
         setActionLoading(null)
-        if (result.error) setError(result.error)
-        else fetchState()
+        if (result.error) {
+            setNotice(null)
+            setError(result.error)
+        } else {
+            setError(null)
+            setNotice(result.message ?? null)
+            fetchState()
+        }
     }
 
     const handleRestart = async () => {
         setActionLoading("restart")
         const result = await apiCall("POST", "/admin/system-control/discord-bot/restart")
         setActionLoading(null)
-        if (result.error) setError(result.error)
-        else fetchState()
+        if (result.error) {
+            setNotice(null)
+            setError(result.error)
+        } else {
+            setError(null)
+            setNotice(result.message ?? null)
+            fetchState()
+        }
     }
 
     const handleBuildFromGitHub = async () => {
         setActionLoading("build")
         const result = await apiCall("POST", "/admin/system-control/discord-bot/build-from-github")
         setActionLoading(null)
-        if (result.error) setError(result.error)
-        else {
+        if (result.error) {
+            setNotice(null)
+            setError(result.error)
+        } else {
+            setError(null)
+            setNotice(result.message ?? null)
             fetchState()
             loadFiles(filesPath)
         }
@@ -308,6 +331,12 @@ export function DiscordBotControlPanel() {
 
     return (
         <div className="space-y-6">
+            {error && (
+                <p className="whitespace-pre-wrap break-words text-sm text-destructive">{error}</p>
+            )}
+            {notice && (
+                <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{notice}</p>
+            )}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex items-center gap-3">
