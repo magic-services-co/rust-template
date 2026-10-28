@@ -239,7 +239,7 @@ function RecheckAllRolesButton() {
           <AlertDialogHeader>
             <AlertDialogTitle>Recheck roles for every user?</AlertDialogTitle>
             <AlertDialogDescription>
-              PayNow ranks and roles linked to a Discord role are checked for every user. Roles can be granted or removed.
+              Every user is checked. PayNow ranks stay only while the purchase is active. A role linked to Discord is removed when that person is not linked to Discord, is not in the server, or no longer has the Discord role.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

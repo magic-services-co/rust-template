@@ -1,12 +1,12 @@
 {
-  "version": "2.3.48",
+  "version": "2.3.49",
   "releasedAt": "2026-10-28",
   "notes": [
-    "Saving a PayNow API key works when the stored key was encrypted with another site key."
+    "Recheck roles looks at every user. A role linked to Discord is removed when that person is not linked, is not in the server, or no longer has the Discord role."
   ],
   "added": [],
   "changed": [
-    "Site settings replace the PayNow API key without reading the previous ciphertext."
+    "The users list role check includes accounts that no longer have Discord linked."
   ],
   "removed": []
 }
