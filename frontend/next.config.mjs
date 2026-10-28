@@ -41,6 +41,11 @@ function devOriginHostnames() {
 const nextConfig = {
     experimental: {
         agentUpgrade: 'security',
+        inlineCss: true,
+        staleTimes: {
+            dynamic: 30,
+            static: 300,
+        },
     },
     typescript: {
         ignoreBuildErrors: process.env.TEMPLATE_UPDATE_SKIP_TYPECHECK === '1',

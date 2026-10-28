@@ -42,6 +42,8 @@ function getAuthTokenFromCookie(cookieHeader: string | null): string | null {
 }
 
 const SKIP_REDIRECT_PREFIXES = ["/admin", "/storage", "/images", "/setup"];
+const REDIRECT_CACHE_MS = 60_000;
+const redirectCache = new Map<string, { expires: number; destination: string; permanent: boolean }>();
 
 function backendOrigin(): string {
   const raw = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
@@ -53,6 +55,15 @@ async function redirectResponse(request: NextRequest, pathname: string): Promise
     return null;
   }
   if (pathname.includes(".")) return null;
+
+  const cached = redirectCache.get(pathname);
+  if (cached && cached.expires > Date.now()) {
+    if (!cached.destination || cached.destination === pathname) return null;
+    const target = cached.destination.startsWith("http://") || cached.destination.startsWith("https://")
+      ? cached.destination
+      : new URL(cached.destination.startsWith("/") ? cached.destination : `/${cached.destination}`, request.url);
+    return NextResponse.redirect(target, cached.permanent ? 308 : 307);
+  }
 
   try {
     const lookup = await fetch(
@@ -66,6 +77,12 @@ async function redirectResponse(request: NextRequest, pathname: string): Promise
     if (!lookup.ok) return null;
     const data = (await lookup.json()) as { destination?: string; permanent?: boolean };
     const destination = typeof data.destination === "string" ? data.destination.trim() : "";
+    if (redirectCache.size > 300) redirectCache.clear();
+    redirectCache.set(pathname, {
+      expires: Date.now() + REDIRECT_CACHE_MS,
+      destination,
+      permanent: data.permanent === true,
+    });
     if (!destination || destination === pathname) return null;
     const target = destination.startsWith("http://") || destination.startsWith("https://")
       ? destination

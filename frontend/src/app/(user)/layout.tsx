@@ -5,8 +5,10 @@ import { backendApi } from "@/lib/api";
 import { LicenseRequiredBlock } from "@/components/license-required-block";
 import { UserLayoutClient } from "./user-layout-client";
 import type { LayoutTheme } from "@/lib/layout-theme-defaults";
+import type { NavigationItem } from "@/types/navigation";
 import { installedFrontIds } from "@/addons/installed-ids";
 import { PublicStructuredData } from "@/components/seo/public-structured-data";
+import { getPublicChrome } from "@/lib/public-chrome";
 
 export const metadata = {};
 
@@ -23,32 +25,42 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
   const host = clientFacingHost(headersList);
   const pathname = headersList.get("x-pathname") ?? "";
 
-  if (!pathname.startsWith("/setup")) {
-    const setupRes = await fetch(backendApi("setup/status"), {
-      headers: {
-        Accept: "application/json",
-        ...(host && { Host: host }),
-        ...(host && { "X-Forwarded-Host": host }),
-      },
+  const pageHeaders = {
+    Accept: "application/json",
+    ...(host && { Host: host }),
+    ...(host && { "X-Forwarded-Host": host }),
+  };
+  const setupPromise = pathname.startsWith("/setup")
+    ? Promise.resolve(null)
+    : fetch(backendApi("setup/status?lite=1"), {
+        headers: pageHeaders,
+        cache: "no-store",
+        signal: AbortSignal.timeout(4000),
+      }).catch(() => null);
+
+  const [setupRes, licenseRes, data, addonsRes] = await Promise.all([
+    setupPromise,
+    fetch(backendApi("license/status"), {
+      headers: pageHeaders,
       cache: "no-store",
-    });
-    if (setupRes.ok) {
-      const setupJson = (await setupRes.json()) as { wizardPending?: boolean };
-      if (setupJson.wizardPending === true) {
-        redirect("/setup");
-      }
+      signal: AbortSignal.timeout(6000),
+    }).catch(() => null),
+    getPublicChrome(),
+    fetch(backendApi("addons"), {
+      headers: pageHeaders,
+      next: { revalidate: 30, tags: ["public-pages"] },
+      signal: AbortSignal.timeout(4000),
+    }).catch(() => null),
+  ]);
+
+  if (setupRes?.ok) {
+    const setupJson = (await setupRes.json()) as { wizardPending?: boolean };
+    if (setupJson.wizardPending === true) {
+      redirect("/setup");
     }
   }
 
-  const licenseRes = await fetch(backendApi("license/status"), {
-    headers: {
-      Accept: "application/json",
-      ...(host && { Host: host }),
-      ...(host && { "X-Forwarded-Host": host }),
-    },
-    cache: "no-store",
-  });
-  const licenseData = licenseRes.ok
+  const licenseData = licenseRes?.ok
     ? await licenseRes.json()
     : {
         valid: false,
@@ -61,41 +73,10 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
     );
   }
 
-  const pageHeaders = {
-    Accept: "application/json",
-    ...(host && { Host: host }),
-    ...(host && { "X-Forwarded-Host": host }),
-  };
-  const [res, addonsRes] = await Promise.all([
-    fetch(backendApi("data?include=navigationItems,themeSettings,siteSettings"), {
-      headers: pageHeaders,
-      next: { revalidate: 60, tags: ["public-pages"] },
-    }),
-    fetch(backendApi("addons"), {
-      headers: pageHeaders,
-      cache: "no-store",
-    }),
-  ]);
-
-  if (res.status === 403) {
-    let body: { error?: string; message?: string } = {};
-    try {
-      body = await res.json();
-    } catch {
-      // ignore
-    }
-    if (body.error === "license_required") {
-      return (
-        <LicenseRequiredBlock message={body.message} />
-      );
-    }
-  }
-
-  const data = res.ok ? await res.json() : {};
-  const navItems = Array.isArray(data.navigationItems) ? data.navigationItems : [];
+  const navItems = (Array.isArray(data.navigationItems) ? data.navigationItems : []) as NavigationItem[];
   const theme = data.themeSettings as LayoutTheme | undefined;
   const siteName = typeof data.siteSettings?.name === "string" ? data.siteSettings.name : undefined;
-  const addonsJson = addonsRes.ok ? await addonsRes.json() : { addons: [] };
+  const addonsJson = addonsRes?.ok ? await addonsRes.json() : { addons: [] };
   const enabledIds = new Set(
     (Array.isArray(addonsJson.addons) ? addonsJson.addons : [])
       .map((addon: { id?: string }) => addon.id)

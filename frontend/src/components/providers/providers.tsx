@@ -3,15 +3,46 @@
 import { SessionProvider } from "@/lib/laravel-auth-react"
 import { ThemeProvider } from "./theme-provider"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState } from "react"
+import dynamic from "next/dynamic"
+import { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Toaster } from "../ui/sonner";
 import { useAuthEvents } from "@/hooks/use-auth-events";
 import { CookieConsentProvider } from "./cookie-consent-provider";
-import { LiveSiteEditor } from "@/components/theme/live-site-editor";
+
+const ReactQueryDevtools =
+    process.env.NODE_ENV === "development"
+        ? dynamic(
+              () => import("@tanstack/react-query-devtools").then((mod) => mod.ReactQueryDevtools),
+              { ssr: false },
+          )
+        : function QueryDevtoolsDisabled() {
+              return null
+          }
+
+const LiveSiteEditor = dynamic(
+    () => import("@/components/theme/live-site-editor").then((mod) => mod.LiveSiteEditor),
+    { ssr: false },
+)
+
+function LiveSiteEditorGate() {
+    const params = useSearchParams()
+    if (params.get("theme-editor") !== "true") return null
+    return <LiveSiteEditor />
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    const [client] = useState(new QueryClient())
+    const [client] = useState(
+        () =>
+            new QueryClient({
+                defaultOptions: {
+                    queries: {
+                        staleTime: 15_000,
+                        retry: 1,
+                    },
+                },
+            }),
+    )
     return (
         <ThemeProvider
             attribute="class"
@@ -24,7 +55,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <CookieConsentProvider>
                         <AuthEventWrapper>
                             {children ?? null}
-                            <LiveSiteEditor />
+                            <Suspense fallback={null}>
+                                <LiveSiteEditorGate />
+                            </Suspense>
                             <Toaster />
                             <ReactQueryDevtools initialIsOpen={false} />
                         </AuthEventWrapper>

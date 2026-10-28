@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers/providers";
-import { backendApi } from "@/lib/api";
 import { firstShareImage, requestOrigin } from "@/lib/metadata";
+import { getPublicChrome } from "@/lib/public-chrome";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { ConditionalAnalytics } from "@/components/conditional-analytics";
 import { UserActivityTracker } from "@/components/user-activity-tracker";
@@ -17,8 +17,6 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
-
-const FETCH_TIMEOUT_MS = 5000;
 
 function faviconFromPayload(data: {
   themeSettings?: { faviconImage?: string };
@@ -40,24 +38,15 @@ export async function generateMetadata() {
   }
 
   let siteMetadata: Record<string, unknown> | null = null;
-  try {
-    const res = await fetch(backendApi("data?include=siteMetadata,themeSettings,layoutChrome"), {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 60, tags: ["public-pages"] },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    const data = res.ok ? await res.json() : {};
-    siteMetadata = (data?.siteMetadata as Record<string, unknown>) ?? null;
-    const themeLogo = (data?.themeSettings as { logoImage?: string } | undefined)?.logoImage;
-    const layoutLogo = (data?.layoutChrome as { logoImage?: string } | undefined)?.logoImage;
-    siteMetadata = {
-      ...(siteMetadata ?? {}),
-      logoImage: layoutLogo?.trim() || themeLogo?.trim() || "",
-      faviconImage: faviconFromPayload(data),
-    };
-  } catch {
-    // ignore - use defaults
-  }
+  const data = await getPublicChrome();
+  siteMetadata = data.siteMetadata ?? null;
+  const themeLogo = data.themeSettings?.logoImage;
+  const layoutLogo = data.layoutChrome?.logoImage;
+  siteMetadata = {
+    ...(siteMetadata ?? {}),
+    logoImage: layoutLogo?.trim() || themeLogo?.trim() || "",
+    faviconImage: faviconFromPayload(data),
+  };
 
   const origin = await requestOrigin();
   const logoImage = (siteMetadata?.logoImage as string | undefined) || null;
@@ -128,13 +117,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const timestamp = Date.now();
+  const chrome = await getPublicChrome();
+  const themeVersion = encodeURIComponent(chrome.styleRevision?.theme || "0");
+  const elementVersion = encodeURIComponent(chrome.styleRevision?.elements || "0");
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="stylesheet" href={`/api/admin/theme/styles?v=${timestamp}`} />
-        <link rel="stylesheet" href={`/api/admin/page-elements/styles?v=${timestamp}`} />
+        <link rel="stylesheet" href={`/api/admin/theme/styles?v=${themeVersion}`} />
+        <link rel="stylesheet" href={`/api/admin/page-elements/styles?v=${elementVersion}`} />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ClientThemeInjector />

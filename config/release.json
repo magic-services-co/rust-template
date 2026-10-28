@@ -1,12 +1,12 @@
 {
-  "version": "2.3.49",
+  "version": "2.3.50",
   "releasedAt": "2026-10-28",
   "notes": [
-    "Recheck roles looks at every user. A role linked to Discord is removed when that person is not linked, is not in the server, or no longer has the Discord role."
+    "Pages open faster. The license check and theme CSS are reused instead of being loaded from scratch on every visit."
   ],
   "added": [],
   "changed": [
-    "The users list role check includes accounts that no longer have Discord linked."
+    "Repeat visits keep the theme stylesheet, and the license check stays cached for a few minutes."
   ],
   "removed": []
 }

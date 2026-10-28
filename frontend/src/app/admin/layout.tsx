@@ -30,7 +30,7 @@ export default async function DashboardLayout({
         headersList.get("x-forwarded-host")?.split(",")[0]?.trim() ||
         headersList.get("host") ||
         ""
-    const setupRes = await fetch(backendApi("setup/status"), {
+    const setupRes = await fetch(backendApi("setup/status?lite=1"), {
         headers: {
             Accept: "application/json",
             ...(forwardedFor && { "X-Forwarded-For": forwardedFor }),
