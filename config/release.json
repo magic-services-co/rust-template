@@ -1,12 +1,10 @@
 {
-  "version": "2.3.51",
+  "version": "2.3.52",
   "releasedAt": "2026-10-28",
   "notes": [
-    "The Discord bot can unlink people who left every configured server or revoked the site's Discord access."
+    "Discord linking still finishes when the browser drops the login cookie on the way back from Discord."
   ],
-  "added": [
-    "Discord link audits remove a linked account only after the site confirms they left, or that they revoked access."
-  ],
+  "added": [],
   "changed": [],
   "removed": []
 }
