@@ -1,13 +1,7 @@
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/admin/navigation/app-sidebar"
-import DynamicBreadcrumbs from "@/components/dynamic-breadcrumbs"
+import { AdminChrome } from "@/components/admin/navigation/admin-chrome"
 import { AdminPageViewLogger } from "@/components/admin/admin-page-view-logger"
 import { AdminActionLogger } from "@/components/admin/admin-action-logger"
-import { AdminReleaseBadge } from "@/components/admin/admin-release-badge"
-import { PurgeCacheButton } from "@/components/admin/purge-cache-button"
 import { PayNowKeyWarning } from "@/components/admin/paynow-key-warning"
-import { Suspense } from "react"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { backendApi } from "@/lib/api"
@@ -53,28 +47,11 @@ export default async function DashboardLayout({
     }
 
     return (
-        <SidebarProvider>
+        <AdminChrome>
             <AdminPageViewLogger />
             <AdminActionLogger />
-            <AppSidebar />
-            <SidebarInset>
-                <header className="flex h-16 w-full shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4">
-                        <SidebarTrigger className="-ml-1" />
-                        <Separator orientation="vertical" className="mr-2 h-4" />
-                        <Suspense fallback={<div>Loading...</div>}>
-                            <DynamicBreadcrumbs />
-                        </Suspense>
-                        <Separator orientation="vertical" className="mx-2 h-4" />
-                        <AdminReleaseBadge />
-                    </div>
-                    <PurgeCacheButton />
-                </header>
-                <div className="flex flex-1 flex-col gap-4 p-4 py-6">
-                    <PayNowKeyWarning />
-                    {children}
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
+            <PayNowKeyWarning />
+            {children}
+        </AdminChrome>
     )
 }

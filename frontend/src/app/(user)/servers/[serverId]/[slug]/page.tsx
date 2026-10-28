@@ -3,6 +3,7 @@ import { backendApi } from "@/lib/api";
 import { notFound } from "next/navigation";
 import { CustomPageView } from "@/components/cms/custom-page-view";
 import { getMetadata } from "@/lib/metadata";
+import { PublicFrontSwitch } from "@/lib/public-front";
 
 export async function generateMetadata({
     params,
@@ -35,12 +36,16 @@ export default async function ServerPage({
             ? String((page.server as { server_name?: string }).server_name || "")
             : "";
 
+    const description = typeof page.description === "string" ? page.description.trim() : "";
+    const subtitle = description || (serverName ? `Commands, rules, and notes for ${serverName}.` : undefined);
     return (
-        <CustomPageView
-            title={page.title}
-            kicker={serverName || "SERVER"}
-            subtitle={serverName ? `Commands, rules, and notes for ${serverName}.` : undefined}
-            content={page.content}
-        />
+        <PublicFrontSwitch name="customPage" slotProps={{ title: page.title, subtitle, content: page.content }}>
+            <CustomPageView
+                title={page.title}
+                kicker={serverName || "SERVER"}
+                subtitle={subtitle}
+                content={page.content}
+            />
+        </PublicFrontSwitch>
     );
 }

@@ -48,7 +48,12 @@ export default async function UserLayout({ children }: { children: ReactNode }) 
     },
     cache: "no-store",
   });
-  const licenseData = licenseRes.ok ? await licenseRes.json() : { valid: false };
+  const licenseData = licenseRes.ok
+    ? await licenseRes.json()
+    : {
+        valid: false,
+        message: "The license check failed on the server. Enter your key again, and if it still stays on this page the saved key could not be read.",
+      };
 
   if (licenseData.valid !== true) {
     return (

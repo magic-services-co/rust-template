@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { MarkdownGuide } from "@/components/admin/server-pages/markdown-guide";
 import { ServerCombobox } from "@/components/admin/server-pages/server-combobox";
 import { Loader2, Bold, Italic, Heading, List, Link, Code, Image as ImageIcon, Copy } from "lucide-react";
 
@@ -18,6 +19,7 @@ interface ServerPage {
     id: string;
     server_id: string;
     title: string;
+    description?: string | null;
     slug: string;
     content: any;
     enabled: boolean;
@@ -56,6 +58,7 @@ export function PageBuilder({ page, onSuccess }: PageBuilderProps) {
     const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
         defaultValues: {
             title: page?.title || "",
+            description: page?.description || "",
             slug: page?.slug || "",
             content: page?.content
                 ? typeof page.content === "string"
@@ -190,6 +193,16 @@ export function PageBuilder({ page, onSuccess }: PageBuilderProps) {
             </div>
 
             <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                    id="description"
+                    rows={2}
+                    {...register("description")}
+                    placeholder="Shown under the title, like the line under the home heading"
+                />
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="slug">URL Slug *</Label>
                 <Input
                     id="slug"
@@ -312,8 +325,9 @@ export function PageBuilder({ page, onSuccess }: PageBuilderProps) {
                     />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                    Use the toolbar buttons above or write Markdown directly. Click toolbar buttons to insert formatting for selected text.
+                    Use the toolbar buttons above or write Markdown directly. Click toolbar buttons to insert formatting for selected text. [copy:text] makes a published command copyable.
                 </p>
+                <MarkdownGuide />
                 {errors.content && (
                     <p className="text-sm text-destructive">{errors.content.message as string}</p>
                 )}

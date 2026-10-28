@@ -9,4 +9,5 @@ export const navigationItemSchema = z.object({
 
 export type NavigationItem = z.infer<typeof navigationItemSchema> & {
   id: string
+  children?: NavigationItem[]
 }

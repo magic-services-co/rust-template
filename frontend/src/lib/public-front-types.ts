@@ -69,9 +69,10 @@ export type PublicFrontSlots = {
     categorySubtitle?: string
     theme?: Record<string, unknown>
   }>
-  leaderboard?: ComponentType<{ section: "casual" | "ranked" | "weapons" | "player" | "rules" | "compare" | "match" | "sandbox"; steamId?: string; matchId?: string }>
+  leaderboard?: ComponentType<{ section: "casual" | "ranked" | "weapons" | "player" | "rules" | "compare" | "match" | "sandbox" | "matches"; steamId?: string; matchId?: string }>
   ticketView?: ComponentType<{ ticketId: number; currentUser: User }>
   legalPage?: ComponentType<{ kind: "terms" | "privacy" }>
+  customPage?: ComponentType<{ title: string; subtitle?: string; content: unknown }>
   cookieBanner?: ComponentType
   cookieDialog?: ComponentType<{
     open: boolean
@@ -93,6 +94,9 @@ export type PublicFrontSlots = {
     showSidebar: boolean
     children: ReactNode
   }>
+  adminShell?: ComponentType<{ children: ReactNode }>
+  adminLeaderboard?: ComponentType
+  adminOverview?: ComponentType
 }
 
 export type PublicFrontDefinition = {

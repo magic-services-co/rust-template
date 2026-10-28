@@ -1,6 +1,7 @@
 
 import { Metadata } from 'next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AdminLeaderboardSwitch } from '@/components/admin/admin-leaderboard-switch'
 import { LeaderboardSettingsForm } from '@/components/admin/leaderboard-settings-form'
 import { LeaderboardBuilder } from '@/components/admin/leaderboard-builder'
 import { getServerSession } from '@/lib/get-server-session'
@@ -27,20 +28,22 @@ export default async function LeaderboardManagementPage() {
         )
     }
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Leaderboard Management</h2>
-            <Tabs defaultValue="builder" className="w-full">
-                <TabsList className="w-full">
-                    <TabsTrigger value="builder" className="flex-1">Builder</TabsTrigger>
-                    <TabsTrigger value="settings" className="flex-1">Settings</TabsTrigger>
-                </TabsList>
-                <TabsContent value="builder">
-                    <LeaderboardBuilder />
-                </TabsContent>
-                <TabsContent value="settings">
-                    <LeaderboardSettingsForm />
-                </TabsContent>
-            </Tabs>
-        </div>
+        <AdminLeaderboardSwitch>
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold">Leaderboard Management</h2>
+                <Tabs defaultValue="builder" className="w-full">
+                    <TabsList className="w-full">
+                        <TabsTrigger value="builder" className="flex-1">Builder</TabsTrigger>
+                        <TabsTrigger value="settings" className="flex-1">Settings</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="builder">
+                        <LeaderboardBuilder />
+                    </TabsContent>
+                    <TabsContent value="settings">
+                        <LeaderboardSettingsForm />
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </AdminLeaderboardSwitch>
     )
 }

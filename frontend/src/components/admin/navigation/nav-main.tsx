@@ -33,7 +33,7 @@ export type AdminNavMainItem = {
   }[]
 }
 
-function toAdminHref(url: string) {
+export function toAdminHref(url: string) {
   if (!url || url === "#") return null
   const path = url.startsWith("/") ? url : `/${url}`
   return `/admin${path}`.replace(/\/{2,}/g, "/")
@@ -58,7 +58,7 @@ function collectHrefs(items: AdminNavMainItem[]) {
   return hrefs
 }
 
-function resolveActiveHref(pathname: string, items: AdminNavMainItem[]) {
+export function resolveActiveHref(pathname: string, items: AdminNavMainItem[]) {
   const matches = collectHrefs(items).filter((href) => pathMatches(pathname, href))
   matches.sort((a, b) => b.length - a.length)
   return matches[0] ?? null
@@ -117,22 +117,17 @@ function NavCollapsibleItem({
   )
 }
 
-function visibleNavItems(items: AdminNavMainItem[], hidden: Set<string>, activeHref: string | null) {
+export function visibleNavItems(items: AdminNavMainItem[], hidden: Set<string>) {
   const visible: AdminNavMainItem[] = []
   for (const item of items) {
     const key = adminNavKey(item.title, item.url)
     const groupHidden = hidden.has(key)
     if (!item.items) {
-      const href = toAdminHref(item.url)
-      if (!groupHidden || href === activeHref) visible.push(item)
+      if (!groupHidden) visible.push(item)
       continue
     }
-    const subs = item.items.filter((sub) => {
-      const href = toAdminHref(sub.url)
-      if (href === activeHref) return true
-      if (groupHidden) return false
-      return !hidden.has(adminNavKey(`${item.title}/${sub.title}`, sub.url))
-    })
+    if (groupHidden) continue
+    const subs = item.items.filter((sub) => !hidden.has(adminNavKey(`${item.title}/${sub.title}`, sub.url)))
     if (subs.length > 0) visible.push({ ...item, items: subs })
   }
   return visible
@@ -187,8 +182,8 @@ export function NavMain({
   const pathname = usePathname()
   const { hidden } = useAdminSidebarPrefs()
   const activeHref = resolveActiveHref(pathname, [...items, ...addonItems])
-  const platform = visibleNavItems(items, hidden, activeHref)
-  const addons = visibleNavItems(addonItems, hidden, activeHref)
+  const platform = visibleNavItems(items, hidden)
+  const addons = visibleNavItems(addonItems, hidden)
 
   return (
     <>

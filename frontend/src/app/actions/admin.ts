@@ -24,6 +24,7 @@ export type CategoryWithServers = {
     harmony_status?: "connected" | "stale" | "offline";
     harmony_update_available?: boolean;
     harmony_latest?: string | null;
+    magiccore_product?: "harmony" | "oxide" | null;
     tags?: Array<{ id: number; name: string; image?: string | null }>;
   }>;
 };

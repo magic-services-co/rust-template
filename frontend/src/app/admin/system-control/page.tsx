@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Metadata } from "next"
 import { VpsMetricsPanel } from "@/components/admin/vps-metrics-panel"
-import { HarmonyModDownloadButton } from "@/components/admin/harmony-mod-download"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
@@ -38,17 +37,14 @@ export default function SystemControlDashboardPage() {
             </div>
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
                 <div>
-                    <p className="font-medium">Harmony mod</p>
+                    <p className="font-medium">MagicCore Plugin</p>
                     <p className="text-muted-foreground text-sm">
-                        Download MagicCore, or open the page to read the version and what changed. Servers update on their own, or with magiccore.update.
+                        Download the Harmony mod or the Oxide/Carbon plugin, and read the changelog for each.
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <Button variant="ghost" asChild>
-                        <Link href="/admin/system-control/harmony">Update notes</Link>
-                    </Button>
-                    <HarmonyModDownloadButton />
-                </div>
+                <Button variant="secondary" asChild>
+                    <Link href="/admin/system-control/magiccore">Open</Link>
+                </Button>
             </div>
         </div>
     )

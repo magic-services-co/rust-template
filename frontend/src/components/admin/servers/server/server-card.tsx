@@ -89,8 +89,9 @@ function HarmonyLink({ server }: { server: Server }) {
     const seen = server.harmony_seen_at ? new Date(server.harmony_seen_at) : null
     const seenLabel = seen && !Number.isNaN(seen.getTime()) ? seen.toLocaleString() : null
     const framework = frameworkLabel(server.mod_runtime)
+    const kind = server.magiccore_product === "oxide" ? "plugin" : null
     const version = server.harmony_version
-        ? `MagicCore ${server.harmony_version}${framework ? ` · ${framework}` : ""}`
+        ? `MagicCore ${server.harmony_version}${framework ? ` · ${framework}` : ""}${kind ? ` ${kind}` : ""}`
         : framework
 
     const statusClass =

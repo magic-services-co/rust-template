@@ -38,9 +38,9 @@ type Prefs = {
 
 const PrefsContext = createContext<Prefs | null>(null)
 
-function readHidden(userId: string): string[] | null {
+function readHidden(prefix: string, userId: string): string[] | null {
   try {
-    const raw = localStorage.getItem(STORAGE_PREFIX + userId)
+    const raw = localStorage.getItem(prefix + userId)
     if (!raw) return null
     const parsed = JSON.parse(raw) as { hidden?: unknown }
     if (!parsed || !Array.isArray(parsed.hidden)) return null
@@ -50,34 +50,38 @@ function readHidden(userId: string): string[] | null {
   }
 }
 
-function writeHidden(userId: string, hidden: string[]) {
-  localStorage.setItem(STORAGE_PREFIX + userId, JSON.stringify({ hidden }))
+function writeHidden(prefix: string, userId: string, hidden: string[]) {
+  localStorage.setItem(prefix + userId, JSON.stringify({ hidden }))
 }
 
 export function AdminSidebarPrefsProvider({
   sections,
   children,
+  defaultHidden = DEFAULT_HIDDEN,
+  storagePrefix = STORAGE_PREFIX,
 }: {
   sections: Section[]
   children: ReactNode
+  defaultHidden?: string[]
+  storagePrefix?: string
 }) {
   const { data: session, status } = useSession()
   const rawUserId = session?.user?.id
   const userId = typeof rawUserId === "string" || typeof rawUserId === "number" ? String(rawUserId) : ""
-  const [hidden, setHidden] = useState<Set<string>>(() => new Set(DEFAULT_HIDDEN))
+  const [hidden, setHidden] = useState<Set<string>>(() => new Set(defaultHidden))
   const [hydratedFor, setHydratedFor] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "loading") return
-    const next = new Set(userId ? (readHidden(userId) ?? DEFAULT_HIDDEN) : DEFAULT_HIDDEN)
+    const next = new Set(userId ? (readHidden(storagePrefix, userId) ?? defaultHidden) : defaultHidden)
     setHidden(next)
     setHydratedFor(userId || "anonymous")
-  }, [status, userId])
+  }, [status, userId, storagePrefix, defaultHidden])
 
   useEffect(() => {
     if (!userId || hydratedFor !== userId) return
-    writeHidden(userId, [...hidden])
-  }, [hidden, hydratedFor, userId])
+    writeHidden(storagePrefix, userId, [...hidden])
+  }, [hidden, hydratedFor, userId, storagePrefix])
 
   const value = useMemo<Prefs>(() => {
     const change = (key: string, visible: boolean) => {
@@ -93,9 +97,9 @@ export function AdminSidebarPrefsProvider({
       sections,
       setVisible: change,
       showAll: () => setHidden(new Set()),
-      resetDefaults: () => setHidden(new Set(DEFAULT_HIDDEN)),
+      resetDefaults: () => setHidden(new Set(defaultHidden)),
     }
-  }, [hidden, sections])
+  }, [hidden, sections, defaultHidden])
 
   return <PrefsContext.Provider value={value}>{children}</PrefsContext.Provider>
 }
@@ -109,9 +113,13 @@ export function useAdminSidebarPrefs() {
 export function SidebarCustomizeDialog({
   open,
   onOpenChange,
+  title = "Sidebar",
+  description = "Choose what stays in your admin menu. This is saved for your account on this browser.",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  title?: string
+  description?: string
 }) {
   const { hidden, sections, setVisible, showAll, resetDefaults } = useAdminSidebarPrefs()
   const listed = sections.filter((section) => section.items.length > 0)
@@ -120,10 +128,8 @@ export function SidebarCustomizeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Sidebar</DialogTitle>
-          <DialogDescription>
-            Choose what stays in your admin menu. This is saved for your account on this browser.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
           {listed.map((section) => (

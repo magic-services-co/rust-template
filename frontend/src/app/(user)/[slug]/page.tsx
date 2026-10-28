@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CustomPageView } from "@/components/cms/custom-page-view";
 import { backendApi } from "@/lib/api";
 import { getMetadata } from "@/lib/metadata";
+import { PublicFrontSwitch } from "@/lib/public-front";
 
 export async function generateMetadata({
     params,
@@ -34,5 +35,9 @@ export default async function GeneralPage({
     const page = data.serverPage;
     if (!page || !page.enabled) notFound();
 
-    return <CustomPageView title={page.title} kicker="PAGE" content={page.content} />;
+    return (
+        <PublicFrontSwitch name="customPage" slotProps={{ title: page.title, subtitle: page.description || undefined, content: page.content }}>
+            <CustomPageView title={page.title} kicker="PAGE" subtitle={page.description || undefined} content={page.content} />
+        </PublicFrontSwitch>
+    );
 }

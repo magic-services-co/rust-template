@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "releasedAt": "2026-10-27",
+  "notes": [
+    "Oxide and Carbon build of MagicCore. Use this instead of the Harmony mod, not beside it."
+  ],
+  "added": [
+    "Website role queue and connect-time group sync",
+    "Website ban checks",
+    "Leaderboard stats",
+    "Wipe reporting",
+    "Linked kit sync",
+    "Server check-in",
+    "Self-update from the site"
+  ],
+  "changed": [],
+  "removed": []
+}

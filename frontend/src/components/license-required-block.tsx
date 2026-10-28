@@ -31,7 +31,11 @@ export function LicenseRequiredBlock({ message }: { message?: string }) {
         window.location.reload();
         return;
       }
-      setError(data.message ?? "Activation failed.");
+      setError(
+        typeof data?.message === "string" && data.message.trim() !== ""
+          ? data.message
+          : "Activation failed.",
+      );
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -71,12 +75,15 @@ export function LicenseRequiredBlock({ message }: { message?: string }) {
             />
           </div>
           {error && (
-            <p className="text-destructive text-sm">{error}</p>
+            <p role="alert" className="text-sm" style={{ color: "#f87171" }}>
+              {error}
+            </p>
           )}
           <button
             type="submit"
             disabled={loading || !key.trim()}
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
+            style={{ backgroundColor: "#F042FA", color: "#ffffff" }}
           >
             {loading ? "Activating…" : "Activate license"}
           </button>

@@ -28,7 +28,7 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { useSavedPageTheme } from "@/hooks/use-saved-page-theme"
 
-import { NavMain } from "@/components/admin/navigation/nav-main"
+import { NavMain, type AdminNavMainItem } from "@/components/admin/navigation/nav-main"
 import { NavUser } from "@/components/admin/navigation/nav-user"
 import {
   Sidebar,
@@ -47,13 +47,7 @@ import { backendApi } from "@/lib/api"
 import { LAYOUT_THEME_DEFAULTS } from "@/lib/layout-theme-defaults"
 import Link from "next/link"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+export const adminNavMain: AdminNavMainItem[] = [
     {
       title: "Users",
       url: "/users",
@@ -194,8 +188,8 @@ const data = {
           url: "system-control/discord-bot",
         },
         {
-          title: "Harmony mod",
-          url: "system-control/harmony",
+          title: "MagicCore Plugin",
+          url: "system-control/magiccore",
         },
         {
           title: "Import data",
@@ -203,8 +197,7 @@ const data = {
         },
       ],
     },
-  ],
-}
+  ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: siteSettings, isLoading } = useSiteSettings();
@@ -230,7 +223,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [logoSrc]);
   const addonNavItems = useAddonAdminNavItems();
   return (
-    <AdminSidebarPrefsProvider sections={[{ label: "Platform", items: data.navMain }, { label: "Addons", items: addonNavItems }]}>
+    <AdminSidebarPrefsProvider sections={[{ label: "Platform", items: adminNavMain }, { label: "Addons", items: addonNavItems }]}>
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
@@ -262,7 +255,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} addonItems={addonNavItems} />
+        <NavMain items={adminNavMain} addonItems={addonNavItems} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

@@ -1,18 +1,18 @@
 {
-  "version": "2.3.45",
-  "releasedAt": "2026-10-26",
+  "version": "2.3.46",
+  "releasedAt": "2026-10-27",
   "notes": [
-    "The admin sidebar starts with the pages you use every day. Each person can choose what else stays visible."
+    "A license key that is refused now shows the reason, and a saved key that cannot be read no longer leaves the site stuck on the license page."
   ],
   "added": [
-    "Customize sidebar in the admin account menu. The choice is saved for that account in the browser."
+    "MagicCore Plugin downloads the Harmony mod or the Oxide/Carbon plugin. Servers report which one is connected.",
+    "Store checkout can gift a package to a Steam ID.",
+    "Custom pages have a description, and the editor includes a Markdown reference."
   ],
   "changed": [
-    "CDN image previews on Manage Images show the picture.",
-    "The store server picker uses a styled dropdown.",
-    "Leaderboard stats load after a board is selected."
+    "API keys are a short list: create a key, turn it on or off, or add a key you already have.",
+    "Hidden admin menu items stay hidden, including on the page you are viewing.",
+    "The Harmony mod page opens the MagicCore Plugin page."
   ],
-  "removed": [
-    "The unused GitHub Actions workflow that published a beta branch."
-  ]
+  "removed": []
 }
