@@ -1,18 +1,12 @@
 {
-  "version": "2.3.46",
+  "version": "2.3.47",
   "releasedAt": "2026-10-27",
   "notes": [
-    "A license key that is refused now shows the reason, and a saved key that cannot be read no longer leaves the site stuck on the license page."
+    "Setup can save the Steam Web API key. A column that was too short, or a settings row that could not be read, was turning that step into a server error."
   ],
-  "added": [
-    "MagicCore Plugin downloads the Harmony mod or the Oxide/Carbon plugin. Servers report which one is connected.",
-    "Store checkout can gift a package to a Steam ID.",
-    "Custom pages have a description, and the editor includes a Markdown reference."
-  ],
+  "added": [],
   "changed": [
-    "API keys are a short list: create a key, turn it on or off, or add a key you already have.",
-    "Hidden admin menu items stay hidden, including on the page you are viewing.",
-    "The Harmony mod page opens the MagicCore Plugin page."
+    "The setup wizard stores the Steam Web API key directly and widens the settings column when it is shorter than an encrypted key."
   ],
   "removed": []
 }
