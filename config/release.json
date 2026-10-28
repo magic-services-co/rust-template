@@ -1,12 +1,12 @@
 {
-  "version": "2.3.47",
-  "releasedAt": "2026-10-27",
+  "version": "2.3.48",
+  "releasedAt": "2026-10-28",
   "notes": [
-    "Setup can save the Steam Web API key. A column that was too short, or a settings row that could not be read, was turning that step into a server error."
+    "Saving a PayNow API key works when the stored key was encrypted with another site key."
   ],
   "added": [],
   "changed": [
-    "The setup wizard stores the Steam Web API key directly and widens the settings column when it is shorter than an encrypted key."
+    "Site settings replace the PayNow API key without reading the previous ciphertext."
   ],
   "removed": []
 }
