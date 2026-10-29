@@ -56,14 +56,24 @@ function authHeaders(json = false): Record<string, string> {
     return h
 }
 
+function clientKeyPrefix(driver: PanelDriver): string {
+    return driver === 'pelican' ? 'pacc_' : 'ptlc_'
+}
+
+function applicationKeyPrefix(driver: PanelDriver): string {
+    return driver === 'pelican' ? 'papp_' : 'ptla_'
+}
+
 function apiKeyHint(driver: PanelDriver, key: string): string | null {
     if (driver === 'calagopus') return null
     const trimmed = key.trim().toLowerCase()
-    if (trimmed.startsWith('ptla_')) {
-        return 'Application keys (ptla_) cannot be used. Create a Client API key (ptlc_) in your panel account instead.'
+    const clientPrefix = clientKeyPrefix(driver)
+    const applicationPrefix = applicationKeyPrefix(driver)
+    if (trimmed.startsWith(applicationPrefix)) {
+        return `Application keys (${applicationPrefix}) cannot be used. Create a Client API key (${clientPrefix}) in your panel account instead.`
     }
-    if (trimmed.length > 0 && !trimmed.startsWith('ptlc_')) {
-        return 'Client API keys must start with ptlc_.'
+    if (trimmed.length > 0 && !trimmed.startsWith(clientPrefix)) {
+        return `Client API keys must start with ${clientPrefix}.`
     }
     return null
 }
@@ -200,9 +210,9 @@ export function PterodactylPanelSettings() {
                 <DialogHeader>
                     <DialogTitle>Game panels</DialogTitle>
                     <DialogDescription>
-                        Connect Pterodactyl, Pelican, or Calagopus. Pterodactyl and Pelican use a Client API key (
-                        <code className="text-xs">ptlc_</code>
-                        ). Calagopus uses an account API key from its API keys page.
+                        Connect Pterodactyl, Pelican, or Calagopus. Pterodactyl Client keys start with{' '}
+                        <code className="text-xs">ptlc_</code>. Pelican Client keys start with{' '}
+                        <code className="text-xs">pacc_</code>. Calagopus uses an account API key from its API keys page.
                         Keys list servers when you add or edit a site server.
                         For live console output, add your admin site URL to Wings{' '}
                         <code className="text-xs">allowed_origins</code> on each node.{' '}
@@ -332,7 +342,7 @@ export function PterodactylPanelSettings() {
                                         ? 'Leave blank to keep current key'
                                         : driver === 'calagopus'
                                           ? 'Account API key'
-                                          : 'ptlc_...'
+                                          : `${clientKeyPrefix(driver)}...`
                                 }
                                 autoComplete="off"
                             />
@@ -355,7 +365,7 @@ export function PterodactylPanelSettings() {
                                     </a>
                                     {driver === 'calagopus'
                                         ? '.'
-                                        : '. Application keys (ptla_) will not work. Use a Client key (ptlc_).'}
+                                        : `. Application keys (${applicationKeyPrefix(driver)}) will not work. Use a Client key (${clientKeyPrefix(driver)}).`}
                                 </p>
                             )}
                         </div>

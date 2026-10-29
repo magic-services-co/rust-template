@@ -1,8 +1,8 @@
 {
-  "version": "2.3.52",
+  "version": "2.3.53",
   "releasedAt": "2026-10-28",
   "notes": [
-    "Discord linking still finishes when the browser drops the login cookie on the way back from Discord."
+    "Pelican panel Client API keys are accepted when they start with pacc_."
   ],
   "added": [],
   "changed": [],
