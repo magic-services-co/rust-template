@@ -1,10 +1,14 @@
 {
-  "version": "2.3.53",
-  "releasedAt": "2026-10-28",
+  "version": "2.3.54",
+  "releasedAt": "2026-10-30",
   "notes": [
-    "Pelican panel Client API keys are accepted when they start with pacc_."
+    "Installing an addon rebuilds the public site, and the server list and SEO no longer wait on placeholders."
   ],
-  "added": [],
-  "changed": [],
+  "added": [
+    "Addons can register the API routes their plugins call, and the Addons page can rebuild the public site."
+  ],
+  "changed": [
+    "The backend handles several API calls at once, the server list is cached briefly, and removed survival leaderboard tabs stay removed."
+  ],
   "removed": []
 }

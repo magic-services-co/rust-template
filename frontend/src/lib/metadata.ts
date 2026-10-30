@@ -5,6 +5,32 @@ import { backendApi } from '@/lib/api';
 const DEFAULT_TITLE = 'Magic Rust Template';
 const DEFAULT_DESCRIPTION = 'A powerful Rust server website template';
 
+const PLACEHOLDER_TITLES = new Set([
+  'welcome to our site',
+  'home page - welcome to our site',
+  'your site title',
+  'your site name',
+  "your site's description here.",
+  'the home page of our site, featuring an overview of our offerings.',
+  'explore our site and learn more about what we offer.',
+]);
+
+export function seoText(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || /yourwebsite\.com/i.test(trimmed)) return undefined;
+  if (PLACEHOLDER_TITLES.has(trimmed.toLowerCase())) return undefined;
+  return trimmed;
+}
+
+export function seoImage(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || /yourwebsite\.com/i.test(trimmed)) return undefined;
+  if (!trimmed.includes('/') && /\.(jpg|jpeg|png|webp)$/i.test(trimmed)) return undefined;
+  return trimmed;
+}
+
 function slugToTitle(slug: string): string {
   const parts = slug.split('/').filter(Boolean);
   const last = parts[parts.length - 1] ?? slug;
@@ -99,23 +125,25 @@ export async function getMetadata(pageSlug: string, defaults?: { title?: string 
     const themeLogo = (data.themeSettings as { logoImage?: string } | undefined)?.logoImage;
     const layoutLogo = (data.layoutChrome as { logoImage?: string } | undefined)?.logoImage;
 
-    if (site?.siteTitle) siteTitle = site.siteTitle;
-    if (site?.siteDescription) siteDescription = site.siteDescription;
-    if (site?.siteImageUrl) siteImageUrl = site.siteImageUrl;
-    if (site?.ogImageUrl) siteOgImageUrl = site.ogImageUrl;
+    const usableSiteTitle = seoText(site?.siteTitle);
+    const usableSiteDescription = seoText(site?.siteDescription) || seoText(site?.ogDescription);
+    if (usableSiteTitle) siteTitle = usableSiteTitle;
+    if (usableSiteDescription) siteDescription = usableSiteDescription;
+    siteImageUrl = seoImage(site?.siteImageUrl);
+    siteOgImageUrl = seoImage(site?.ogImageUrl);
     logoImage = layoutLogo?.trim() || themeLogo?.trim() || undefined;
     if (page?.settings && typeof page.settings === 'object' && 'title' in page.settings) {
       themeTitle = (page.settings as { title?: string }).title;
     }
-    if (pageMetadata?.description) pageDescription = pageMetadata.description;
+    pageDescription = seoText(pageMetadata?.description) || seoText(pageMetadata?.ogDescription);
     if (pageMetadata && Object.keys(pageMetadata).length > 0) pageMeta = pageMetadata;
   } catch {
     // use defaults
   }
 
-  const title = pageMeta?.title || defaults?.title || themeTitle || slugToTitle(pageSlug);
+  const title = seoText(pageMeta?.title) || defaults?.title || themeTitle || siteTitle || slugToTitle(pageSlug);
   const fullTitle = title === siteTitle ? siteTitle : `${title} | ${siteTitle}`;
-  const description = pageDescription ?? siteDescription;
+  const description = pageDescription || siteDescription;
   const origin = await requestOrigin();
 
   const metadata: Metadata = {
@@ -123,12 +151,12 @@ export async function getMetadata(pageSlug: string, defaults?: { title?: string 
     description,
   };
 
-  const ogTitle = pageMeta?.ogTitle ?? title;
-  const ogDescription = pageMeta?.ogDescription ?? description;
-  const ogImage = firstShareImage([pageMeta?.ogImageUrl, siteOgImageUrl, siteImageUrl], logoImage, origin);
-  const twitterTitle = pageMeta?.twitterTitle ?? ogTitle;
-  const twitterDescription = pageMeta?.twitterDescription ?? ogDescription;
-  const twitterImage = firstShareImage([pageMeta?.twitterImageUrl, ogImage], logoImage, origin);
+  const ogTitle = seoText(pageMeta?.ogTitle) || title;
+  const ogDescription = seoText(pageMeta?.ogDescription) || description;
+  const ogImage = firstShareImage([seoImage(pageMeta?.ogImageUrl), siteOgImageUrl, siteImageUrl], logoImage, origin);
+  const twitterTitle = seoText(pageMeta?.twitterTitle) || ogTitle;
+  const twitterDescription = seoText(pageMeta?.twitterDescription) || ogDescription;
+  const twitterImage = firstShareImage([seoImage(pageMeta?.twitterImageUrl), ogImage], logoImage, origin);
 
   if (ogTitle || ogDescription || ogImage) {
     metadata.openGraph = {

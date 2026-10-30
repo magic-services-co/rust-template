@@ -2,29 +2,29 @@
   "pageMetadata": [
     {
       "slug": "home",
-      "title": "Home Page - Welcome to Our Site",
+      "title": null,
       "description": "The home page of our site, featuring an overview of our offerings.",
       "keywords": "home, welcome, overview",
-      "ogTitle": "Welcome to Our Site",
+      "ogTitle": null,
       "ogDescription": "Explore our site and learn more about what we offer.",
-      "ogImageUrl": "https://yourwebsite.com/images/home-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Home Page Image",
-      "twitterTitle": "Welcome to Our Site",
+      "twitterTitle": null,
       "twitterDescription": "Explore our site and learn more about what we offer.",
-      "twitterImageUrl": "https://yourwebsite.com/images/home-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "leaderboard",
-      "title": "Leaderboard — Rust player rankings",
+      "title": "Leaderboard \u2014 Rust player rankings",
       "description": "Browse PvP, farming, explosives, and wipe stats. Filter by server and wipe to see who is on top.",
       "keywords": "leaderboard, rust, player statistics, rankings, wipe, pvp",
-      "ogTitle": "Leaderboard — Rust player rankings",
+      "ogTitle": "Leaderboard \u2014 Rust player rankings",
       "ogDescription": "Browse stats by category, server, and wipe. See top players across the community.",
-      "ogImageUrl": "https://yourwebsite.com/images/leaderboard-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Leaderboard Image",
-      "twitterTitle": "Leaderboard — Rust player rankings",
+      "twitterTitle": "Leaderboard \u2014 Rust player rankings",
       "twitterDescription": "Filter by server and wipe. PvP, farming, explosives, and more.",
-      "twitterImageUrl": "https://yourwebsite.com/images/leaderboard-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "servers",
@@ -33,11 +33,11 @@
       "keywords": "servers, rust, server list",
       "ogTitle": "All Rust Servers",
       "ogDescription": "Find and explore all our Rust servers here.",
-      "ogImageUrl": "https://yourwebsite.com/images/servers-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Servers Image",
       "twitterTitle": "All Rust Servers",
       "twitterDescription": "Explore our full list of Rust servers.",
-      "twitterImageUrl": "https://yourwebsite.com/images/servers-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "store",
@@ -46,11 +46,11 @@
       "keywords": "store, packages, in-game items",
       "ogTitle": "Store - Packages and Items",
       "ogDescription": "Check out our store for packages and in-game items you can purchase.",
-      "ogImageUrl": "https://yourwebsite.com/images/store-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Store Image",
       "twitterTitle": "Store - Packages and Items",
       "twitterDescription": "Find packages and in-game items in our store.",
-      "twitterImageUrl": "https://yourwebsite.com/images/store-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "support",
@@ -59,11 +59,11 @@
       "keywords": "support, help, tickets, customer service",
       "ogTitle": "Support Center",
       "ogDescription": "Get assistance and submit support tickets for any problems you're facing.",
-      "ogImageUrl": "https://yourwebsite.com/images/support-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Support Center Image",
       "twitterTitle": "Support Center",
       "twitterDescription": "Need help? Submit a support ticket and we'll assist you.",
-      "twitterImageUrl": "https://yourwebsite.com/images/support-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "maps",
@@ -72,11 +72,11 @@
       "keywords": "maps, voting, rust maps, server rotation",
       "ogTitle": "Vote for Rust Maps",
       "ogDescription": "Participate in map voting and help decide the next Rust server map.",
-      "ogImageUrl": "https://yourwebsite.com/images/maps-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "Map Voting Image",
       "twitterTitle": "Vote for Rust Maps",
       "twitterDescription": "Cast your vote and influence the next Rust server map rotation.",
-      "twitterImageUrl": "https://yourwebsite.com/images/maps-twitter-image.jpg"
+      "twitterImageUrl": null
     },
     {
       "slug": "profile",
@@ -85,27 +85,27 @@
       "keywords": "profile, user account, settings, stats",
       "ogTitle": "Your Rust Player Profile",
       "ogDescription": "View and manage your account settings.",
-      "ogImageUrl": "https://yourwebsite.com/images/profile-og-image.jpg",
+      "ogImageUrl": null,
       "ogImageAlt": "User Profile Image",
       "twitterTitle": "Your Rust Player Profile",
       "twitterDescription": "View and manage your account settings.",
-      "twitterImageUrl": "https://yourwebsite.com/images/profile-twitter-image.jpg"
+      "twitterImageUrl": null
     }
   ],
   "siteMetadata": {
     "siteName": "Your Site Name",
     "siteTitle": "Your Site Title",
     "siteDescription": "Your site's description here.",
-    "siteUrl": "https://yourwebsite.com",
-    "siteImageUrl": "https://yourwebsite.com/images/site-og-image.jpg",
+    "siteUrl": null,
+    "siteImageUrl": null,
     "siteImageAlt": "Site Image",
     "keywords": "rust, gaming, community, servers",
     "ogTitle": "Your Site Title",
     "ogDescription": "Your site's description here.",
-    "ogImageUrl": "https://yourwebsite.com/images/site-og-image.jpg",
+    "ogImageUrl": null,
     "ogImageAlt": "Site Image",
     "twitterTitle": "Your Site Title",
     "twitterDescription": "Your site's description here.",
-    "twitterImageUrl": "https://yourwebsite.com/images/site-twitter-image.jpg"
+    "twitterImageUrl": null
   }
 }

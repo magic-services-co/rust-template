@@ -9,5 +9,6 @@
     "providers": [
         "Modules\\ExampleAddon\\Providers\\ExampleAddonServiceProvider"
     ],
-    "files": []
+    "files": [],
+    "apiKeyRoutes": {}
 }

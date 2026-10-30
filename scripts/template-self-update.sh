@@ -389,7 +389,7 @@ start_backend_if_down() {
     "$backend/storage/logs"
   (
     cd "$backend"
-    nohup php artisan serve --host=0.0.0.0 --port="$port" >>"$logf" 2>&1 &
+    PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}" nohup php artisan serve --no-reload --host=0.0.0.0 --port="$port" >>"$logf" 2>&1 &
     echo $! >"$pidfile"
   )
   local _

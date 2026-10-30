@@ -122,6 +122,23 @@ export function useRemoveAddonMutation() {
   })
 }
 
+export function useRebuildFrontendMutation() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch(backendApi('admin/system-control/frontend-rebuild'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: await mutationHeaders(false),
+      })
+      if (!res.ok) {
+        throw new Error(await readError(res, 'Could not rebuild the frontend'))
+      }
+      const body = await res.json().catch(() => ({}))
+      return typeof body?.message === 'string' ? body.message : 'Frontend rebuild started.'
+    },
+  })
+}
+
 export function useSetAddonEnabledMutation() {
   const queryClient = useQueryClient()
 

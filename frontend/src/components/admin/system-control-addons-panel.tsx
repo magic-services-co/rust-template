@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Loader2, Puzzle, Settings2, Trash2, Upload } from "lucide-react"
+import { Loader2, Puzzle, RefreshCw, Settings2, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +36,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import {
   useInstallAddonMutation,
+  useRebuildFrontendMutation,
   useRemoveAddonMutation,
   useSetAddonEnabledMutation,
   useSystemControlAddons,
@@ -139,6 +140,7 @@ export function SystemControlAddonsPanel() {
   const { data, isLoading, isError, error, refetch } = useSystemControlAddons()
   const mutation = useSetAddonEnabledMutation()
   const install = useInstallAddonMutation()
+  const rebuild = useRebuildFrontendMutation()
   const remove = useRemoveAddonMutation()
   const [addOpen, setAddOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -197,17 +199,33 @@ export function SystemControlAddonsPanel() {
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight">Installed modules</h2>
-        <Button type="button" onClick={() => setAddOpen(true)}>
-          <Upload className="mr-1.5 size-4" />
-          Add addon
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={rebuild.isPending}
+            onClick={() => {
+              rebuild.mutate(undefined, {
+                onSuccess: (message) => toast.success(message),
+                onError: (e) => toast.error(e instanceof Error ? e.message : "Could not rebuild the frontend"),
+              })
+            }}
+          >
+            {rebuild.isPending ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <RefreshCw className="mr-1.5 size-4" />}
+            Rebuild frontend
+          </Button>
+          <Button type="button" onClick={() => setAddOpen(true)}>
+            <Upload className="mr-1.5 size-4" />
+            Add addon
+          </Button>
+        </div>
       </div>
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add addon</DialogTitle>
             <DialogDescription>
-              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site, then the public site rebuilds and switches over when that build finishes.
+              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site. Installing or replacing an addon rebuilds the public site beside the live one and switches over when that build finishes.
             </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm">

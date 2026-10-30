@@ -1036,7 +1036,7 @@ start_backend_production() {
     log "Starting Laravel (php artisan serve, production .env) on 0.0.0.0:8000…"
     (
         cd "$backend" || exit 1
-        nohup php artisan serve --host=0.0.0.0 --port=8000 >>"$logf" 2>&1 &
+        PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}" nohup php artisan serve --no-reload --host=0.0.0.0 --port=8000 >>"$logf" 2>&1 &
         echo $! >"${root}/.rust-template-backend-serve.pid"
     )
     sleep 2
@@ -1627,7 +1627,7 @@ Install finished.
     - ${ROOT}/frontend/install-next-start.log               (frontend PID: ${ROOT}/.rust-template-frontend-serve.pid)
 
   Restart later (production-style, all interfaces):
-    cd ${ROOT}/backend && php artisan serve --host=0.0.0.0 --port=8000
+    cd ${ROOT}/backend && PHP_CLI_SERVER_WORKERS="\${PHP_CLI_SERVER_WORKERS:-4}" php artisan serve --no-reload --host=0.0.0.0 --port=8000
     cd ${ROOT}/frontend && npm run start -- --hostname 0.0.0.0 --port 3000
 
   Laravel scheduler (cron, installed by this script when root/sudo + crontab available):

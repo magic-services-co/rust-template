@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers/providers";
-import { firstShareImage, requestOrigin } from "@/lib/metadata";
+import { firstShareImage, requestOrigin, seoImage, seoText } from "@/lib/metadata";
 import { getPublicChrome } from "@/lib/public-chrome";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { ConditionalAnalytics } from "@/components/conditional-analytics";
@@ -51,34 +51,37 @@ export async function generateMetadata() {
   const origin = await requestOrigin();
   const logoImage = (siteMetadata?.logoImage as string | undefined) || null;
   const shareImage = firstShareImage(
-    [siteMetadata?.ogImageUrl as string | undefined, siteMetadata?.siteImageUrl as string | undefined],
+    [seoImage(siteMetadata?.ogImageUrl), seoImage(siteMetadata?.siteImageUrl)],
     logoImage,
     origin,
   );
   const twitterImage = firstShareImage(
-    [siteMetadata?.twitterImageUrl as string | undefined, shareImage],
+    [seoImage(siteMetadata?.twitterImageUrl), shareImage],
     logoImage,
     origin,
   );
+  const siteTitle = seoText(siteMetadata?.siteTitle) || "Magic Rust Template";
+  const siteDescription = seoText(siteMetadata?.siteDescription) || seoText(siteMetadata?.ogDescription) || "A powerful Rust server website template";
+  const siteUrl = seoText(siteMetadata?.siteUrl);
 
   const faviconImage = (siteMetadata?.faviconImage as string | undefined) || "/favicon.ico";
 
   return {
-    title: siteMetadata?.siteTitle || 'Magic Rust Template',
+    title: siteTitle,
     icons: { icon: faviconImage },
 
-    description: siteMetadata?.siteDescription || 'A powerful Rust server website template',
+    description: siteDescription,
 
     keywords: (typeof siteMetadata?.keywords === 'string' ? siteMetadata.keywords.split(',') : null) || ['rust', 'gaming', 'server'],
 
     openGraph: {
-      title: siteMetadata?.ogTitle || siteMetadata?.siteTitle || 'Magic Rust Template',
+      title: seoText(siteMetadata?.ogTitle) || siteTitle,
 
-      description: siteMetadata?.ogDescription || siteMetadata?.siteDescription || 'A powerful Rust server website template',
+      description: seoText(siteMetadata?.ogDescription) || siteDescription,
 
-      url: siteMetadata?.siteUrl,
+      url: siteUrl,
 
-      siteName: siteMetadata?.siteName,
+      siteName: seoText(siteMetadata?.siteName),
 
       images: shareImage ? [
         {
@@ -98,9 +101,9 @@ export async function generateMetadata() {
     twitter: {
       card: 'summary_large_image',
 
-      title: siteMetadata?.twitterTitle || siteMetadata?.siteTitle || 'Magic Rust Template',
+      title: seoText(siteMetadata?.twitterTitle) || siteTitle,
 
-      description: siteMetadata?.twitterDescription || siteMetadata?.siteDescription || 'A powerful Rust server website template',
+      description: seoText(siteMetadata?.twitterDescription) || siteDescription,
 
       images: twitterImage ? [twitterImage] : [],
     },
