@@ -12,13 +12,13 @@ const btnDanger = "inline-flex items-center justify-center rounded-[10px] border
 const field = "h-10 rounded-[10px] border border-[#283548] bg-[#0b1120] px-3 text-sm outline-none"
 
 type ApiKeyRow = {
-  id: string
-  key: string
-  name: string
-  description: string | null
-  enabled: boolean
+    id: string
+    key: string
+    name: string
+    description: string | null
+    enabled: boolean
   permissions: unknown
-  createdAt: string
+    createdAt: string
 }
 
 function ago(value?: string | null) {
@@ -57,11 +57,11 @@ export default function ApiKeysPage() {
       setKeys((result.data ?? []) as ApiKeyRow[])
     }
     setLoading(false)
-  }
+    }
 
-  useEffect(() => {
+    useEffect(() => {
     void load()
-  }, [])
+    }, [])
 
   async function create(event: FormEvent) {
     event.preventDefault()
@@ -126,9 +126,9 @@ export default function ApiKeysPage() {
     setBusy(null)
     if (result.error) toast.error(result.error)
     await load()
-  }
+    }
 
-  return (
+    return (
     <div className="api-keys flex flex-col gap-6">
       <style>{`
         .api-keys, .api-keys p, .api-keys span, .api-keys h2, .api-keys code { color: inherit; }
@@ -150,7 +150,7 @@ export default function ApiKeysPage() {
         <div className="border-b border-[#1e2939] px-5 py-4">
           <h2 className="k-title text-base font-bold">API keys</h2>
           <p className="k-body text-xs">The game plugins send stats with one of these keys (x-api-key). Keys are never shown again after creating.</p>
-        </div>
+                                    </div>
         <div className="p-5">
           {loading ? <p className="k-body text-sm">Loading keys…</p> : keys.length ? (
             <ul className="divide-y divide-[#1e2939]">
@@ -163,18 +163,18 @@ export default function ApiKeysPage() {
                       {hasStats(row.permissions) ? <span className="k-stats ml-1 rounded-md px-2 py-0.5 text-[11px] font-bold uppercase">Stats</span> : null}
                     </p>
                     <p className="k-body text-xs"><span className="font-mono">{row.key.slice(0, 8)}…</span> · created {ago(row.createdAt)}{row.description ? ` · ${row.description}` : ""}</p>
-                  </div>
+                                                            </div>
                   <div className="flex gap-2">
                     <button type="button" className={`${btn} k-btn`} disabled={busy === row.id} onClick={() => void toggle(row)}>{row.enabled ? "Turn off" : "Turn on"}</button>
                     <button type="button" className={`${btnDanger} k-danger`} disabled={busy === `delete:${row.id}`} onClick={() => void remove(row.id)}>Delete</button>
-                  </div>
+                                                        </div>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="k-body text-sm">No keys yet. Create one or add the key the plugins already use.</p>
           )}
-        </div>
+                                                            </div>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -182,18 +182,18 @@ export default function ApiKeysPage() {
           <div className="border-b border-[#1e2939] px-5 py-4">
             <h2 className="k-title text-base font-bold">New key</h2>
             <p className="k-body text-xs">Makes a fresh key with stats permission.</p>
-          </div>
+                                                            </div>
           <form className="flex flex-col gap-3 p-5" onSubmit={(event) => void create(event)}>
             <div className="flex flex-wrap gap-2">
               <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Name, e.g. Game server" className={`${field} k-field min-w-[220px] flex-1`} />
               <button type="submit" className={`${btnPrimary} k-primary`} disabled={busy === "create"}>{busy === "create" ? "Please wait" : "Create key"}</button>
-            </div>
+                                                        </div>
             {revealed ? (
               <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
                 <p className="k-ok font-semibold">Copy it now. It is shown once.</p>
                 <code className="k-strong mt-2 block select-all break-all rounded-lg bg-black/40 p-2 font-mono text-xs">{revealed}</code>
                 <p className="k-body mt-2 text-xs">Put it in each plugin config under Website Stats → API key.</p>
-              </div>
+                                                            </div>
             ) : null}
           </form>
         </section>
@@ -201,18 +201,18 @@ export default function ApiKeysPage() {
           <div className="border-b border-[#1e2939] px-5 py-4">
             <h2 className="k-title text-base font-bold">Add an existing key</h2>
             <p className="k-body text-xs">Paste the key that is already in the plugin configs, so nothing has to change in game.</p>
-          </div>
+                                                        </div>
           <form className="flex flex-col gap-3 p-5" onSubmit={(event) => void importExisting(event)}>
             <div className="flex flex-wrap gap-2">
               <input value={importName} onChange={(event) => setImportName(event.target.value)} placeholder="Name" className={`${field} k-field w-44`} />
               <input value={importKey} onChange={(event) => setImportKey(event.target.value)} type="password" autoComplete="off" placeholder="Existing key from the plugin configs" className={`${field} k-field min-w-[220px] flex-1`} />
               <button type="submit" className={`${btn} k-btn`} disabled={busy === "import"}>{busy === "import" ? "Please wait" : "Add existing key"}</button>
-            </div>
+                                                            </div>
             {imported ? <p className="k-ok text-sm">Key added. The plugins can send stats with it now.</p> : null}
           </form>
         </section>
-      </div>
+                                                        </div>
       {error ? <p className="k-bad text-sm">{error}</p> : null}
-    </div>
-  )
-}
+        </div>
+    )
+} 

@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND="$ROOT/frontend"
+# Match TemplateSelfUpdateRunner::shellPath(). PHP starts this script with a
+# short PATH, and npm is `#!/usr/bin/env node`.
+export PATH="/root/.local/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
 PORT="${FRONTEND_PORT:-3000}"
 LOCKDIR="$ROOT/backend/storage/framework/cache"
 AGAIN="$LOCKDIR/frontend-rebuild.again"

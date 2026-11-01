@@ -1,14 +1,12 @@
 {
-  "version": "2.3.54",
-  "releasedAt": "2026-10-30",
+  "version": "2.3.55",
+  "releasedAt": "2026-10-31",
   "notes": [
-    "Installing an addon rebuilds the public site, and the server list and SEO no longer wait on placeholders."
+    "Installing an addon can rebuild the public site on servers where Node is not on PHP's PATH."
   ],
-  "added": [
-    "Addons can register the API routes their plugins call, and the Addons page can rebuild the public site."
-  ],
+  "added": [],
   "changed": [
-    "The backend handles several API calls at once, the server list is cached briefly, and removed survival leaderboard tabs stay removed."
+    "Addon installs start the frontend rebuild with the same Node path as a template update."
   ],
   "removed": []
 }
