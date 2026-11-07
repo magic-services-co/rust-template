@@ -164,7 +164,7 @@ export default function Footer({
                   aria-label={social.name}
                   className="flex h-11 w-[50px] items-center justify-center rounded-lg border border-[rgba(242,247,255,0.5)] bg-white/[0.06]"
                 >
-                  <img src={social.src} alt="" />
+                  <img src={social.src} alt={social.name} />
                 </a>
               ))}
             </div>

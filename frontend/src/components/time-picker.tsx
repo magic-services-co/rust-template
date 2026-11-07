@@ -13,6 +13,21 @@ export function keepTimeOnDaySelect(current: Date | undefined, day: Date | undef
     return next
 }
 
+function padTime(value: number): string {
+    return String(value).padStart(2, "0")
+}
+
+export function toDateTimeLocalValue(date: Date | undefined): string {
+    if (!date || Number.isNaN(date.getTime())) return ""
+    return `${date.getFullYear()}-${padTime(date.getMonth() + 1)}-${padTime(date.getDate())}T${padTime(date.getHours())}:${padTime(date.getMinutes())}`
+}
+
+export function fromDateTimeLocalValue(value: string): Date | undefined {
+    if (!value) return undefined
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? undefined : date
+}
+
 interface TimePickerDemoProps {
     date: Date | undefined;
     setDate: (date: Date | undefined) => void;

@@ -22,9 +22,22 @@ export function JoinCommunity({
     const slotCount = Math.min(48, Math.max(6, slots));
 
     useEffect(() => {
-        fetch(backendApi("linked-users"), { credentials: "include" })
-            .then((res) => (res.ok ? res.json() : []))
-            .then((data) => setUsers(Array.isArray(data) ? data : []))
+        fetch(backendApi("discord-members"), { credentials: "omit" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                const members = Array.isArray(data?.members) ? data.members : [];
+                if (members.length > 0) {
+                    setUsers(members.map((member: { id?: string; name?: string; image?: string | null }) => ({
+                        id: String(member.id ?? member.name ?? "member"),
+                        name: member.name,
+                        image: typeof member.image === "string" ? member.image : undefined,
+                    })));
+                    return;
+                }
+                return fetch(backendApi("linked-users"), { credentials: "include" })
+                    .then((res) => (res.ok ? res.json() : []))
+                    .then((linked) => setUsers(Array.isArray(linked) ? linked : []));
+            })
             .catch(() => setUsers([]));
     }, []);
 
@@ -56,11 +69,11 @@ export function JoinCommunity({
                                     }}
                                 >
                                     <Avatar className="size-full rounded-none">
-                                        {user ? (
-                                            <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+                                        {user?.image ? (
+                                            <AvatarImage src={user.image} alt={user.name || "Community member"} />
                                         ) : (
-                                            <AvatarFallback className="rounded-none bg-transparent text-[#8292a6]">
-                                                <UserIcon className="h-5 w-5 text-[#8292a6]" />
+                                            <AvatarFallback className="rounded-none bg-transparent text-[#c5d0de]">
+                                                {user?.name ? user.name.charAt(0).toUpperCase() : <UserIcon className="h-5 w-5 text-[#c5d0de]" aria-hidden />}
                                             </AvatarFallback>
                                         )}
                                     </Avatar>

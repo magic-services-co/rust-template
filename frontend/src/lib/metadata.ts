@@ -102,7 +102,7 @@ export async function getMetadata(pageSlug: string, defaults?: { title?: string 
   let pageMeta: PageMeta | undefined;
 
   try {
-    const include = `siteMetadata,pageTheme:${slugForTheme},pageMetadata:${pageSlug},themeSettings,layoutChrome`;
+    const include = `siteMetadata,pageTheme:${slugForTheme},pageMetadata:${pageSlug},themeSettings,layoutChrome,siteSettings`;
     const res = await fetch(backendApi(`data?include=${encodeURIComponent(include)}`), {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
@@ -125,7 +125,8 @@ export async function getMetadata(pageSlug: string, defaults?: { title?: string 
     const themeLogo = (data.themeSettings as { logoImage?: string } | undefined)?.logoImage;
     const layoutLogo = (data.layoutChrome as { logoImage?: string } | undefined)?.logoImage;
 
-    const usableSiteTitle = seoText(site?.siteTitle);
+    const siteName = seoText((data.siteSettings as { name?: string } | undefined)?.name);
+    const usableSiteTitle = seoText(site?.siteTitle) || siteName;
     const usableSiteDescription = seoText(site?.siteDescription) || seoText(site?.ogDescription);
     if (usableSiteTitle) siteTitle = usableSiteTitle;
     if (usableSiteDescription) siteDescription = usableSiteDescription;

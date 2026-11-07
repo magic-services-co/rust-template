@@ -60,7 +60,8 @@ export async function generateMetadata() {
     logoImage,
     origin,
   );
-  const siteTitle = seoText(siteMetadata?.siteTitle) || "Magic Rust Template";
+  const siteName = seoText(data.siteSettings?.name);
+  const siteTitle = seoText(siteMetadata?.siteTitle) || siteName || "Magic Rust Template";
   const siteDescription = seoText(siteMetadata?.siteDescription) || seoText(siteMetadata?.ogDescription) || "A powerful Rust server website template";
   const siteUrl = seoText(siteMetadata?.siteUrl);
 

@@ -97,7 +97,7 @@ export default function Server({
                 tags.map((tag) => (
                   <span key={tag.id} className="inline-flex items-center gap-[5px]">
                     {tag.image ? (
-                      <img src={tag.image} alt="" className="h-4 w-6 rounded-[1px] object-cover" />
+                      <img src={tag.image} alt={tag.name} className="h-4 w-6 rounded-[1px] object-cover" />
                     ) : (
                       <span className="size-2 rounded-[1px] bg-[#eef4fb]/40" />
                     )}
@@ -107,7 +107,7 @@ export default function Server({
               ) : (
                 <>
                   {region.flag ? (
-                    <img src={region.flag} alt="" className="size-2 rounded-[1px] object-cover" />
+                    <img src={region.flag} alt={region.label} className="size-2 rounded-[1px] object-cover" />
                   ) : (
                     <span className="size-2 rounded-[1px] bg-[#eef4fb]/40" />
                   )}
@@ -191,7 +191,7 @@ export default function Server({
               className="server-card-muted inline-flex items-center gap-2 text-[9px] leading-[13.5px] text-[#a5b1bb] hover:text-[#eef4fb]"
             >
               Map Vote
-              <img src="/images/servers/map-vote.svg" alt="" className="size-[17px]" />
+              <img src="/images/servers/map-vote.svg" alt="Map vote" className="size-[17px]" />
             </Link>
           ) : (
             <span />
@@ -208,7 +208,7 @@ export default function Server({
             {copied ? (
               <CheckIcon className="size-[17px] text-[#60c781]" />
             ) : (
-              <img src="/images/servers/connect.svg" alt="" className="size-[17px]" />
+              <img src="/images/servers/connect.svg" alt="Connect" className="size-[17px]" />
             )}
           </button>
         </div>

@@ -3,19 +3,15 @@
 import { backendApi } from "@/lib/api";
 import { getAuthToken } from "@/lib/laravel-auth";
 import { ServerCombobox } from "@/components/server-combobox";
-import { keepTimeOnDaySelect, TimePicker } from "@/components/time-picker";
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from "@/components/time-picker";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { CalendarIcon, Trash, Loader2, Link2, ImageIcon } from "lucide-react";
+import { Trash, Loader2, Link2, ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { toast } from "sonner";
@@ -200,7 +196,11 @@ export function AddMapVoteForm() {
             <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Create New Vote</DialogTitle>
-                    <DialogDescription>Create a new map vote.</DialogDescription>
+                    <DialogDescription>
+                        Create a new map vote. Dates use your local time. The save request is
+                        {" "}{"{ server, vote_start, vote_end, map_start, map_options: [{ value }] }"}
+                        {" "}where value is a RustMaps id or page URL.
+                    </DialogDescription>
                 </DialogHeader>
                 <FormProvider {...methods}>
                     <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
@@ -228,39 +228,14 @@ export function AddMapVoteForm() {
                                 render={({ field }) => (
                                     <FormItem className="flex justify-end flex-col">
                                         <FormLabel className="text-left">Wipe Time</FormLabel>
-                                        <Popover>
-                                            <FormControl>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "justify-start text-left font-normal",
-                                                            !field.value && "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {field.value ? (
-                                                            format(field.value, "PPpp")
-                                                        ) : (
-                                                            <span>Pick a date</span>
-                                                        )}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                            </FormControl>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={field.value}
-                                                    onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
-                                                />
-                                                <div className="flex justify-center p-3 border-t border-border/15">
-                                                    <TimePicker
-                                                        setDate={field.onChange}
-                                                        date={field.value}
-                                                    />
-                                                </div>
-                                            </PopoverContent>
-                                        </Popover>
+                                        <FormControl>
+                                            <Input
+                                                type="datetime-local"
+                                                step={60}
+                                                value={toDateTimeLocalValue(field.value)}
+                                                onChange={(event) => field.onChange(fromDateTimeLocalValue(event.target.value))}
+                                            />
+                                        </FormControl>
                                     </FormItem>
                                 )}
                             />
@@ -273,39 +248,14 @@ export function AddMapVoteForm() {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel className="text-left">Vote Start</FormLabel>
-                                            <Popover>
-                                                <FormControl>
-                                                    <PopoverTrigger asChild>
-                                                        <Button
-                                                            variant="outline"
-                                                            className={cn(
-                                                                "justify-start text-left font-normal",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                                            {field.value ? (
-                                                                format(field.value, "PPpp")
-                                                            ) : (
-                                                                <span>Pick a date</span>
-                                                            )}
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                </FormControl>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
-                                                    />
-                                                    <div className="flex justify-center p-3 border-t border-border/15">
-                                                        <TimePicker
-                                                            setDate={field.onChange}
-                                                            date={field.value}
-                                                        />
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
+                                            <FormControl>
+                                                <Input
+                                                    type="datetime-local"
+                                                    step={60}
+                                                    value={toDateTimeLocalValue(field.value)}
+                                                    onChange={(event) => field.onChange(fromDateTimeLocalValue(event.target.value))}
+                                                />
+                                            </FormControl>
                                         </FormItem>
                                     )}
                                 />
@@ -317,39 +267,14 @@ export function AddMapVoteForm() {
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel className="text-left">Vote End</FormLabel>
-                                            <Popover>
-                                                <FormControl>
-                                                    <PopoverTrigger asChild>
-                                                        <Button
-                                                            variant="outline"
-                                                            className={cn(
-                                                                "justify-start text-left font-normal",
-                                                                !field.value && "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                                            {field.value ? (
-                                                                format(field.value, "PPpp")
-                                                            ) : (
-                                                                <span>Pick a date</span>
-                                                            )}
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                </FormControl>
-                                                <PopoverContent className="w-auto p-0">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={field.value}
-                                                        onSelect={(day) => field.onChange(keepTimeOnDaySelect(field.value, day))}
-                                                    />
-                                                    <div className="flex justify-center p-3 border-t border-border/15">
-                                                        <TimePicker
-                                                            setDate={field.onChange}
-                                                            date={field.value}
-                                                        />
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
+                                            <FormControl>
+                                                <Input
+                                                    type="datetime-local"
+                                                    step={60}
+                                                    value={toDateTimeLocalValue(field.value)}
+                                                    onChange={(event) => field.onChange(fromDateTimeLocalValue(event.target.value))}
+                                                />
+                                            </FormControl>
                                         </FormItem>
                                     )}
                                 />

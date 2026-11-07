@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProfilePanel } from "@/components/profile/profile-ui";
+import { readableText } from "@/lib/color-contrast";
 
 export interface TeamMember {
   userId: string;
@@ -108,7 +109,7 @@ export default function Team({ members, emptyText = "No team members configured 
                 style={{
                   color:
                     member.roleColor && /^#[0-9A-F]{6}$/i.test(member.roleColor)
-                      ? member.roleColor
+                      ? readableText(member.roleColor, "#12181f")
                       : "var(--home-team-role, #ba9142)",
                 }}
               >

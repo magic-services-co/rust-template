@@ -191,7 +191,7 @@ export function GlobalSeoForm() {
                                         <Info className="h-4 w-4 text-muted-foreground" />
                                     </PopoverTrigger>
                                     <PopoverContent className="w-80 p-3 text-muted-foreground text-sm">
-                                        The title that appears in search engine results and browser tabs. It should be concise, descriptive, and include your main keyword for SEO purposes.
+                                        The title that appears in search engine results and browser tabs. Leave it blank to use the site name from settings.
                                     </PopoverContent>
                                 </Popover>
                             </div>

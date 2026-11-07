@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
 import { HomeCardCorners } from "@/components/home/home-card-corners";
+import { readableText } from "@/lib/color-contrast";
 import { LAYOUT_THEME_DEFAULTS } from "@/lib/layout-theme-defaults";
 import { NavigationItem } from "@/types/navigation";
 
@@ -69,7 +70,7 @@ export default function MobileNav({
     const displayImage = typeof session?.user?.image === "string" ? session.user.image : "";
     const mutedColor = theme?.secondaryTextColor || LAYOUT_THEME_DEFAULTS.secondaryTextColor;
     const roleLabel = highestRole?.name || "View profile";
-    const roleColor = highestRole?.color || mutedColor;
+    const roleColor = readableText(highestRole?.color || mutedColor, "#121820");
     const signInBg = signInHover
         ? theme?.primaryButtonHover || LAYOUT_THEME_DEFAULTS.primaryButtonHover
         : theme?.primaryButtonBg || LAYOUT_THEME_DEFAULTS.primaryButtonBg;

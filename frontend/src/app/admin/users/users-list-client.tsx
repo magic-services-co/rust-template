@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsInteger } from "nuqs";
 import { useDebouncedCallback } from "use-debounce";
 import { backendApi } from "@/lib/api";
+import { roleBadgeColors } from "@/lib/color-contrast";
 import { getAuthToken } from "@/lib/laravel-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -323,7 +324,7 @@ function UsersListClientInner() {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {(user.roles ?? []).slice(0, 3).map((r) => (
-                      <span key={r.id} className="rounded-md border px-2 py-0.5 text-xs font-medium" style={r.color ? { borderColor: r.color, color: r.color } : undefined}>{r.name}</span>
+                      <span key={r.id} className="rounded-md border px-2 py-0.5 text-xs font-medium" style={r.color ? roleBadgeColors(r.color) ?? undefined : undefined}>{r.name}</span>
                     ))}
                     {(user.roles ?? []).length > 3 && <span className="text-muted-foreground text-xs">+{(user.roles ?? []).length - 3}</span>}
                     {(user.roles ?? []).length === 0 && "—"}

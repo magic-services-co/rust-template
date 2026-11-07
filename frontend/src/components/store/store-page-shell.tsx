@@ -28,7 +28,7 @@ export function StorePageShell({
           >
             <img
               src="/images/legal-hero.png"
-              alt=""
+              alt="Site background"
               className="h-[216%] w-full max-w-none object-cover object-top"
             />
           </div>

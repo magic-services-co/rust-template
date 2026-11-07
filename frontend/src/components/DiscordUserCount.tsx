@@ -1,18 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { backendApi } from '@/lib/api';
 
 export function DiscordUserCount({ suffix = "DISCORD MEMBERS" }: { suffix?: string }) {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
-    if (!base) {
-      setCount(null);
-      return;
-    }
-    const url = `${base.replace(/\/$/, '')}/api/discord-members`;
-    fetch(url, { credentials: 'omit' })
+    fetch(backendApi('discord-members'), { credentials: 'omit' })
       .then(res => res.json())
       .then(data => setCount(typeof data?.count === 'number' ? data.count : null))
       .catch(() => setCount(null));

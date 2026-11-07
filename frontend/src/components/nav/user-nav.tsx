@@ -13,6 +13,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "../ui/dropdown-menu";
+import { readableText } from "@/lib/color-contrast";
 import { LAYOUT_THEME_DEFAULTS } from "@/lib/layout-theme-defaults";
 function getHighestRole(roles: Array<{ role?: { name?: string; color?: string | null; order?: number } }> | undefined) {
     if (!roles?.length) return null;
@@ -59,7 +60,7 @@ export function UserNav({
     const displayName = typeof session?.user?.name === "string" ? session.user.name : ""
     const displayImage = typeof session?.user?.image === "string" ? session.user.image : ""
     const roleLabel = highestRole?.name || "View profile"
-    const roleColor = highestRole?.color || mutedColor
+    const roleColor = readableText(highestRole?.color || mutedColor, "#121820")
 
     if (AimUserNav) return <AimUserNav />
 

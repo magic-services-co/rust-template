@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { backendApi } from '@/lib/api'
 import { getAuthToken } from '@/lib/laravel-auth'
@@ -20,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { format } from 'date-fns'
+import { Input } from '@/components/ui/input'
 
 interface Wipe {
     id: number
@@ -38,6 +40,8 @@ interface WipesResponse {
 
 export function WipeManagement() {
     const queryClient = useQueryClient()
+    const [serverId, setServerId] = useState('')
+    const [wipeName, setWipeName] = useState('')
 
     const { data, isLoading, error } = useQuery<WipesResponse>({
         queryKey: ['wipes', 'all'],
@@ -52,6 +56,39 @@ export function WipeManagement() {
             return response.json()
         },
         staleTime: 30 * 1000,
+    })
+
+    const createMutation = useMutation({
+        mutationFn: async () => {
+            const token = getAuthToken();
+            const headers: Record<string, string> = {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const response = await fetch(backendApi('admin/wipes'), {
+                method: 'POST',
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                    server_id: serverId.trim(),
+                    name: wipeName.trim() || undefined,
+                }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.error || errorData.message || 'Failed to record wipe')
+            }
+            return response.json()
+        },
+        onSuccess: () => {
+            toast.success('Wipe recorded')
+            setWipeName('')
+            queryClient.invalidateQueries({ queryKey: ['wipes'] })
+        },
+        onError: (error) => {
+            toast.error(error instanceof Error ? error.message : 'Failed to record wipe')
+        },
     })
 
     const deleteMutation = useMutation({
@@ -113,14 +150,41 @@ export function WipeManagement() {
             <CardHeader>
                 <CardTitle>Wipe Management</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                    MagicCore records a wipe when the map save changes, if WIPES_ENABLED is on and the server API key can call POST /api/wipes. A crash before that save does not create a row. Record one here when a wipe was missed. Deleting a wipe also deletes its stats.
+                </p>
+                <form
+                    className="flex flex-col gap-2 sm:flex-row"
+                    onSubmit={(event) => {
+                        event.preventDefault()
+                        if (!serverId.trim()) {
+                            toast.error('Server id is required')
+                            return
+                        }
+                        createMutation.mutate()
+                    }}
+                >
+                    <Input
+                        value={serverId}
+                        onChange={(event) => setServerId(event.target.value)}
+                        placeholder="Server id"
+                        className="sm:max-w-xs"
+                    />
+                    <Input
+                        value={wipeName}
+                        onChange={(event) => setWipeName(event.target.value)}
+                        placeholder="Name, optional"
+                        className="sm:max-w-xs"
+                    />
+                    <Button type="submit" disabled={createMutation.isPending}>
+                        Record wipe
+                    </Button>
+                </form>
                 {wipes.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No wipes found.</p>
                 ) : (
                     <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                            Manage wipes and remove them if needed. Deleting a wipe will also delete all associated stats.
-                        </p>
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>

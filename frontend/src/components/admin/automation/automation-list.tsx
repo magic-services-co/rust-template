@@ -80,7 +80,7 @@ export function AutomationList() {
 
             {!isLoading && schedulerStale && (
                 <p className="mb-4 text-sm text-amber-600 dark:text-amber-400">
-                    The scheduler has not checked in recently. Timed and vote-end schedules run about once a minute. Run now still starts a schedule immediately.
+                    The scheduler has not checked in. Vote-end and timed schedules run when cron calls php artisan schedule:run every minute. That runs automations:run-due. A failed step stops the steps after it. Run now still starts a schedule immediately.
                 </p>
             )}
 

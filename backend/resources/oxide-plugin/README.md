@@ -48,7 +48,7 @@ Set any of these to `false` to stop that feature completely. A disabled feature 
 | Linked kit | `GET/POST /api/oxide/linked-kit` | boot, then every 5 minutes |
 | Self-update | `GET /api/oxide/plugin-release` + `GET /api/oxide/plugin-download` | ~45s after boot, then every 30 minutes |
 
-Website role changes still land through `RoleOxideGroupQueue`. `ROLE_SAFETY_SYNC_MINUTES` of `0` also rechecks everyone online every 2 minutes, so a missed queue update is corrected. Set a higher number to check less often.
+Website role changes still land through `RoleOxideGroupQueue`. Set `ROLE_SAFETY_SYNC_MINUTES` (for example `30`) only if you also want a full resync. `0` leaves that off.
 
 Leaderboard counters match the Harmony mod: combat, explosives, farming, collectibles, hacked crates, heli, Bradley, NPCs, animals, missions, vehicle purchases, supply signals, and play time. Crate, mission, and vehicle counts use small Harmony patches inside this plugin because Oxide has no hooks for them. Unload removes only those patches.
 
