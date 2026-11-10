@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProductListProps {
     isPending: boolean
-    onProductSelect: (productId: string) => void;
+    onProductSelect: (productId: string, gameserverId?: string, expiresAt?: string) => void;
 }
 
 export function ProductList({ onProductSelect, isPending }: ProductListProps) {
@@ -93,7 +93,7 @@ export function ProductList({ onProductSelect, isPending }: ProductListProps) {
                                 <ProductCard
                                     product={product}
                                     isPending={isPending}
-                                    onSelect={() => onProductSelect(product.id)}
+                                    onSelect={onProductSelect}
                                 />
                             </motion.div>
                         ))}

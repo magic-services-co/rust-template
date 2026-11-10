@@ -1,1 +1,1 @@
-export const installedFrontIds = ["aimtraintheme"] as const
+export const installedFrontIds = [] as const

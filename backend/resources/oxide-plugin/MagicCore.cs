@@ -15,11 +15,11 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("MagicCore", "Magic Services // Vinni P.", "1.0.0")]
+    [Info("MagicCore", "Magic Services // Vinni P.", "1.0.1")]
     [Description("Website roles, bans, leaderboard stats, wipes, linked kits, presence, and self-update.")]
     public class MagicCore : RustPlugin
     {
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
         private const string HarmonyId = "com.magicservices.magiccore.oxide";
 
         public static MagicCore Instance { get; private set; }
@@ -47,6 +47,8 @@ namespace Oxide.Plugins
         private readonly Queue<Action> _httpWait = new Queue<Action>();
 
         private readonly HashSet<string> _tracked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _managed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private bool _queueWarned;
         private int _suppress;
         private bool _polling;
         private bool _fastPoll;
@@ -294,7 +296,8 @@ namespace Oxide.Plugins
                 CheckUpdate(false, null);
             }
 
-            if (RolesOn() && _cfg.ROLE_SAFETY_SYNC_MINUTES > 0 && _safetyElapsed >= _cfg.ROLE_SAFETY_SYNC_MINUTES * 60f)
+            var safetyMinutes = _cfg.ROLE_SAFETY_SYNC_MINUTES > 0 ? _cfg.ROLE_SAFETY_SYNC_MINUTES : 2;
+            if (RolesOn() && _safetyElapsed >= safetyMinutes * 60f)
             {
                 _safetyElapsed = 0f;
                 SyncOnline();
@@ -817,7 +820,9 @@ namespace Oxide.Plugins
                     {
                         if (!string.IsNullOrWhiteSpace(group))
                         {
-                            _tracked.Add(group.Trim());
+                            var name = group.Trim();
+                            _tracked.Add(name);
+                            _managed.Add(name);
                         }
                     }
                 }
@@ -847,8 +852,16 @@ namespace Oxide.Plugins
                 if (!IsOk(code, body))
                 {
                     _fastPoll = false;
+                    if (!_queueWarned)
+                    {
+                        _queueWarned = true;
+                        PrintWarning("Role queue check failed (" + code + "). Linked roles stay unchanged until the site accepts this key. /link still checks the current player.");
+                    }
+
                     return;
                 }
+
+                _queueWarned = false;
 
                 var items = Parse<QueuePullResponse>(body)?.Items;
                 if (items == null || items.Count == 0)
@@ -1024,7 +1037,7 @@ namespace Oxide.Plugins
 
                 foreach (var current in permission.GetUserGroups(steamId) ?? new string[0])
                 {
-                    if (desired.Contains(current, StringComparer.OrdinalIgnoreCase) || !_tracked.Contains(current))
+                    if (desired.Contains(current, StringComparer.OrdinalIgnoreCase) || !_managed.Contains(current))
                     {
                         continue;
                     }

@@ -1,33 +1,16 @@
 {
-  "version": "2.3.56",
-  "releasedAt": "2026-11-07",
+  "version": "2.3.57",
+  "releasedAt": "2026-11-09",
   "notes": [
-    "Apply winning map writes the RustMaps .map download URL, keeps a required WORLD_SIZE, and writes nothing if the panel would reject a value.",
-    "A failed automation step stops the steps after it. The run card names the vote that was applied.",
-    "A vote with no votes, or a tie, picks one of those options at random and says so on the run card.",
-    "Vote-end schedules follow the newest vote for that server. They run when cron calls php artisan schedule:run every minute.",
-    "2.3.44 keeps a MagicCore reload from removing other plugins' Harmony patches.",
-    "2.3.45 lets each admin keep the sidebar pages they use, and shows CDN image previews.",
-    "2.3.46 shows why a license key was refused, and ships MagicCore plugin downloads with the pages editor.",
-    "2.3.47 lets setup save the Steam Web API key when the settings row cannot be updated through the model.",
-    "2.3.48 replaces a PayNow API key without reading a ciphertext saved under another site key.",
-    "2.3.49 removes a Discord-linked role when the user is no longer linked or in the server.",
-    "2.3.50 reuses the license check and theme CSS so pages open without fetching them again.",
-    "2.3.51 lets the Discord bot unlink people who left the server or revoked access.",
-    "2.3.52 keeps Discord linking working when the browser drops the login cookie on the way back.",
-    "2.3.53 accepts Pelican Client API keys that start with pacc_.",
-    "2.3.54 ships addon rebuilds and keeps public pages from waiting on placeholders.",
-    "2.3.55 lets addon installs find Node the same way a template update does."
+    "Gift Package shows product images and the same server dropdown used at checkout.",
+    "A gifted package is delivered only on the selected server.",
+    "Set an expiration date, or leave it empty and the package does not expire."
   ],
   "added": [
-    "Wipe Management can record a wipe that MagicCore did not post."
+    "Gift Package can set an expiration date."
   ],
   "changed": [
-    "Home map-vote links use the latest vote for each server.",
-    "GET and POST /api/votes use the same handlers as /api/vote.",
-    "A blank Global SEO site title uses the site name before the template name.",
-    "The Pages SEO list keeps custom pages in path order after a save.",
-    "The home Discord count uses the Discord invite on the site, and the member avatars use the server widget when Discord allows it."
+    "Gift Package lists product images and limits the package to the selected server."
   ],
   "removed": []
 }

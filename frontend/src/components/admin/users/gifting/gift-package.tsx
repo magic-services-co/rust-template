@@ -20,8 +20,16 @@ export function GiftPackage({ customerId, steamId }: { customerId: string; steam
   const [contentMounted, setContentMounted] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: async (productId: string) => {
-      const result = await assignPackage(customerId, productId, steamId);
+    mutationFn: async ({
+      productId,
+      gameserverId,
+      expiresAt,
+    }: {
+      productId: string;
+      gameserverId?: string;
+      expiresAt?: string;
+    }) => {
+      const result = await assignPackage(customerId, productId, steamId, gameserverId, expiresAt);
       if (result.error) {
         throw new Error(result.error);
       }
@@ -38,8 +46,8 @@ export function GiftPackage({ customerId, steamId }: { customerId: string; steam
     }
   });
 
-  const handleProductSelect = (productId: string) => {
-    setTimeout(() => mutation.mutate(productId), 0);
+  const handleProductSelect = (productId: string, gameserverId?: string, expiresAt?: string) => {
+    setTimeout(() => mutation.mutate({ productId, gameserverId, expiresAt }), 0);
   };
 
   const handleOpenChange = (open: boolean) => {

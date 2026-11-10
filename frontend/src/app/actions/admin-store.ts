@@ -57,7 +57,13 @@ export async function getInventory(customerId: string) {
   return handleResponse(res);
 }
 
-export async function assignPackage(customerId: string, productId: string, steamId?: string) {
+export async function assignPackage(
+  customerId: string,
+  productId: string,
+  steamId?: string,
+  gameserverId?: string,
+  expiresAt?: string,
+) {
   const res = await fetch(backendApi("admin/store/command_delivery"), {
     method: "POST",
     headers: authHeaders(),
@@ -67,7 +73,9 @@ export async function assignPackage(customerId: string, productId: string, steam
       steam_id: steamId || undefined,
       product_id: productId,
       quantity: 1,
-      permanent: true,
+      permanent: !expiresAt,
+      gameserver_id: gameserverId || undefined,
+      expires_at: expiresAt || undefined,
     }),
   });
   return handleResponse(res);
