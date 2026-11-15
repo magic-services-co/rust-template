@@ -2,6 +2,7 @@
 
 import { Suspense, type ReactNode } from "react"
 
+import { AdminPageHost } from "@/components/admin/admin-page-host"
 import { AdminReleaseBadge } from "@/components/admin/admin-release-badge"
 import { AppSidebar } from "@/components/admin/navigation/app-sidebar"
 import { PurgeCacheButton } from "@/components/admin/purge-cache-button"
@@ -12,8 +13,9 @@ import { usePublicFrontSlot } from "@/lib/public-front"
 
 export function AdminChrome({ children }: { children: ReactNode }) {
   const { slot: Shell, ready } = usePublicFrontSlot("adminShell")
+  const hosted = <AdminPageHost>{children}</AdminPageHost>
   if (!ready) return null
-  if (Shell) return <Shell>{children}</Shell>
+  if (Shell) return <Shell>{hosted}</Shell>
 
   return (
     <SidebarProvider>
@@ -31,7 +33,7 @@ export function AdminChrome({ children }: { children: ReactNode }) {
           </div>
           <PurgeCacheButton />
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 py-6">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 p-4 py-6">{hosted}</div>
       </SidebarInset>
     </SidebarProvider>
   )

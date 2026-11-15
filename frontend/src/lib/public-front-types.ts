@@ -99,8 +99,21 @@ export type PublicFrontSlots = {
   adminOverview?: ComponentType
 }
 
+export type AdminAddonPageProps = {
+  pathname: string
+  params: Record<string, string>
+}
+
+/** One admin URL an addon wants to replace or extend. `path` is under `/admin`. */
+export type AdminAddonPage = {
+  path: string
+  page?: ComponentType<AdminAddonPageProps>
+  panels?: ComponentType<AdminAddonPageProps>[]
+}
+
 export type PublicFrontDefinition = {
   id: string
   adminNav?: AdminNavMainItem[]
   slots: PublicFrontSlots
+  adminPages?: AdminAddonPage[]
 }

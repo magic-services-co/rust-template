@@ -1,16 +1,22 @@
 {
-  "version": "2.3.57",
-  "releasedAt": "2026-11-09",
+  "version": "2.3.58",
+  "releasedAt": "2026-11-15",
   "notes": [
-    "Gift Package shows product images and the same server dropdown used at checkout.",
-    "A gifted package is delivered only on the selected server.",
-    "Set an expiration date, or leave it empty and the package does not expire."
+    "Sync Discord roles gives linked players the Discord roles their website roles map to, including when they join the server after linking.",
+    "Recheck roles only removes a website role or a lapsed PayNow rank.",
+    "Discord tickets opened from the bot include the category questions, and the ticket can be answered and closed from Discord.",
+    "Installing an addon with frontend files rebuilds the public site, and a rebuild that stops immediately is reported.",
+    "An addon can replace an admin page or add panels on any admin URL."
   ],
   "added": [
-    "Gift Package can set an expiration date."
+    "Sync Discord roles for every linked user, and for one user.",
+    "Addon panels and page replacements on admin URLs.",
+    "Discord ticket create, reply, and close for the linking bot."
   ],
   "changed": [
-    "Gift Package lists product images and limits the package to the selected server."
+    "Recheck roles explains that it does not give Discord roles.",
+    "Joining Discord grants the roles mapped from the player's website roles.",
+    "A frontend rebuild started from an addon install or Rebuild frontend keeps running after the request ends."
   ],
   "removed": []
 }

@@ -225,7 +225,7 @@ export function SystemControlAddonsPanel() {
           <DialogHeader>
             <DialogTitle>Add addon</DialogTitle>
             <DialogDescription>
-              Upload a zip with module.json at the root, or inside one folder. Frontend files in frontend/addons, frontend/admin, and frontend/components are copied into the site. Installing or replacing an addon rebuilds the public site beside the live one and switches over when that build finishes.
+              Upload a zip with module.json at the root, or inside one folder. frontend/admin/name is copied to src/app/admin/addons/name, and frontend/components/name is copied to src/components/addons/name. Do not add another addons folder inside those paths. Installing or replacing an addon rebuilds the public site beside the live one and switches over when that build finishes.
             </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm">

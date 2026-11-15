@@ -91,6 +91,30 @@ export default function UserHeader({ user }: { user: User }) {
         }
     });
 
+    const syncDiscordMutation = useMutation({
+        mutationFn: async () => {
+            const token = getAuthToken();
+            const headers: Record<string, string> = { Accept: 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const response = await fetch(backendApi(`admin/users/${user.id}/sync-discord-roles`), {
+                method: 'POST',
+                credentials: 'include',
+                headers,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error((data.error || data.message || 'Failed to sync Discord roles') as string);
+            }
+            return data as { added?: number; already?: number; absent?: number };
+        },
+        onSuccess: (data) => {
+            toast.success(`Discord roles synced — added ${data?.added ?? 0}, already had ${data?.already ?? 0}${data?.absent ? ', not in the server' : ''}`);
+        },
+        onError: (error) => {
+            toast.error(error instanceof Error ? error.message : 'Failed to sync Discord roles');
+        }
+    });
+
     const recheckPaynowMutation = useMutation({
         mutationFn: async () => {
             const token = getAuthToken();
@@ -534,17 +558,58 @@ export default function UserHeader({ user }: { user: User }) {
                     customerId={typeof user.storeId === 'string' ? user.storeId : ''}
                     steamId={typeof user.steamId === 'string' ? user.steamId : undefined}
                 />
-                <Button
-                    size="sm"
-                    variant="secondary"
-                    type="button"
-                    className="w-fit md:w-full justify-start"
-                    onClick={() => recheckPaynowMutation.mutate()}
-                    disabled={recheckPaynowMutation.isPending}
-                >
-                    <RefreshCw className={cn("mr-2 h-4 w-4", recheckPaynowMutation.isPending && "animate-spin")} />
-                    Recheck roles
-                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            type="button"
+                            className="w-fit md:w-full justify-start"
+                            disabled={syncDiscordMutation.isPending}
+                        >
+                            <RefreshCw className={cn("mr-2 h-4 w-4", syncDiscordMutation.isPending && "animate-spin")} />
+                            Sync Discord roles
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Sync Discord roles for this user?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Adds every Discord role this user&apos;s website roles map to. If they are not in the server, nothing is added. Nothing is removed.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => syncDiscordMutation.mutate()}>Sync Discord roles</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            type="button"
+                            className="w-fit md:w-full justify-start"
+                            disabled={recheckPaynowMutation.isPending}
+                        >
+                            <RefreshCw className={cn("mr-2 h-4 w-4", recheckPaynowMutation.isPending && "animate-spin")} />
+                            Recheck roles
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Recheck roles for this user?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This only removes. A website role linked to Discord is removed when this person is not linked, is not in the server, or no longer has the Discord role. PayNow ranks are dropped when the purchase is no longer active. It does not give Discord roles they are missing.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => recheckPaynowMutation.mutate()}>Recheck roles</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button

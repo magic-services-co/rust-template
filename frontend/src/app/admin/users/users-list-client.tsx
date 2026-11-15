@@ -174,6 +174,83 @@ function SteamProspectRow({ prospect }: { prospect: SteamProspect }) {
   );
 }
 
+function SyncDiscordRolesButton() {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function waitForSync(jobId: string): Promise<{ users?: number; added?: number; already?: number; absent?: number }> {
+    const started = Date.now();
+    for (;;) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const token = getAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(backendApi(`admin/users/sync-discord-roles/${jobId}`), { credentials: "include", headers });
+      const data = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        status?: string;
+        message?: string;
+        result?: { users?: number; added?: number; already?: number; absent?: number };
+      } | null;
+      if (data?.status === "done") return data.result ?? {};
+      if (!response.ok || data?.status === "failed" || !data?.success) {
+        throw new Error(data?.message || "Discord role sync failed");
+      }
+      if (data.status === "queued" && Date.now() - started > 30_000) {
+        throw new Error("Discord role sync did not start.");
+      }
+    }
+  }
+
+  async function run() {
+    setBusy(true);
+    setOpen(false);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await fetch(backendApi("admin/users/sync-discord-roles"), {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      const started = (await response.json().catch(() => null)) as { success?: boolean; jobId?: string; message?: string } | null;
+      if (!response.ok || !started?.success || !started.jobId) {
+        throw new Error(started?.message || "Discord role sync failed");
+      }
+      const result = await waitForSync(started.jobId);
+      toast.success(`Discord roles synced — ${result.users ?? 0} users, added ${result.added ?? 0}, already had ${result.already ?? 0}, not in server ${result.absent ?? 0}`);
+    } catch (error) {
+      toast.error(error instanceof Error && error.message ? error.message : "Discord role sync failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Button type="button" variant="secondary" className="ml-auto" disabled={busy} onClick={() => setOpen(true)}>
+        <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
+        {busy ? "Syncing Discord roles..." : "Sync Discord roles"}
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync Discord roles for every linked user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Adds every Discord role that a linked user&apos;s website roles map to. People who are not in the server are skipped. Nothing is removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={run}>Sync Discord roles</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 function RecheckAllRolesButton() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -231,7 +308,7 @@ function RecheckAllRolesButton() {
 
   return (
     <>
-      <Button type="button" variant="secondary" className="ml-auto" disabled={busy} onClick={() => setOpen(true)}>
+      <Button type="button" variant="secondary" disabled={busy} onClick={() => setOpen(true)}>
         <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
         {busy ? "Rechecking roles..." : "Recheck roles"}
       </Button>
@@ -240,7 +317,7 @@ function RecheckAllRolesButton() {
           <AlertDialogHeader>
             <AlertDialogTitle>Recheck roles for every user?</AlertDialogTitle>
             <AlertDialogDescription>
-              Every user is checked. PayNow ranks stay only while the purchase is active. A role linked to Discord is removed when that person is not linked to Discord, is not in the server, or no longer has the Discord role.
+              This only removes. A website role linked to Discord is removed when that person is not linked, is not in the server, or no longer has the Discord role. PayNow ranks are dropped when the purchase is no longer active. It does not give Discord roles to people who are missing them.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -290,6 +367,7 @@ function UsersListClientInner() {
             ))}
           </SelectContent>
         </Select>
+        <SyncDiscordRolesButton />
         <RecheckAllRolesButton />
       </div>
       <Table>

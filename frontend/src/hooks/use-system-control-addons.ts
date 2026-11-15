@@ -69,7 +69,9 @@ async function mutationHeaders(json: boolean): Promise<Record<string, string>> {
 
 async function readError(res: Response, fallback: string): Promise<string> {
   const body = await res.json().catch(() => ({}))
-  return typeof body?.message === 'string' ? body.message : fallback
+  if (typeof body?.message === 'string' && body.message !== '') return body.message
+  if (typeof body?.error === 'string' && body.error !== '') return body.error
+  return fallback
 }
 
 export function useInstallAddonMutation() {
