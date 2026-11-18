@@ -8,10 +8,6 @@ This tree contains the **ionCube-encoded** Laravel backend and the **unencoded**
 - **Node.js 20+** for the frontend.
 - **MySQL** (or compatible).
 
-## Coolify or a panel
-
-`docker-compose.yml` runs the site and MariaDB. A Pterodactyl-style egg is in `docker/pterodactyl/`. See `docker/README.md`.
-
 ## Blade templates
 
 `.blade.php` files are shipped as **plain source** so Laravel can compile views. Other application PHP is ionCube-encoded.

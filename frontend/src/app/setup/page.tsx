@@ -52,7 +52,6 @@ function sessionUserIsOwner(user: SetupWizardSessionUser): boolean {
 type SetupStatus = {
   wizardPending?: boolean;
   wizardCompleted?: boolean;
-  databaseConfigured?: boolean;
   hasSiteLicense?: boolean;
   steamConfigured?: boolean;
   ownerClaimed?: boolean;
@@ -81,11 +80,6 @@ export default function SetupPage() {
   const [rustmapsApiKey, setRustmapsApiKey] = useState("");
   const [rustmapsOrgId, setRustmapsOrgId] = useState("");
   const [importDatabaseUrl, setImportDatabaseUrl] = useState("");
-  const [dbHost, setDbHost] = useState("");
-  const [dbPort, setDbPort] = useState("3306");
-  const [dbName, setDbName] = useState("");
-  const [dbUser, setDbUser] = useState("");
-  const [dbPassword, setDbPassword] = useState("");
 
   const refreshStatus = useCallback(async () => {
     setLoadError(null);
@@ -94,12 +88,7 @@ export default function SetupPage() {
         credentials: "include",
         headers: { Accept: "application/json" },
       });
-      const data = (await res.json().catch(() => null)) as SetupStatus | null;
-      if (!res.ok || !data || typeof data.wizardPending !== "boolean") {
-        setStatus(null);
-        setLoadError(`Could not load setup (${res.status}).`);
-        return null;
-      }
+      const data = (await res.json()) as SetupStatus;
       setStatus(data);
       return data;
     } catch {
@@ -218,68 +207,6 @@ export default function SetupPage() {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
         <p className="text-muted-foreground">Loading…</p>
-      </main>
-    );
-  }
-
-  if (status.databaseConfigured === false) {
-    return (
-      <main className="min-h-screen bg-background px-4 py-10">
-        <div className="mx-auto flex max-w-lg flex-col gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Site setup</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Database</p>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Database</CardTitle>
-              <CardDescription>
-                MariaDB or MySQL for this site. The host must be reachable from the container. 127.0.0.1 is this container, not the panel machine.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formError && <p className="text-destructive text-sm">{formError}</p>}
-              <div>
-                <Label htmlFor="db-host">Host</Label>
-                <Input id="db-host" value={dbHost} onChange={(e) => setDbHost(e.target.value)} className="mt-1" autoComplete="off" />
-              </div>
-              <div>
-                <Label htmlFor="db-port">Port</Label>
-                <Input id="db-port" value={dbPort} onChange={(e) => setDbPort(e.target.value)} className="mt-1" inputMode="numeric" autoComplete="off" />
-              </div>
-              <div>
-                <Label htmlFor="db-name">Database name</Label>
-                <Input id="db-name" value={dbName} onChange={(e) => setDbName(e.target.value)} className="mt-1" autoComplete="off" />
-              </div>
-              <div>
-                <Label htmlFor="db-user">Username</Label>
-                <Input id="db-user" value={dbUser} onChange={(e) => setDbUser(e.target.value)} className="mt-1" autoComplete="off" />
-              </div>
-              <div>
-                <Label htmlFor="db-password">Password</Label>
-                <Input id="db-password" type="password" value={dbPassword} onChange={(e) => setDbPassword(e.target.value)} className="mt-1" autoComplete="off" />
-              </div>
-              <Button
-                type="button"
-                disabled={busy || !dbHost.trim() || !dbName.trim() || !dbUser.trim()}
-                onClick={async () => {
-                  const data = await postJson("setup/database", {
-                    host: dbHost.trim(),
-                    port: Number.parseInt(dbPort, 10) || 3306,
-                    database: dbName.trim(),
-                    username: dbUser.trim(),
-                    password: dbPassword,
-                  });
-                  if (data && (data as { success?: boolean }).success) {
-                    await refreshStatus();
-                  }
-                }}
-              >
-                Save and create tables
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </main>
     );
   }

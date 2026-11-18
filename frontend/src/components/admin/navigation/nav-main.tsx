@@ -35,14 +35,8 @@ export type AdminNavMainItem = {
 
 export function toAdminHref(url: string) {
   if (!url || url === "#") return null
-  if (/^https?:\/\//i.test(url)) return url
   const path = url.startsWith("/") ? url : `/${url}`
   return `/admin${path}`.replace(/\/{2,}/g, "/")
-}
-
-function externalLinkProps(href: string | null) {
-  if (!href || !/^https?:\/\//i.test(href)) return {}
-  return { target: "_blank", rel: "noreferrer" }
 }
 
 function pathMatches(pathname: string, href: string) {
@@ -109,7 +103,7 @@ function NavCollapsibleItem({
               return (
                 <SidebarMenuSubItem key={subItem.title}>
                   <SidebarMenuSubButton asChild isActive={active}>
-                    <Link href={href ?? "#"} {...externalLinkProps(href)}>
+                    <Link href={href ?? "#"}>
                       <span>{subItem.title}</span>
                     </Link>
                   </SidebarMenuSubButton>
@@ -161,7 +155,7 @@ function NavMenuBlock({
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title} isActive={active}>
-                <Link href={href ?? "#"} {...externalLinkProps(href)}>
+                <Link href={href ?? "#"}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>

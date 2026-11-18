@@ -4,14 +4,7 @@ export interface Ticket {
   category?: Partial<TicketCategory>;
   updatedAt?: string;
   createdAt?: string;
-  user?: {
-    id?: string;
-    name?: string | null;
-    image?: string | null;
-    createdAt?: string;
-    storeId?: string;
-    accounts?: Array<{ provider?: string; providerAccountId?: string | null }>;
-  };
+  user?: { id?: string; name?: string | null; image?: string | null; createdAt?: string; storeId?: string };
   [key: string]: unknown;
 }
 

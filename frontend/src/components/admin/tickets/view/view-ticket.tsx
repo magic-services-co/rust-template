@@ -51,14 +51,12 @@ export function TicketView({ ticketId, currentUser }: TicketViewProps) {
     })
 
     const userSteamId = useMemo(() => {
-        return ticket?.user?.accounts?.find((account) => account.provider === 'steam')?.providerAccountId || ''
+        return (ticket?.user as any)?.accounts?.find((account: any) => account.provider === 'steam')?.providerAccountId
     }, [ticket])
 
     const userDiscordId = useMemo(() => {
-        return ticket?.user?.accounts?.find((account) => account.provider === 'discord')?.providerAccountId || ''
+        return (ticket?.user as any)?.accounts?.find((account: any) => account.provider === 'discord')?.providerAccountId
     }, [ticket])
-
-    const profileId = userSteamId || ticket?.user?.id || ''
 
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -180,7 +178,7 @@ export function TicketView({ ticketId, currentUser }: TicketViewProps) {
             <Card className='flex flex-col md:flex-row'>
                 <CardHeader className="flex justify-center items-center">
                     <Link
-                        href={`/admin/users/${profileId}`}
+                        href={`/admin/users/${userSteamId}`}
                     >
                         <Avatar className="h-16 w-16 md:h-32 md:w-32">
                             <AvatarImage src={ticket.user?.image || undefined} />
@@ -244,7 +242,7 @@ export function TicketView({ ticketId, currentUser }: TicketViewProps) {
                 </CardContent>
                 <CardFooter className="p-4 flex flex-col gap-2">
                     <Link
-                        href={`/admin/users/${profileId}`}
+                        href={`/admin/users/${userSteamId}`}
                         className={cn(
                             buttonVariants({
                                 variant: 'secondary',
@@ -391,26 +389,19 @@ function QuestionsAndAnswers({ ticket }: { ticket: Ticket }) {
 
 const DisplayValue = ({ value, type }: { value: any, type: string }) => {
     const formatValue = (value: any): string => {
-        if (value == null) {
-            return '';
-        }
         if (Array.isArray(value)) {
-            return value.filter((item) => item != null).map(String).join(', ');
+            return value.join(', ');
         }
         if (typeof value === 'number') {
             return value.toLocaleString();
         }
-        return String(value);
-    }
-    if (value == null || value === '') {
-        return <div>—</div>
+        return value.toString();
     }
     if (type === 'server' || type === 'server-grid') {
-        return <DisplayServer serverId={String(value)} />
+        return <DisplayServer serverId={value} />
     }
-    if (type === 'players-grid' || type === 'players') {
-        const ids = Array.isArray(value) ? value : [value];
-        return <DisplayPlayer playerIds={ids.filter((id) => id != null && id !== '').map(String)} />
+    if (type === 'players-grid') {
+        return <DisplayPlayer playerIds={value} />
     }
     return <div>{formatValue(value)}</div>
 }
@@ -429,28 +420,24 @@ const DisplayServer = ({ serverId }: { serverId: string }) => {
 }
 
 const DisplayPlayer = ({ playerIds }: { playerIds: string[] }) => {
-    const ids = playerIds.filter(Boolean);
     const { data: players } = useQuery({
-        queryKey: ['admin-player-search', ids.join(',')],
+        queryKey: ['admin-player-search', playerIds.join(',')],
         queryFn: async () => {
             const token = getAuthToken();
             const headers: Record<string, string> = { Accept: 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
-            const res = await fetch(backendApi(`players?ids=${ids.join(',')}`), { credentials: 'include', headers });
-            if (!res.ok) return [];
-            const body = await res.json();
-            return Array.isArray(body) ? body : [];
-        },
-        enabled: ids.length > 0,
+            const res = await fetch(backendApi(`players?ids=${playerIds.join(',')}`), { credentials: 'include', headers });
+            return res.json();
+        }
     })
-    if (Array.isArray(players) && players.length > 0) {
+    if (players) {
         return (
             <div className="w-full grid grid-cols-1 md:flex md:flex-wrap gap-2">
                 {players.map((p: any) => !p.user ? (
                     <div key={p.steam_id} className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50">
                         <Avatar>
                             <AvatarImage src={p.avatar} />
-                            <AvatarFallback>{String(p.username ?? '?').charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{p.username.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium">{p.username}</span>
@@ -466,7 +453,7 @@ const DisplayPlayer = ({ playerIds }: { playerIds: string[] }) => {
                     >
                         <Avatar>
                             <AvatarImage src={p.user.image} />
-                            <AvatarFallback>{String(p.username ?? '?').charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{p.username.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium">{p.username}</span>
@@ -477,7 +464,7 @@ const DisplayPlayer = ({ playerIds }: { playerIds: string[] }) => {
             </div >
         )
     }
-    return <div>{ids.join(', ') || '—'}</div>
+    return <div>{playerIds.join(', ')}</div>
 }
 
 function TicketSkeleton() {

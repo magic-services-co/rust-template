@@ -37,7 +37,6 @@ type ReleasePayload = {
   latestRemoved?: string[];
   manifestUrl?: string;
   autoUpdateTemplate?: boolean;
-  container?: boolean;
   update?: UpdateStatus;
 };
 
@@ -229,52 +228,42 @@ export default function AdminUpdatePage() {
             </div>
           )}
 
-          {r?.container ? (
-            <p className="text-muted-foreground text-sm">
-              {r.updateAvailable
-                ? "A newer image is published. Pull the new image on the panel and restart this server."
-                : "This server updates by pulling a new image on the panel and restarting."}
-            </p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="auto-update">Automatic updates</Label>
-                    <p className="text-muted-foreground text-xs">
-                      Off by default. When on, the daily scheduler runs{" "}
-                      <code className="text-xs">template:auto-update-check</code> if this server has cron calling{" "}
-                      <code className="text-xs">php artisan schedule:run</code>.
-                    </p>
-                  </div>
-                  <Switch
-                    id="auto-update"
-                    checked={!!r?.autoUpdateTemplate}
-                    disabled={autoMutation.isPending || releaseQuery.isLoading}
-                    onCheckedChange={(v) => autoMutation.mutate(v)}
-                  />
-                </div>
+          <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="auto-update">Automatic updates</Label>
+                <p className="text-muted-foreground text-xs">
+                  Off by default. When on, the daily scheduler runs{" "}
+                  <code className="text-xs">template:auto-update-check</code> if this server has cron calling{" "}
+                  <code className="text-xs">php artisan schedule:run</code>.
+                </p>
               </div>
+              <Switch
+                id="auto-update"
+                checked={!!r?.autoUpdateTemplate}
+                disabled={autoMutation.isPending || releaseQuery.isLoading}
+                onCheckedChange={(v) => autoMutation.mutate(v)}
+              />
+            </div>
+          </div>
 
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  disabled={updateMutation.isPending || running || !r?.updateAvailable || !!r?.manifestFetchError}
-                  onClick={() => updateMutation.mutate()}
-                >
-                  {running || updateMutation.isPending ? "Running update…" : "Run update now"}
-                </Button>
-                {running && (
-                  <p className="text-muted-foreground text-xs">
-                    Update is running in the background. You can refresh this page — the log will keep updating.
-                  </p>
-                )}
-                {!running && !r?.updateAvailable && !r?.manifestFetchError && (
-                  <p className="text-muted-foreground text-xs">Already on the latest published version.</p>
-                )}
-              </div>
-            </>
-          )}
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              disabled={updateMutation.isPending || running || !r?.updateAvailable || !!r?.manifestFetchError}
+              onClick={() => updateMutation.mutate()}
+            >
+              {running || updateMutation.isPending ? "Running update…" : "Run update now"}
+            </Button>
+            {running && (
+              <p className="text-muted-foreground text-xs">
+                Update is running in the background. You can refresh this page — the log will keep updating.
+              </p>
+            )}
+            {!running && !r?.updateAvailable && !r?.manifestFetchError && (
+              <p className="text-muted-foreground text-xs">Already on the latest published version.</p>
+            )}
+          </div>
 
           {showLog && (
             <div className="space-y-2">

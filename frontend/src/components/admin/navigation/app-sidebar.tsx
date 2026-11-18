@@ -162,7 +162,7 @@ export const adminNavMain: AdminNavMainItem[] = [
         },
         {
           title: "API Reference",
-          url: "https://docs.magicthemes.co/",
+          url: "/api",
         },
       ],
     },
