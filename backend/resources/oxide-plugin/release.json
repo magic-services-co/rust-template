@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
-  "releasedAt": "2026-10-27",
+  "version": "1.0.1",
+  "releasedAt": "2026-10-28",
   "notes": [
-    "Oxide and Carbon build of MagicCore. Use this instead of the Harmony mod, not beside it."
+    "Online players are rechecked every 2 minutes, and a role's Oxide group is added or removed for everyone who already has that role."
   ],
   "added": [
     "Website role queue and connect-time group sync",

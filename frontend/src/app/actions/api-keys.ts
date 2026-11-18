@@ -59,7 +59,7 @@ export async function listApiKeys(clientToken?: string | null): Promise<{ data?:
 }
 
 export async function createApiKey(
-  payload: { name: string; description?: string; permissions: unknown; key?: string },
+  payload: { name: string; description?: string; permissions: unknown },
   clientToken?: string | null
 ): Promise<{ data?: unknown; error?: string; status?: number }> {
   return fetchBackend('admin/settings/api-keys', {

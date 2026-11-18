@@ -18,6 +18,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/automation-scheduler-heartbeat
 /storage/app/.license_server_api_key
 /storage/app/.site_license_key
 /vendor
