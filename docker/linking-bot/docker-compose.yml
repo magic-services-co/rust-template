@@ -1,0 +1,12 @@
+services:
+  linking-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: linking-bot:latest
+    container_name: linking-bot
+    restart: "no"
+    volumes:
+      - "${DISCORD_BOT_CONFIG_MOUNT:-./config.json}:/app/config.json"
+    environment:
+      - NODE_ENV=production

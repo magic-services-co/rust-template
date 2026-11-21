@@ -1,0 +1,82 @@
+{
+    "_comment": "Import in the panel under Nests → Import egg. Point the Docker image at the image you built from this repo.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-11-15T20:00:00+00:00",
+    "name": "Magic Rust Template",
+    "author": "magic-services-co",
+    "description": "Rust server website (Next.js + Laravel) in one container. The panel port is the public site. MariaDB or MySQL is entered in the setup wizard at /setup. HTTPS uses a Cloudflare origin certificate uploaded to /home/container/ssl/cert.pem and key.pem. Without those files the port stays HTTP.",
+    "features": null,
+    "docker_images": {
+        "Rust Template": "magicservices/rust-template:latest"
+    },
+    "file_denylist": [],
+    "startup": "/usr/local/bin/rust-template-entrypoint serve",
+    "config": {
+        "files": "{}",
+        "startup": "{\n    \"done\": \"Frontend is listening\"\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\nmkdir -p /mnt/server/ssl\nprintf '%s\\n' 'Upload the Cloudflare Origin Certificate PEM to cert.pem and the private key to key.pem in this folder.' 'Cloudflare SSL/TLS mode: Full (strict).' 'Allocate a Cloudflare HTTPS port: 443, 2053, 2083, 2087, 2096, or 8443.' > /mnt/server/ssl/README.txt\nexit 0\n",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Site URL",
+            "description": "Public URL players open, including https://. Example: https://site.example.com",
+            "env_variable": "SITE_URL",
+            "default_value": "https://example.com",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:255",
+            "field_type": "text"
+        },
+        {
+            "name": "Origin certificate path",
+            "description": "Cloudflare origin certificate PEM. Upload the file, then leave this path. Empty files keep the port on HTTP.",
+            "env_variable": "SSL_CERT_PATH",
+            "default_value": "/home/container/ssl/cert.pem",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:255",
+            "field_type": "text"
+        },
+        {
+            "name": "Origin private key path",
+            "description": "Private key that matches the Cloudflare origin certificate.",
+            "env_variable": "SSL_KEY_PATH",
+            "default_value": "/home/container/ssl/key.pem",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:255",
+            "field_type": "text"
+        },
+        {
+            "name": "App key",
+            "description": "Leave empty. A value that is not a 32-byte Laravel key (base64:...) is ignored and one is generated on first start.",
+            "env_variable": "APP_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:255",
+            "field_type": "text"
+        },
+        {
+            "name": "Auth secret",
+            "description": "Optional NEXTAUTH_SECRET. Leave empty to generate one on first start.",
+            "env_variable": "NEXTAUTH_SECRET",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:255",
+            "field_type": "text"
+        }
+    ]
+}

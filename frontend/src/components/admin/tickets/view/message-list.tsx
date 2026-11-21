@@ -57,7 +57,7 @@ export function MessageList({ ticketId, currentUser }: MessageListProps) {
     });
 
     const reverseMessages = useMemo(() => {
-        return messages ? [...messages].reverse() : []
+        return Array.isArray(messages) ? [...messages].reverse() : []
     }, [messages])
 
     const discordIds = useMemo(() => {

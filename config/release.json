@@ -1,14 +1,19 @@
 {
-  "version": "2.3.60",
+  "version": "2.3.61",
   "releasedAt": "2026-11-17",
   "notes": [
-    "API keys settings is the full permission editor again, instead of the Aim Train plugin key screen."
+    "Discord tickets save with the current API keys and show the Steam profile after that person links Discord.",
+    "A container install can enter its database during setup. Updates for that copy come from a new image."
   ],
-  "added": [],
+  "added": [
+    "Setup step to save a MariaDB or MySQL connection and create the tables.",
+    "Coolify compose file and a Pterodactyl egg for running the site in a container."
+  ],
   "changed": [
-    "Creating an API key generates a normal key and lets you choose each permission."
+    "Ticket pages follow the Steam account once Discord is linked, including the Steam ID, Discord ID, and join date.",
+    "The Discord bot accepts current API keys when it creates a ticket.",
+    "Admin API Reference opens the public docs.",
+    "Next.js is 16.4.6."
   ],
-  "removed": [
-    "The Aim Train stats-only key form and pasted plugin key import."
-  ]
+  "removed": []
 }
