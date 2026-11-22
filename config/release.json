@@ -1,19 +1,16 @@
 {
-  "version": "2.3.61",
-  "releasedAt": "2026-11-17",
+  "version": "2.3.62",
+  "releasedAt": "2026-11-21",
   "notes": [
-    "Discord tickets save with the current API keys and show the Steam profile after that person links Discord.",
-    "A container install can enter its database during setup. Updates for that copy come from a new image."
+    "A frontend rebuild no longer takes the live site down. The current site stays up until the new build succeeds.",
+    "Admin → Update can rebuild only the frontend when the backend is already on the latest version."
   ],
   "added": [
-    "Setup step to save a MariaDB or MySQL connection and create the tables.",
-    "Coolify compose file and a Pterodactyl egg for running the site in a container."
+    "Rebuild frontend on the update page, including after a build was killed for memory."
   ],
   "changed": [
-    "Ticket pages follow the Steam account once Discord is linked, including the Steam ID, Discord ID, and join date.",
-    "The Discord bot accepts current API keys when it creates a ticket.",
-    "Admin API Reference opens the public docs.",
-    "Next.js is 16.4.6."
+    "Next.js builds skip the interactive security-upgrade prompt that deleted .next.",
+    "The build checks free memory and swap first and caps the Node heap so a small server is not killed mid-build."
   ],
   "removed": []
 }

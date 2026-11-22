@@ -1011,7 +1011,13 @@ setup_frontend() {
 
     if [[ "$SKIP_FRONTEND_BUILD" -eq 0 ]]; then
         log "npm run build (frontend)…"
-        (cd "$fe" && TEMPLATE_UPDATE_SKIP_TYPECHECK=1 npm run build)
+        # shellcheck disable=SC1091
+        source "${root}/scripts/frontend-build.sh"
+        (
+          cd "$fe" &&
+          frontend_build_prepare &&
+          TEMPLATE_UPDATE_SKIP_TYPECHECK=1 npm run build
+        )
     else
         warn "Skipped frontend build (--no-frontend-build)."
     fi
@@ -1435,7 +1441,7 @@ maybe_setup_nginx_domain_proxy() {
         apply_frontend_public_env "${root}/frontend/.env" "$INTERNAL_LARAVEL_URL" "$fe_https"
         if [[ "$SKIP_FRONTEND_BUILD" -eq 0 ]]; then
             log "Rebuilding frontend (NEXT_PUBLIC_* must match new URL)…"
-            (cd "${root}/frontend" && TEMPLATE_UPDATE_SKIP_TYPECHECK=1 npm run build) || warn "npm run build failed after HTTPS switch; run it manually in frontend/."
+            bash "${root}/scripts/rebuild-frontend.sh" || warn "Frontend rebuild failed after the HTTPS switch. The current site was left running. Rebuild it from Admin → Update."
         else
             warn "Frontend was built before HTTPS. Run: cd ${root}/frontend && npm run build"
         fi

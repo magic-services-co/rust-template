@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FRONTEND="$ROOT/frontend"
+# shellcheck disable=SC1091
+source "$ROOT/scripts/frontend-build.sh"
 # Match TemplateSelfUpdateRunner::shellPath(). PHP starts this script with a
 # short PATH, and npm is `#!/usr/bin/env node`.
 export PATH="/root/.local/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
@@ -113,14 +115,17 @@ build_and_swap() {
   echo "Building the frontend beside the live site. The current site stays up."
   if ! (
     cd "$stage" &&
-    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" exec -- next build
-  ) < /dev/null; then
+    frontend_build_prepare &&
+    frontend_next_build "$NPM_BIN"
+  ); then
     echo "Frontend build failed. The current site was left running." >&2
+    frontend_rebuild_mark_needed "$ROOT" "The frontend build did not finish. The previous site is still running. Use Admin → Update → Rebuild frontend."
     rm -rf "$stage"
     return 1
   fi
   if [[ ! -f "$stage/.next/BUILD_ID" ]]; then
     echo "Frontend build did not produce a build. The current site was left running." >&2
+    frontend_rebuild_mark_needed "$ROOT" "The frontend build did not produce a build. The previous site is still running. Use Admin → Update → Rebuild frontend."
     rm -rf "$stage"
     return 1
   fi
@@ -134,6 +139,7 @@ build_and_swap() {
   if ss -H -ltn "sport = :${PORT}" 2>/dev/null | grep -q .; then
     echo "Next.js is still listening, so the new build was not swapped in." >&2
     rm -rf "$stage"
+    frontend_rebuild_mark_needed "$ROOT" "The new frontend was built, but the current server was still running, so it was not swapped in. Use Admin → Update → Rebuild frontend."
     return 1
   fi
 
@@ -150,9 +156,11 @@ build_and_swap() {
   rm -rf "$stage"
   if ! bash "$FRONTEND/scripts/restart-next.sh"; then
     restore_previous "$previous"
+    frontend_rebuild_mark_needed "$ROOT" "The new frontend was built, but the server did not start. The previous site was put back. Use Admin → Update → Rebuild frontend."
     return 1
   fi
   rm -rf "$previous"
+  frontend_rebuild_mark_done "$ROOT"
   return 0
 }
 

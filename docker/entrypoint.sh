@@ -221,9 +221,10 @@ build_frontend_if_needed() {
     echo "Building the frontend for ${SITE_URL} (first start, or the public URL changed)…"
     (
         cd "${FRONTEND_ROOT}"
-        export TEMPLATE_UPDATE_SKIP_TYPECHECK=1
-        export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=2048}"
-        ./node_modules/.bin/next build
+        # shellcheck disable=SC1091
+        source "${APP_ROOT}/scripts/frontend-build.sh"
+        frontend_build_prepare
+        TEMPLATE_UPDATE_SKIP_TYPECHECK=1 ./node_modules/.bin/next build < /dev/null
     )
     mkdir -p "${FRONTEND_ROOT}/.next"
     printf '%s\n' "$want" > "$stamp"

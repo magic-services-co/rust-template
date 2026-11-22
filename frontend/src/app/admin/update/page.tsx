@@ -38,6 +38,8 @@ type ReleasePayload = {
   manifestUrl?: string;
   autoUpdateTemplate?: boolean;
   container?: boolean;
+  frontendRebuildNeeded?: boolean;
+  frontendRebuildReason?: string | null;
   update?: UpdateStatus;
 };
 
@@ -78,6 +80,7 @@ export default function AdminUpdatePage() {
       if (!res.ok) throw new Error("release");
       return (await res.json()) as ReleasePayload;
     },
+    refetchInterval: (query) => (query.state.data?.frontendRebuildNeeded ? 5000 : false),
   });
 
   const statusQuery = useQuery({
@@ -159,6 +162,29 @@ export default function AdminUpdatePage() {
     onSuccess: () => {
       toast.message("Update started. Live log is below — you can refresh this page.");
       void queryClient.invalidateQueries({ queryKey: ["admin", "system", "update-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rebuildMutation = useMutation({
+    mutationFn: async () => {
+      const headers = await prepareSanctumMutationHeaders({
+        bearerToken: getAuthToken(),
+      });
+      const res = await fetch(backendApi("admin/system-control/frontend-rebuild"), {
+        method: "POST",
+        credentials: "include",
+        headers,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body as { message?: string }).message ?? "Frontend rebuild failed");
+      }
+      return body as { message?: string };
+    },
+    onSuccess: (body) => {
+      toast.message(body.message ?? "Frontend rebuild started. The current site stays up until it finishes.");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "system", "release"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -256,6 +282,13 @@ export default function AdminUpdatePage() {
                 </div>
               </div>
 
+              {r?.frontendRebuildNeeded && (
+                <p className="text-destructive text-sm">
+                  {r.frontendRebuildReason ||
+                    "The frontend build did not finish. The site is still serving the previous frontend."}
+                </p>
+              )}
+
               <div className="flex flex-col gap-2">
                 <Button
                   type="button"
@@ -264,12 +297,23 @@ export default function AdminUpdatePage() {
                 >
                   {running || updateMutation.isPending ? "Running update…" : "Run update now"}
                 </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={rebuildMutation.isPending || running}
+                  onClick={() => rebuildMutation.mutate()}
+                >
+                  {rebuildMutation.isPending ? "Starting frontend rebuild…" : "Rebuild frontend"}
+                </Button>
+                <p className="text-muted-foreground text-xs">
+                  Rebuild frontend runs only the Next.js build. The current site stays up until that build succeeds, then it switches over. Use this when an update saved the backend but the frontend build was killed.
+                </p>
                 {running && (
                   <p className="text-muted-foreground text-xs">
                     Update is running in the background. You can refresh this page — the log will keep updating.
                   </p>
                 )}
-                {!running && !r?.updateAvailable && !r?.manifestFetchError && (
+                {!running && !r?.updateAvailable && !r?.manifestFetchError && !r?.frontendRebuildNeeded && (
                   <p className="text-muted-foreground text-xs">Already on the latest published version.</p>
                 )}
               </div>

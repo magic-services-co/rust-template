@@ -40,7 +40,6 @@ function devOriginHostnames() {
 
 const nextConfig = {
     experimental: {
-        agentUpgrade: 'security',
         inlineCss: true,
         staleTimes: {
             dynamic: 30,

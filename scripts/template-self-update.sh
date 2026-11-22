@@ -309,6 +309,13 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
     bash "$frontend_dir/scripts/restart-next.sh" || true
   }
 
+  if [[ ! -f "$ROOT/scripts/frontend-build.sh" ]]; then
+    echo "Missing scripts/frontend-build.sh." >&2
+    exit 1
+  fi
+  # shellcheck disable=SC1091
+  source "$ROOT/scripts/frontend-build.sh"
+
   echo "Building the new frontend beside the live site. The current site stays up."
   echo "Skipping the TypeScript check so a small server is not killed during the build."
   if command -v rsync >/dev/null 2>&1; then
@@ -331,14 +338,19 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   # next build directly, not npm run build: postbuild would restart the live server.
   if ! (
     cd "$FRONTEND_STAGE" &&
+    frontend_build_prepare &&
     TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" ci &&
-    TEMPLATE_UPDATE_SKIP_TYPECHECK=1 "$NPM_BIN" exec -- next build
-  ) < /dev/null; then
+    frontend_next_build "$NPM_BIN"
+  ); then
     echo "Frontend build failed. The current site was left running." >&2
+    frontend_rebuild_mark_needed "$ROOT" "The update finished the backend, but the frontend build did not. The previous site is still running. Use Admin → Update → Rebuild frontend."
+    rm -rf "$FRONTEND_STAGE"
     exit 1
   fi
   if [[ ! -f "$FRONTEND_STAGE/.next/BUILD_ID" ]]; then
     echo "Frontend build did not produce a build. The current site was left running." >&2
+    frontend_rebuild_mark_needed "$ROOT" "The update finished the backend, but the frontend build did not produce a build. Use Admin → Update → Rebuild frontend."
+    rm -rf "$FRONTEND_STAGE"
     exit 1
   fi
 
@@ -346,6 +358,8 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   bash "$frontend_dir/scripts/restart-next.sh" stop
   if ss -H -ltn "sport = :${FRONTEND_PORT:-3000}" 2>/dev/null | grep -q .; then
     echo "Next.js is still listening, so the new build was not swapped in." >&2
+    rm -rf "$FRONTEND_STAGE"
+    frontend_rebuild_mark_needed "$ROOT" "The new frontend was built, but the current server was still running, so it was not swapped in. Use Admin → Update → Rebuild frontend."
     exit 1
   fi
 
@@ -358,14 +372,17 @@ if [[ -f "$ROOT/frontend/package.json" ]]; then
   fi
   if ! mv "$FRONTEND_STAGE/.next" "$frontend_dir/.next" || ! mv "$FRONTEND_STAGE/node_modules" "$frontend_dir/node_modules"; then
     restore_previous_frontend
+    frontend_rebuild_mark_needed "$ROOT" "The new frontend was built, but it could not be swapped in. The previous site was put back. Use Admin → Update → Rebuild frontend."
     exit 1
   fi
   if ! bash "$frontend_dir/scripts/restart-next.sh"; then
     restore_previous_frontend
+    frontend_rebuild_mark_needed "$ROOT" "The new frontend was built, but the server did not start. The previous site was put back. Use Admin → Update → Rebuild frontend."
     exit 1
   fi
 
-  rm -rf "$previous_build" "$previous_modules"
+  rm -rf "$previous_build" "$previous_modules" "$FRONTEND_STAGE"
+  frontend_rebuild_mark_done "$ROOT"
 fi
 
 start_backend_if_down() {
