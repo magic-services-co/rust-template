@@ -52,13 +52,31 @@ export interface TicketMessagePayload {
     metadata?: Record<string, unknown>;
 }
 
+export interface OutboundTicketReply {
+    id: number;
+    ticketId: number;
+    content: string;
+    channelId: string;
+    guildId: string;
+    discordUserId?: string | null;
+    userName?: string | null;
+}
+
+export interface CloseTicketRequest {
+    ticketId?: string | null;
+    channelId?: string | null;
+    discordUserId?: string | null;
+    categorySlug?: string | null;
+}
+
 export interface CloseTicketResult {
     success: boolean;
+    reason?: string;
+    ticketId?: string;
 }
 
 const SUPPORT_ENDPOINT = cleanJoin(config.API_ENDPOINT, "/support");
 const TICKET_MESSAGES_BASE = cleanJoin(config.API_ENDPOINT, "/bot/tickets");
-const ADMIN_TICKET_STATUS_ENDPOINT = cleanJoin(config.API_ENDPOINT, "/admin/tickets");
 
 function cleanJoin(base: string, path: string): string {
     return `${base.replace(/\/$/, "")}${path}`;
@@ -186,37 +204,116 @@ export class TicketApi {
         }
     }
 
-    static async closeTicket(ticketId: string | null | undefined): Promise<CloseTicketResult> {
-        if (!ticketId) {
-            return { success: false };
-        }
-
+    static async fetchOutboundReplies(): Promise<OutboundTicketReply[]> {
         try {
-            const endpoint = cleanJoin(
-                ADMIN_TICKET_STATUS_ENDPOINT,
-                `/${encodeURIComponent(ticketId)}/status`,
-            );
-
+            const endpoint = cleanJoin(TICKET_MESSAGES_BASE, "/outbound");
             const res = await fetch(endpoint, {
-                method: "PATCH",
-                headers: jsonHeaders(true),
-                body: JSON.stringify({ status: "closed" }),
+                method: "GET",
+                headers: jsonHeaders(false),
+                signal: AbortSignal.timeout(15_000),
             });
-
             if (!res.ok) {
                 console.error(
-                    `[${new Date().toISOString()}] Failed to close ticket ${ticketId} on website: ${res.status} ${res.statusText}`,
+                    `[${new Date().toISOString()}] Failed to fetch website ticket replies: ${res.status} ${res.statusText}`,
                 );
-                return { success: false };
+                return [];
+            }
+            const body = (await res.json()) as OutboundTicketReply[];
+            return Array.isArray(body) ? body : [];
+        } catch (error) {
+            console.error(`[${new Date().toISOString()}] Error fetching website ticket replies`, error);
+            return [];
+        }
+    }
+
+    static async claimOutboundReplies(ids: number[]): Promise<number[]> {
+        if (ids.length === 0) {
+            return [];
+        }
+        try {
+            const endpoint = cleanJoin(TICKET_MESSAGES_BASE, "/outbound/ack");
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: jsonHeaders(true),
+                body: JSON.stringify({ ids }),
+                signal: AbortSignal.timeout(15_000),
+            });
+            if (!res.ok) {
+                console.error(
+                    `[${new Date().toISOString()}] Failed to claim website ticket replies: ${res.status} ${res.statusText}`,
+                );
+                return [];
+            }
+            const body = (await res.json()) as { ids?: number[] };
+            return Array.isArray(body.ids) ? body.ids.map((id) => Number(id)).filter((id) => Number.isFinite(id)) : [];
+        } catch (error) {
+            console.error(`[${new Date().toISOString()}] Error claiming website ticket replies`, error);
+            return [];
+        }
+    }
+
+    static async releaseOutboundReplies(ids: number[]): Promise<void> {
+        if (ids.length === 0) {
+            return;
+        }
+        try {
+            const endpoint = cleanJoin(TICKET_MESSAGES_BASE, "/outbound/release");
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: jsonHeaders(true),
+                body: JSON.stringify({ ids }),
+                signal: AbortSignal.timeout(15_000),
+            });
+            if (!res.ok) {
+                console.error(
+                    `[${new Date().toISOString()}] Failed to release website ticket replies: ${res.status} ${res.statusText}`,
+                );
+            }
+        } catch (error) {
+            console.error(`[${new Date().toISOString()}] Error releasing website ticket replies`, error);
+        }
+    }
+
+    static async closeTicket(request: CloseTicketRequest): Promise<CloseTicketResult> {
+        const ticketId = request.ticketId?.trim() || null;
+        try {
+            const endpoint = cleanJoin(TICKET_MESSAGES_BASE, "/close");
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: jsonHeaders(true),
+                body: JSON.stringify({
+                    ticketId,
+                    channelId: request.channelId ?? null,
+                    discordUserId: request.discordUserId ?? null,
+                    categorySlug: request.categorySlug ?? null,
+                }),
+                signal: AbortSignal.timeout(15_000),
+            });
+
+            const body = (await res.json().catch(() => null)) as {
+                success?: boolean;
+                reason?: string;
+                ticketId?: string | number;
+            } | null;
+            if (res.ok && body?.success) {
+                const closedId = body.ticketId ?? ticketId;
+                return { success: true, ticketId: closedId ? String(closedId) : undefined };
             }
 
-            return { success: true };
+            const reason =
+                typeof body?.reason === "string" && body.reason.trim() !== ""
+                    ? body.reason.trim()
+                    : `Website returned HTTP ${res.status}.`;
+            console.error(
+                `[${new Date().toISOString()}] Failed to close website ticket ${ticketId ?? "(no id)"}: ${reason}`,
+            );
+            return { success: false, reason };
         } catch (error) {
             console.error(
-                `[${new Date().toISOString()}] Error closing ticket ${ticketId} on website`,
+                `[${new Date().toISOString()}] Error closing website ticket ${ticketId ?? "(no id)"}`,
                 error,
             );
-            return { success: false };
+            return { success: false, reason: "The website could not be reached." };
         }
     }
 }

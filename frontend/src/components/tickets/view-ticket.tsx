@@ -184,7 +184,7 @@ export function TicketView({ ticketId, currentUser, serverTheme }: TicketViewPro
         formData.append('message', content);
 
         selectedFiles.forEach((file) => {
-            formData.append('files', file);
+            formData.append('files[]', file);
         });
 
         sendMessage(formData);

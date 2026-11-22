@@ -275,6 +275,42 @@ interface DiscordBotState {
     urls?: { discord_settings: string; api_keys: string }
 }
 
+function discordApplicationId(token: string): string | null {
+    const segment = token.trim().replace(/^Bot\s+/i, "").split(".")[0] ?? ""
+    if (!segment) return null
+    try {
+        const padded = segment.replace(/-/g, "+").replace(/_/g, "/")
+        const decoded = atob(padded + "=".repeat((4 - (padded.length % 4)) % 4))
+        return /^\d{5,30}$/.test(decoded) ? decoded : null
+    } catch {
+        return null
+    }
+}
+
+function sameDiscordApp(left: string, right: string): boolean {
+    const a = left.trim().replace(/^Bot\s+/i, "")
+    const b = right.trim().replace(/^Bot\s+/i, "")
+    if (a === "" || b === "") return false
+    if (a === b) return true
+    const aId = discordApplicationId(a)
+    const bId = discordApplicationId(b)
+    return aId !== null && aId === bId
+}
+
+function duplicateBotTokenMessage(config: Record<string, unknown>): string | null {
+    const bot = String(config.BOT_TOKEN ?? "")
+    const link = String(config.LINK_BOT_TOKEN ?? "")
+    const support = String(config.SUPPORT_BOT_TOKEN ?? "")
+    const parts: string[] = []
+    if (sameDiscordApp(link, bot)) parts.push("LINK_BOT_TOKEN is the same Discord app as BOT_TOKEN")
+    if (sameDiscordApp(support, bot)) parts.push("SUPPORT_BOT_TOKEN is the same Discord app as BOT_TOKEN")
+    if (parts.length === 0 && sameDiscordApp(link, support)) {
+        parts.push("LINK_BOT_TOKEN and SUPPORT_BOT_TOKEN are the same Discord app")
+    }
+    if (parts.length === 0) return null
+    return `${parts.join(". ")}. Saving this starts another client and crashes ticket buttons.`
+}
+
 export function DiscordBotControlPanel() {
     const [data, setData] = useState<DiscordBotState | null>(null)
     const [loading, setLoading] = useState(true)
@@ -644,6 +680,8 @@ export function DiscordBotControlPanel() {
         )
     }
 
+    const duplicateTokens = duplicateBotTokenMessage(configForm)
+
     return (
         <div className="space-y-6">
             {error && (
@@ -951,6 +989,14 @@ export function DiscordBotControlPanel() {
                                         onChange={(e) => updateConfig("SUPPORT_BOT_TOKEN", e.target.value)}
                                     />
                                 </div>
+                                <div className="space-y-1 sm:col-span-2">
+                                    <p className="text-xs text-muted-foreground">
+                                        Leave these empty unless they are separate bot apps.
+                                    </p>
+                                    {duplicateTokens && (
+                                        <p className="text-xs text-destructive">{duplicateTokens}</p>
+                                    )}
+                                </div>
                                 <div className="space-y-2 sm:col-span-2">
                                     <Label htmlFor="modal_guild_ids">GUILD_IDS</Label>
                                     <Input
@@ -1206,7 +1252,7 @@ export function DiscordBotControlPanel() {
                                     const ok = await handleSave()
                                     if (ok) setTimeout(() => setConfigOpen(false), 1200)
                                 }}
-                                disabled={actionLoading !== null}
+                                disabled={actionLoading !== null || duplicateTokens !== null}
                             >
                                 {actionLoading === "save" ? (
                                     <Loader2 className="mr-2 size-4 animate-spin" />

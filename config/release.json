@@ -1,16 +1,20 @@
 {
-  "version": "2.3.62",
+  "version": "2.3.63",
   "releasedAt": "2026-11-21",
   "notes": [
-    "A frontend rebuild no longer takes the live site down. The current site stays up until the new build succeeds.",
-    "Admin → Update can rebuild only the frontend when the backend is already on the latest version."
+    "A reply written on a Discord ticket, including an attached image, is posted in the Discord channel and its responses thread.",
+    "Images sent in a Discord ticket are saved on the site, so they keep showing after the Discord link expires.",
+    "Close Ticket in Discord closes the website ticket, or says why it could not.",
+    "After a restart the linking bot starts map votes and updates immediately. The full role sync keeps running in the background instead of blocking that loop for about an hour.",
+    "Saving the same Discord app as LINK_BOT_TOKEN or SUPPORT_BOT_TOKEN is refused. That second login crashes ticket buttons."
   ],
   "added": [
-    "Rebuild frontend on the update page, including after a build was killed for memory."
+    "Website ticket replies are relayed to the matching Discord ticket channel.",
+    "Discord ticket images are copied into site storage."
   ],
   "changed": [
-    "Next.js builds skip the interactive security-upgrade prompt that deleted .next.",
-    "The build checks free memory and swap first and caps the Node heap so a small server is not killed mid-build."
+    "The linking bot only receives admin logs and map votes newer than its last check.",
+    "Close Ticket can find the website ticket from the Discord channel when the bot no longer has the ticket id."
   ],
   "removed": []
 }

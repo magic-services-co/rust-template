@@ -11,6 +11,7 @@ RUN apk add --no-cache git && \
 COPY docker/linking-bot/overlay/TicketApi.ts /app/ADDONS/tickets/TicketApi.ts
 COPY docker/linking-bot/overlay/TicketsAddon.ts /app/ADDONS/tickets/TicketsAddon.ts
 COPY docker/linking-bot/overlay/Api.ts /app/tools/Api.ts
+COPY docker/linking-bot/overlay/index.ts /app/index.ts
 
 FROM oven/bun:1-alpine
 

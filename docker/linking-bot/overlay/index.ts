@@ -1,0 +1,281 @@
+import {dirname, importx} from "@discordx/importer";
+import {Client} from "discordx";
+import {ActivityType, IntentsBitField, Partials} from "discord.js";
+import config from './config.json';
+import {Api} from "./tools/Api.ts";
+import Conf from 'conf';
+
+const schema = {
+    lastFetch: {
+        type: 'string'
+    }
+};
+
+const storage = new Conf({projectName: 'Linking-bot', schema});
+
+const RATE_LIMIT = {
+    maxRequests: 50,
+    timeWindow: 60000, 
+    requests: new Map<string, number[]>()
+};
+
+function isRateLimited(endpoint: string): boolean {
+    const now = Date.now();
+    const requests = RATE_LIMIT.requests.get(endpoint) || [];
+    
+    const recentRequests = requests.filter(time => now - time < RATE_LIMIT.timeWindow);
+    RATE_LIMIT.requests.set(endpoint, recentRequests);
+    
+    if (recentRequests.length >= RATE_LIMIT.maxRequests) {
+        return true;
+    }
+    
+    recentRequests.push(now);
+    return false;
+}
+
+function tokenApplicationId(token: string): string | null {
+    const segment = token.trim().replace(/^Bot\s+/i, "").split(".")[0] ?? "";
+    if (!segment) {
+        return null;
+    }
+    const decoded = Buffer.from(segment, "base64").toString("utf8");
+    return /^\d{5,30}$/.test(decoded) ? decoded : null;
+}
+
+function sameDiscordApplication(left: string, right: string): boolean {
+    const a = left.trim().replace(/^Bot\s+/i, "");
+    const b = right.trim().replace(/^Bot\s+/i, "");
+    if (a === "" || b === "") {
+        return false;
+    }
+    if (a === b) {
+        return true;
+    }
+    const aId = tokenApplicationId(a);
+    const bId = tokenApplicationId(b);
+    return aId !== null && aId === bId;
+}
+
+function dropDuplicateBotTokens(): void {
+    const used = [String(config.BOT_TOKEN ?? "")];
+    for (const key of ["SUPPORT_BOT_TOKEN", "LINK_BOT_TOKEN"] as const) {
+        const raw = (config as any)[key];
+        if (typeof raw !== "string" || raw.trim() === "") {
+            continue;
+        }
+        const token = raw.trim();
+        const duplicate = used.some((existing) => sameDiscordApplication(token, existing));
+        if (duplicate) {
+            console.warn(
+                `[${new Date().toISOString()}] ${key} is the same Discord app as a token already in use, so that client was not started.`,
+            );
+            (config as any)[key] = "";
+            continue;
+        }
+        used.push(token);
+        (config as any)[key] = token;
+    }
+}
+
+let supportClient: Client | null = null;
+let linkClient: Client | null = null;
+
+async function start() {
+    const client = new Client({
+        botId: config.CLIENT_ID,
+        intents: [
+            IntentsBitField.Flags.Guilds,
+            IntentsBitField.Flags.GuildModeration,
+            IntentsBitField.Flags.GuildMembers,
+            IntentsBitField.Flags.GuildMessages,
+            IntentsBitField.Flags.MessageContent,
+            IntentsBitField.Flags.DirectMessages,
+        ],
+        botGuilds: config.GUILD_IDS,
+        partials: [Partials.GuildMember]
+    });
+
+    client.once("clientReady", async () => {
+        console.log(">> Bot started");
+
+        const lastFetch = storage.get('lastFetch') as string | undefined;
+        
+        if (!lastFetch) {
+            console.log(`[${new Date().toISOString()}] No lastFetch found - update loop starting now, full role sync running in the background`);
+        } else {
+            const lastFetchTime = new Date(lastFetch).getTime();
+            const hoursOffline = (Date.now() - lastFetchTime) / (1000 * 60 * 60);
+            const minutesOffline = (Date.now() - lastFetchTime) / (1000 * 60);
+            console.log(`[${new Date().toISOString()}] Bot was offline for ${minutesOffline.toFixed(1)} minutes (${hoursOffline.toFixed(2)} hours) - update loop starting now, full role sync running in the background`);
+        }
+
+        const runUpdateLoop = async () => {
+            try {
+                await Api.fetchAndPostMaps(client, new Date(Date.now() - 60000).toISOString());
+
+                const currentLastFetch = storage.get('lastFetch') as string || new Date(Date.now() - 60000).toISOString();
+                await Api.fetchAndApplyUpdates(client, currentLastFetch);
+                storage.set('lastFetch', new Date().toISOString());
+
+                let activityType = ActivityType.Custom;
+                switch (config.ACTIVITY_TYPE) {
+                    case "Competing":
+                        activityType = ActivityType.Competing;
+                        break;
+                    case "Custom":
+                        activityType = ActivityType.Custom;
+                        break;
+                    case "Playing":
+                        activityType = ActivityType.Playing;
+                        break;
+                    case "Listening":
+                        activityType = ActivityType.Listening;
+                        break;
+                    case "Watching":
+                        activityType = ActivityType.Watching;
+                        break;
+                    case "Streaming":
+                        activityType = ActivityType.Streaming;
+                        break;
+                }
+
+                const hasLinkBot = (config as any).LINK_BOT_TOKEN && typeof (config as any).LINK_BOT_TOKEN === "string" && (config as any).LINK_BOT_TOKEN.trim().length > 0;
+                let statusText = config.STATUS_TEXT;
+                if (hasLinkBot) {
+                    statusText = statusText.replace('{USERS_AMOUNT}', '').trim();
+                } else {
+                    statusText = statusText.replace('{USERS_AMOUNT}', `${await Api.fetchLinkedCount()}`);
+                }
+
+                client.user?.setPresence({
+                    status: 'online',
+                    activities: [{type: activityType, name: statusText}]
+                });
+            } catch (error) {
+                console.error(`[${new Date().toISOString()}] Update loop failed`, error);
+            }
+        };
+
+        void runUpdateLoop();
+        setInterval(() => {
+            void runUpdateLoop();
+        }, config["UPDATE_CHECK_FREQUENCY (MINUTES)"] * 60_000);
+
+        void Api.fetchAndAssignUserRoles(client)
+            .then(() => {
+                console.log(`[${new Date().toISOString()}] Full sync after startup completed`);
+            })
+            .catch((error) => {
+                console.error(`[${new Date().toISOString()}] Error during full sync after startup:`, error);
+            });
+
+        await client.initApplicationCommands();
+    });
+
+    client.on("interactionCreate", (interaction: any) => {
+        client.executeInteraction(interaction);
+    });
+
+    dropDuplicateBotTokens();
+
+    await importx(`${dirname(import.meta.url)}/commands/**/*.{js,ts}`);
+    await importx(`${dirname(import.meta.url)}/events/**/*.{js,ts}`);
+    await importx(`${dirname(import.meta.url)}/ADDONS/**/*.{js,ts}`);
+
+    if (!config.BOT_TOKEN) {
+        throw Error("Could not find BOT_TOKEN in config.json");
+    }
+
+    if ((config as any).SUPPORT_BOT_TOKEN && typeof (config as any).SUPPORT_BOT_TOKEN === "string" && (config as any).SUPPORT_BOT_TOKEN.trim().length > 0) {
+        supportClient = new Client({
+            intents: [
+                IntentsBitField.Flags.Guilds,
+                IntentsBitField.Flags.GuildModeration,
+                IntentsBitField.Flags.GuildMembers,
+                IntentsBitField.Flags.GuildMessages,
+                IntentsBitField.Flags.MessageContent,
+                IntentsBitField.Flags.DirectMessages,
+            ],
+            botGuilds: config.GUILD_IDS,
+            partials: [Partials.GuildMember]
+        });
+
+        supportClient.once("clientReady", async () => {
+            console.log(">> Support bot started");
+            
+            const { TicketRegistry } = await import("./ADDONS/tickets/TicketRegistry.ts");
+            
+            const ticketCount = TicketRegistry.getTotalTicketCount();
+            supportClient!.user?.setPresence({
+                status: 'online',
+                activities: [{type: ActivityType.Custom, name: `${ticketCount} tickets`}]
+            });
+
+            setInterval(async () => {
+                const ticketCount = TicketRegistry.getTotalTicketCount();
+                supportClient?.user?.setPresence({
+                    status: 'online',
+                    activities: [{type: ActivityType.Custom, name: `${ticketCount} tickets`}]
+                });
+            }, config["UPDATE_CHECK_FREQUENCY (MINUTES)"] * 60_000);
+        });
+
+        supportClient.on("interactionCreate", (interaction: any) => {
+            supportClient!.executeInteraction(interaction);
+        });
+
+        supportClient.login((config as any).SUPPORT_BOT_TOKEN).catch((error) => {
+            console.error(`[${new Date().toISOString()}] Failed to login support bot:`, error);
+            supportClient = null;
+        });
+    }
+
+    if ((config as any).LINK_BOT_TOKEN && typeof (config as any).LINK_BOT_TOKEN === "string" && (config as any).LINK_BOT_TOKEN.trim().length > 0) {
+        linkClient = new Client({
+            intents: [
+                IntentsBitField.Flags.Guilds,
+                IntentsBitField.Flags.GuildModeration,
+                IntentsBitField.Flags.GuildMembers,
+                IntentsBitField.Flags.GuildMessages,
+                IntentsBitField.Flags.MessageContent,
+                IntentsBitField.Flags.DirectMessages,
+            ],
+            botGuilds: config.GUILD_IDS,
+            partials: [Partials.GuildMember]
+        });
+
+        linkClient.once("clientReady", async () => {
+            console.log(">> Link bot started");
+            
+            const linkedCount = await Api.fetchLinkedCount();
+            linkClient!.user?.setPresence({
+                status: 'online',
+                activities: [{type: ActivityType.Custom, name: `${linkedCount} users linked!`}]
+            });
+
+            setInterval(async () => {
+                const linkedCount = await Api.fetchLinkedCount();
+                linkClient?.user?.setPresence({
+                    status: 'online',
+                    activities: [{type: ActivityType.Custom, name: `${linkedCount} users linked!`}]
+                });
+            }, config["UPDATE_CHECK_FREQUENCY (MINUTES)"] * 60_000);
+        });
+
+        linkClient.on("interactionCreate", (interaction: any) => {
+            linkClient!.executeInteraction(interaction);
+        });
+
+        linkClient.login((config as any).LINK_BOT_TOKEN).catch((error) => {
+            console.error(`[${new Date().toISOString()}] Failed to login link bot:`, error);
+            linkClient = null;
+        });
+    }
+
+    await client.login(config.BOT_TOKEN);
+}
+
+export { supportClient, linkClient };
+
+start();

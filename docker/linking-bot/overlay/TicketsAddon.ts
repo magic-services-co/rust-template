@@ -7,6 +7,7 @@ import {
     CategoryChannel,
     type Channel,
     ChannelType,
+    type Client,
     ChatInputCommandInteraction,
     ComponentType,
     EmbedBuilder,
@@ -42,7 +43,7 @@ import {
 } from "discordx";
 import { PermissionGuard } from "@discordx/utilities";
 import config from "../../config.json";
-import { TicketApi, type SupportCategory, type SupportField } from "./TicketApi.ts";
+import { TicketApi, type OutboundTicketReply, type SupportCategory, type SupportField } from "./TicketApi.ts";
 import { TicketRegistry } from "./TicketRegistry.ts";
 import { randomUUID } from "crypto";
 import { supportClient } from "../../index.ts";
@@ -183,6 +184,11 @@ function isGuildTextChannel(channel: Channel | null): channel is TextChannel {
         channel.type === ChannelType.GuildText &&
         typeof (channel as TextChannel).send === "function"
     );
+}
+
+function websiteTicketIdFromTopic(topic: string | null | undefined): string | null {
+    const match = topic?.match(/Website ticket #(\d+)/);
+    return match?.[1] ?? null;
 }
 
 function chunkString(input: string, maxLength: number): string[] {
@@ -831,6 +837,11 @@ async function createTicketChannelForUser(options: TicketChannelCreationOptions)
         isDmMode,
     });
 
+    if (ticketId) {
+        const withTicketId = `${topic} • Website ticket #${ticketId}`;
+        await ticketChannel.setTopic(withTicketId.slice(0, 1024)).catch(() => undefined);
+    }
+
     let creation: { message: Message; thread: ThreadChannel | null } | null = null;
     try {
         creation = await sendCreationEmbed(ticketChannel, category, `<@${userId}>`, pingRoleIds);
@@ -881,9 +892,136 @@ async function createTicketChannelForUser(options: TicketChannelCreationOptions)
     };
 }
 
+let websiteReplyTimer: ReturnType<typeof setInterval> | null = null;
+let websiteReplyRelayRunning = false;
+
+function discordErrorCode(error: unknown): number | null {
+    const code = (error as { code?: number })?.code;
+    return typeof code === "number" ? code : null;
+}
+
+async function findResponsesThread(channel: TextChannel): Promise<ThreadChannel | null> {
+    const matches = (name: string) => /responses$/i.test(name.trim());
+    const cached = channel.threads.cache.find((thread) => matches(thread.name));
+    if (cached) {
+        return cached;
+    }
+    const active = await channel.threads.fetchActive().catch(() => null);
+    const activeMatch = active?.threads.find((thread) => matches(thread.name));
+    if (activeMatch) {
+        return activeMatch;
+    }
+    const archived = await channel.threads.fetchArchived().catch(() => null);
+    const archivedMatch = archived?.threads.find((thread) => matches(thread.name)) ?? null;
+    if (archivedMatch?.archived) {
+        await archivedMatch.setArchived(false).catch(() => undefined);
+    }
+    return archivedMatch;
+}
+
+async function sendWebsiteReply(target: TextChannel | ThreadChannel, content: string): Promise<void> {
+    await target.send({
+        content: content.slice(0, 2000),
+        allowedMentions: { parse: [] },
+    });
+}
+
+async function relayOneWebsiteReply(client: Client, reply: OutboundTicketReply): Promise<boolean> {
+    const sender = SUPPORT_BOT_TOKEN && supportClient?.isReady() ? supportClient : client;
+    let channel: Channel | null = null;
+    try {
+        channel = await sender.channels.fetch(reply.channelId);
+    } catch (error) {
+        const code = discordErrorCode(error);
+        if (code === 10003 || code === 10004) {
+            return true;
+        }
+        console.error(`[${new Date().toISOString()}] Failed to fetch ticket channel ${reply.channelId}`, error);
+        return false;
+    }
+    if (!isGuildTextChannel(channel)) {
+        return true;
+    }
+
+    try {
+        await sendWebsiteReply(channel, reply.content);
+    } catch (error) {
+        const code = discordErrorCode(error);
+        if (code === 10003) {
+            return true;
+        }
+        console.error(
+            `[${new Date().toISOString()}] Failed to post website reply ${reply.id} in ${reply.channelId}`,
+            error,
+        );
+        return false;
+    }
+
+    const thread = await findResponsesThread(channel);
+    if (thread) {
+        await sendWebsiteReply(thread, reply.content).catch((error: unknown) => {
+            console.warn(
+                `[${new Date().toISOString()}] Failed to post website reply ${reply.id} in thread ${thread.id}`,
+                error,
+            );
+        });
+    }
+
+    if (TICKET_MODE === "dm" && reply.discordUserId) {
+        const user = await sender.users.fetch(reply.discordUserId).catch(() => null);
+        if (user) {
+            await user.send({
+                content: reply.content.slice(0, 2000),
+                allowedMentions: { parse: [] },
+            }).catch((error: unknown) => {
+                console.warn(
+                    `[${new Date().toISOString()}] Failed to DM website reply ${reply.id} to ${reply.discordUserId}`,
+                    error,
+                );
+            });
+        }
+    }
+
+    return true;
+}
+
+async function relayWebsiteReplies(client: Client): Promise<void> {
+    if (websiteReplyRelayRunning) {
+        return;
+    }
+    websiteReplyRelayRunning = true;
+    try {
+        const replies = await TicketApi.fetchOutboundReplies();
+        const claimed = new Set(await TicketApi.claimOutboundReplies(replies.map((reply) => reply.id)));
+        for (const reply of replies) {
+            if (!reply?.id || !reply.channelId || !reply.content || !claimed.has(reply.id)) {
+                continue;
+            }
+            const delivered = await relayOneWebsiteReply(client, reply);
+            if (!delivered) {
+                await TicketApi.releaseOutboundReplies([reply.id]);
+            }
+        }
+    } finally {
+        websiteReplyRelayRunning = false;
+    }
+}
+
 @Discord()
 @SlashGroup({ name: "panel", description: "Panel management commands" })
 export class TicketPanelAddon {
+    @On({ event: "ready" })
+    async relayWebsiteRepliesOnReady([client]: ArgsOf<"ready">): Promise<void> {
+        if (websiteReplyTimer) {
+            return;
+        }
+        const tick = () => {
+            void relayWebsiteReplies(client);
+        };
+        tick();
+        websiteReplyTimer = setInterval(tick, 5_000);
+    }
+
     @Slash({ name: "send", description: "Send a configured panel" })
     @SlashGroup("panel")
     @Guard(
@@ -1613,7 +1751,13 @@ export class TicketPanelAddon {
 
         TicketRegistry.close(ticket.channelId);
 
-        const websiteClose = await TicketApi.closeTicket(ticket.ticketId);
+        const topicTicketId = websiteTicketIdFromTopic(channel.topic);
+        const websiteClose = await TicketApi.closeTicket({
+            ticketId: ticket.ticketId ?? topicTicketId,
+            channelId: ticket.channelId,
+            discordUserId: ticket.ownerId,
+            categorySlug: ticket.categorySlug,
+        });
 
         if (ticket.ticketId) {
             await TicketApi.postMessage(ticket.ticketId, {
@@ -1625,10 +1769,12 @@ export class TicketPanelAddon {
             });
         }
 
+        const websiteNote = websiteClose.success
+            ? "The website ticket was closed and this channel will be removed shortly."
+            : `This channel will be removed shortly. The website ticket stayed open: ${websiteClose.reason ?? "the website did not say why."}`;
+
         await interaction.reply({
-            content: websiteClose.success
-                ? "Closing ticket... The website ticket was closed and this channel will be removed shortly."
-                : "Closing ticket... This channel will be removed shortly (website ticket may need manual review).",
+            content: `Closing ticket... ${websiteNote}`,
             ephemeral: true,
         });
 
@@ -1644,7 +1790,9 @@ export class TicketPanelAddon {
             : [];
 
         await channel.send({
-            content: `🔒 Ticket closed by <@${interaction.user.id}>. This channel will be deleted.`,
+            content: websiteClose.success
+                ? `🔒 Ticket closed by <@${interaction.user.id}>. This channel will be deleted.`
+                : `🔒 Ticket closed by <@${interaction.user.id}>. This channel will be deleted. The website ticket stayed open: ${websiteClose.reason ?? "the website did not say why."}`,
             components: channelComponents,
         });
 
